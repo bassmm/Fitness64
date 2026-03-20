@@ -1,0 +1,136 @@
+// FINAL Fitness App Database Diagram
+// Exercise covers all activity types + TCX support
+// Cleaned to remove redundancy from workout_logs.exercise_id
+
+Table users {
+  user_id int [pk, increment]
+  name varchar [not null]
+  email varchar [not null, unique]
+  password_hash varchar [not null]
+  fitness_level varchar
+  goal varchar
+  training_days_per_week int
+  created_at timestamp [not null]
+}
+
+Table activity_types {
+  activity_type_id int [pk, increment]
+  name varchar [not null, unique] // cardio, strength, mma, etc.
+}
+
+Table exercises {
+  exercise_id int [pk, increment]
+  name varchar [not null]
+  activity_type_id int [not null]
+  category varchar // e.g. running, cycling, compound, sparring
+  measurement_type varchar // distance, weight, time
+}
+
+Table user_activity_preferences {
+  preference_id int [pk, increment]
+  user_id int [not null]
+  activity_type_id int [not null]
+}
+
+Table goals {
+  goal_id int [pk, increment]
+  user_id int [not null]
+  goal_type varchar [not null]
+  target_value decimal(8,2)
+  current_value decimal(8,2)
+  deadline date
+}
+
+Table training_plans {
+  plan_id int [pk, increment]
+  user_id int [not null]
+  plan_name varchar
+  start_date date
+  end_date date
+  generated_by_system boolean
+  created_at timestamp [not null]
+}
+
+Table planned_sessions {
+  planned_session_id int [pk, increment]
+  plan_id int [not null]
+  exercise_id int [not null]
+  session_date date [not null]
+  day_of_week varchar
+  planned_duration int
+  planned_distance decimal(6,2)
+  notes text
+  created_at timestamp [not null]
+}
+
+Table workout_logs {
+  workout_log_id int [pk, increment]
+  user_id int [not null]
+  planned_session_id int
+  log_date date [not null]
+  duration int
+  distance decimal(6,2)
+  notes text
+  route_map text
+  calories int
+  source varchar // manual or tcx_import
+  created_at timestamp [not null]
+}
+
+Table workout_laps {
+  lap_id int [pk, increment]
+  workout_log_id int [not null]
+  start_time timestamp
+  total_time_seconds int
+  distance decimal(8,2)
+  calories int
+}
+
+Table trackpoints {
+  trackpoint_id int [pk, increment]
+  lap_id int [not null]
+  time timestamp [not null]
+  latitude decimal(9,6)
+  longitude decimal(9,6)
+  altitude decimal(6,2)
+  distance decimal(8,2)
+  heart_rate int
+}
+
+Table workout_exercises {
+  workout_exercise_id int [pk, increment]
+  workout_log_id int [not null]
+  exercise_id int [not null]
+}
+
+Table set_logs {
+  set_id int [pk, increment]
+  workout_exercise_id int [not null]
+  set_number int [not null]
+  reps int
+  weight decimal(6,2)
+  rpe decimal(3,1)
+  estimated_1rm decimal(6,2)
+}
+
+// Relationships
+Ref: exercises.activity_type_id > activity_types.activity_type_id
+
+Ref: user_activity_preferences.user_id > users.user_id
+Ref: user_activity_preferences.activity_type_id > activity_types.activity_type_id
+
+Ref: goals.user_id > users.user_id
+
+Ref: training_plans.user_id > users.user_id
+Ref: planned_sessions.plan_id > training_plans.plan_id
+Ref: planned_sessions.exercise_id > exercises.exercise_id
+
+Ref: workout_logs.user_id > users.user_id
+Ref: workout_logs.planned_session_id > planned_sessions.planned_session_id
+
+Ref: workout_laps.workout_log_id > workout_logs.workout_log_id
+Ref: trackpoints.lap_id > workout_laps.lap_id
+
+Ref: workout_exercises.workout_log_id > workout_logs.workout_log_id
+Ref: workout_exercises.exercise_id > exercises.exercise_id
+Ref: set_logs.workout_exercise_id > workout_exercises.workout_exercise_id
