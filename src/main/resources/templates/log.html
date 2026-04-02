@@ -1,0 +1,30 @@
+<html>
+<body>
+
+<h1>Log Activity</h1>
+
+<form method="post" action="/log">
+    <label>Activity Type:</label>
+    <select name="type">
+        <option>Running</option>
+        <option>Cycling</option>
+        <option>Gym</option>
+        <option>Swimming</option>
+    </select><br/>
+
+    <label>Distance:</label>
+    <input name="distance"/><br/>
+
+    <label>Duration:</label>
+    <input name="duration"/><br/>
+
+    <label>Notes:</label>
+    <input name="notes"/><br/>
+
+    <button type="submit">Save Activity</button>
+</form>
+
+<a href="/home">Back</a>
+
+</body>
+</html>
