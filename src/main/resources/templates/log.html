@@ -1,30 +1,59 @@
-<html>
-<body>
+{% extends "base" %}
 
-<h1>Log Activity</h1>
+{% block title %}Log Activity{% endblock %}
 
-<form method="post" action="/log">
-    <label>Activity Type:</label>
-    <select name="type">
-        <option>Running</option>
-        <option>Cycling</option>
-        <option>Gym</option>
-        <option>Swimming</option>
-    </select><br/>
+{% block content %}
+<h2>Log Activity</h2>
 
-    <label>Distance:</label>
-    <input name="distance"/><br/>
+<div class="card">
 
-    <label>Duration:</label>
-    <input name="duration"/><br/>
+    {% if error %}
+        <p style="color: red; margin-bottom: 16px;">
+            {{ error }}
+        </p>
+    {% endif %}
 
-    <label>Notes:</label>
-    <input name="notes"/><br/>
+    <form method="post" action="/log">
 
-    <button type="submit">Save Activity</button>
-</form>
+        <label for="type">Activity Type</label>
+        <select id="type" name="type" required>
+            <option value="">Select an activity</option>
+            <option value="Running" {% if selectedType == "Running" %}selected{% endif %}>Running</option>
+            <option value="Cycling" {% if selectedType == "Cycling" %}selected{% endif %}>Cycling</option>
+            <option value="Gym" {% if selectedType == "Gym" %}selected{% endif %}>Gym</option>
+            <option value="Swimming" {% if selectedType == "Swimming" %}selected{% endif %}>Swimming</option>
+        </select>
 
-<a href="/home">Back</a>
+        <label for="distance">Distance</label>
+        <input
+            id="distance"
+            name="distance"
+            type="text"
+            placeholder="e.g. 5 km"
+            value="{{ distance }}"
+        >
 
-</body>
-</html>
+        <label for="duration">Duration</label>
+        <input
+            id="duration"
+            name="duration"
+            type="text"
+            placeholder="e.g. 30 min"
+            value="{{ duration }}"
+            required
+        >
+
+        <label for="notes">Notes</label>
+        <input
+            id="notes"
+            name="notes"
+            type="text"
+            placeholder="Optional notes"
+            value="{{ notes }}"
+        >
+
+        <button type="submit">Save Activity</button>
+
+    </form>
+</div>
+{% endblock %}

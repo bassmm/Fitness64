@@ -1,22 +1,45 @@
-<html>
-<body>
+{% extends "base" %}
 
-<h1>Quick Log Workout</h1>
+{% block title %}Quick Log{% endblock %}
 
-<form method="post" action="/quick-log">
+{% block content %}
+<h2>Quick Log Workout</h2>
 
-    <label>Select Activity:</label><br/>
+<div class="card">
 
-    <input type="radio" name="type" value="Running"> Running<br/>
-    <input type="radio" name="type" value="Cycling"> Cycling<br/>
-    <input type="radio" name="type" value="Gym"> Gym<br/>
-    <input type="radio" name="type" value="Swimming"> Swimming<br/>
+    {% if error %}
+        <p style="color: red; margin-bottom: 16px;">
+            {{ error }}
+        </p>
+    {% endif %}
 
-    <button type="submit">Continue</button>
+    <form method="post" action="/quick-log">
 
-</form>
+        <p>Select an activity:</p>
 
-<a href="/home">Back</a>
+        <label>
+            <input type="radio" name="type" value="Running">
+            Running
+        </label><br><br>
 
-</body>
-</html>
+        <label>
+            <input type="radio" name="type" value="Cycling">
+            Cycling
+        </label><br><br>
+
+        <label>
+            <input type="radio" name="type" value="Gym">
+            Gym
+        </label><br><br>
+
+        <label>
+            <input type="radio" name="type" value="Swimming">
+            Swimming
+        </label><br><br>
+
+        <button type="submit">Continue</button>
+
+    </form>
+
+</div>
+{% endblock %}

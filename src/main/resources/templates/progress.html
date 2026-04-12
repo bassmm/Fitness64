@@ -1,15 +1,48 @@
-<html>
-<body>
+{% extends "base" %}
 
-<h1>Statistics / Progress</h1>
+{% block title %}Progress{% endblock %}
 
-<h2>Weekly Activity</h2>
-<p>{{stats}}</p>
+{% block content %}
+<h2>Progress Dashboard</h2>
+<p style="margin-top: -8px; color: #555;">Track your activity, performance, and consistency.</p>
 
-<h3>Personal Best</h3>
-<p>{{pb}}</p>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
 
-<a href="/home">Back</a>
+    <div class="card">
+        <h3>Weekly Summary</h3>
+        <p>{{ weeklyWorkouts }}</p>
+        <p>{{ activeDays }}</p>
+    </div>
 
-</body>
-</html>
+    <div class="card">
+        <h3>Personal Bests</h3>
+        <p>Run: {{ pbRun }}</p>
+        <p>Cycle: {{ pbCycle }}</p>
+    </div>
+
+    <div class="card">
+        <h3>Consistency</h3>
+        <p>{{ consistency }}</p>
+    </div>
+
+    <div class="card">
+        <h3>Next Goal</h3>
+        <p>{{ nextGoal }}</p>
+    </div>
+
+</div>
+
+<div class="card" style="margin-top: 16px;">
+    <h3>Recent Achievements</h3>
+
+    <ul>
+        {% for achievement in achievements %}
+            <li>{{ achievement }}</li>
+        {% endfor %}
+    </ul>
+</div>
+
+<div style="margin-top: 20px;">
+    <a class="button" href="/home">Back to Home</a>
+</div>
+{% endblock %}
