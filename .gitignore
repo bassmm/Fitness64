@@ -34,3 +34,8 @@ out/
 
 ### VS Code ###
 .vscode/
+
+# Ignore local SQLite databases
+/data/
+*.db
+*.sqlite

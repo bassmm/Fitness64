@@ -10,7 +10,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization") version "2.3.0"
 }
 
-group = "com.comp2850"
+group = "com.fitness64"
 version = "0.0.1"
 
 application {
@@ -31,6 +31,8 @@ dependencies {
     implementation("com.h2database:h2:$h2_version")
     implementation("org.xerial:sqlite-jdbc:$sqlite_version")
     implementation("io.ktor:ktor-server-auth")
+    implementation("io.ktor:ktor-server-sessions")
+    implementation("org.mindrot:jbcrypt:0.4")
     implementation("io.ktor:ktor-server-netty")
     implementation("ch.qos.logback:logback-classic:$logback_version")
     implementation("io.ktor:ktor-server-config-yaml")
