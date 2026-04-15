@@ -24,6 +24,15 @@
             <option value="Swimming" {% if selectedType == "Swimming" %}selected{% endif %}>Swimming</option>
         </select>
 
+        <label for="activityDate">Date</label>
+        <input
+            id="activityDate"
+            name="activityDate"
+            type="date"
+            value="{{ activityDate }}"
+            required
+        >
+
         <label for="distance">Distance</label>
         <input
             id="distance"

@@ -1,15 +1,18 @@
 package com.comp2850
 
-import io.ktor.http.*
-import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
-import io.ktor.server.pebble.*
-import io.ktor.server.plugins.contentnegotiation.*
-import io.ktor.server.request.*
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
-import io.pebbletemplates.pebble.loader.ClasspathLoader
-import org.jetbrains.exposed.sql.*
+import io.ktor.server.sessions.*
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class UserSession(
+    val name: String,
+    val email: String,
+    val fitnessLevel: String
+)
 
 fun Application.configureSecurity() {
+    install(Sessions) {
+        cookie<UserSession>("user_session")
+    }
 }
