@@ -39,3 +39,6 @@ out/
 /data/
 *.db
 *.sqlite
+
+#Kotlin
+.kotlin/
