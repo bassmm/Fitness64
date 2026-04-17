@@ -11,6 +11,8 @@ import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
 
+// Temporary demo-only user storage used to support UI development.
+// This will be replaced by the main branch backend implementation later.
 private val registeredUsers = mutableMapOf(
     "sarah@example.com" to DemoUser(
         name = "Sarah",
@@ -18,6 +20,15 @@ private val registeredUsers = mutableMapOf(
         password = "123456",
         fitnessLevel = "Intermediate"
     )
+)
+
+// Temporary demo-only data model for UI flow testing.
+// This will be replaced by the main branch user backend later.
+data class DemoUser(
+    val name: String,
+    val email: String,
+    val password: String,
+    val fitnessLevel: String
 )
 
 private val weeklyPlanData = linkedMapOf(
@@ -32,13 +43,6 @@ private val weeklyPlanData = linkedMapOf(
 
 private val loggedActivities = mutableListOf<LoggedActivity>()
 
-data class DemoUser(
-    val name: String,
-    val email: String,
-    val password: String,
-    val fitnessLevel: String
-)
-
 data class LoggedActivity(
     val date: String,
     val type: String,
@@ -52,7 +56,6 @@ fun getStartOfWeek(today: LocalDate): LocalDate {
 }
 
 fun Application.configureRouting() {
-
     routing {
 
         get("/") {
@@ -69,6 +72,8 @@ fun Application.configureRouting() {
             )
         }
 
+        // Temporary demo-only login logic for UI development.
+        // This will be replaced by the main branch backend implementation.
         post("/login") {
             val params = call.receiveParameters()
             val email = params["email"]?.trim().orEmpty()
@@ -120,6 +125,8 @@ fun Application.configureRouting() {
             )
         }
 
+        // Temporary demo-only registration logic for UI development.
+        // This will be replaced by the main branch backend implementation.
         post("/register") {
             val params = call.receiveParameters()
             val name = params["name"]?.trim().orEmpty()
