@@ -1,59 +1,12 @@
-package com.comp2850
+package com.fitness64
 
 import io.ktor.server.application.*
 import io.ktor.server.pebble.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.server.sessions.*
-import java.time.DayOfWeek
-import java.time.LocalDate
-import java.time.format.TextStyle
-import java.util.Locale
-
-// Temporary demo-only user storage used to support UI development.
-// This will be replaced by the main branch backend implementation later.
-private val registeredUsers = mutableMapOf(
-    "sarah@example.com" to DemoUser(
-        name = "Sarah",
-        email = "sarah@example.com",
-        password = "123456",
-        fitnessLevel = "Intermediate"
-    )
-)
-
-// Temporary demo-only data model for UI flow testing.
-// This will be replaced by the main branch user backend later.
-data class DemoUser(
-    val name: String,
-    val email: String,
-    val password: String,
-    val fitnessLevel: String
-)
-
-private val weeklyPlanData = linkedMapOf(
-    "Monday" to "Run 5km",
-    "Tuesday" to "Gym",
-    "Wednesday" to "Rest",
-    "Thursday" to "Cycling 10km",
-    "Friday" to "Gym",
-    "Saturday" to "Long Run",
-    "Sunday" to "Rest"
-)
-
-private val loggedActivities = mutableListOf<LoggedActivity>()
-
-data class LoggedActivity(
-    val date: String,
-    val type: String,
-    val duration: String,
-    val distance: String,
-    val notes: String
-)
-
-fun getStartOfWeek(today: LocalDate): LocalDate {
-    return today.with(DayOfWeek.MONDAY)
-}
+import io.pebbletemplates.pebble.loader.ClasspathLoader
+import org.jetbrains.exposed.sql.*
 
 fun Application.configureRouting() {
     routing {

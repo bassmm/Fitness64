@@ -1,4 +1,4 @@
-package com.comp2850
+package com.fitness64
 
 import io.ktor.client.request.*
 import io.ktor.http.*
