@@ -1,0 +1,25 @@
+{% extends "base" %}
+
+{% block title %}Weekly Plan{% endblock %}
+
+{% block content %}
+<h2>Weekly Training Plan</h2>
+<p style="margin-top: -8px; color: #555;">Your planned sessions for this real calendar week.</p>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+
+    {% for item in weeklyPlan %}
+        <div class="card">
+            <h3>{{ item.day }}</h3>
+            <p><strong>Date:</strong> {{ item.date }}</p>
+            <p><strong>Planned session:</strong> {{ item.session }}</p>
+            <a class="button" href="/plan/replace?day={{ item.day }}">Replace Session</a>
+        </div>
+    {% endfor %}
+
+</div>
+
+<div style="margin-top: 20px;">
+    <a class="button" href="/home">Back to Home</a>
+</div>
+{% endblock %}

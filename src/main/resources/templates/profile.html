@@ -1,0 +1,38 @@
+{% extends "base" %}
+
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+<h2>Profile</h2>
+<p style="margin-top: -8px; color: #555;">View your personal fitness information and training preferences.</p>
+
+<div class="card">
+    <h3>Personal Details</h3>
+    <p><strong>Name:</strong> {{ name }}</p>
+    <p><strong>Email:</strong> {{ email }}</p>
+    <p><strong>Fitness Level:</strong> {{ fitnessLevel }}</p>
+</div>
+
+<div class="card">
+    <h3>Goals</h3>
+    <p>{{ goals }}</p>
+</div>
+
+<div class="card">
+    <h3>Preferred Activities</h3>
+    <ul>
+        {% for activity in activities %}
+            <li>{{ activity }}</li>
+        {% endfor %}
+    </ul>
+</div>
+
+<div class="card">
+    <h3>Community</h3>
+    <p>{{ community }}</p>
+</div>
+
+<div style="margin-top: 20px;">
+    <a class="button" href="/home">Back to Home</a>
+</div>
+{% endblock %}

@@ -1,0 +1,69 @@
+{% extends "base" %}
+
+{% block title %}Calendar{% endblock %}
+
+{% block content %}
+<h2>Training Calendar</h2>
+<p style="margin-top: -8px; color: #555;">View your planned and logged activities for this week.</p>
+
+<div style="display: grid; gap: 16px;">
+
+    {% for item in calendarItems %}
+        <div class="card {% if item.isToday %}today-card{% endif %}">
+            <h3>
+                {{ item.day }}
+                {% if item.isToday %}
+                    <span style="color: #00b894;">(Today)</span>
+                {% endif %}
+            </h3>
+
+            <p><strong>Date:</strong> {{ item.date }}</p>
+
+            <p>
+                <strong>Planned:</strong>
+                {% if item.planned %}
+                    {{ item.planned }}
+                {% else %}
+                    No plan set
+                {% endif %}
+            </p>
+
+            <div style="margin-bottom: 12px;">
+                <a class="button" href="/log?date={{ item.date }}">Log for this day</a>
+            </div>
+
+            <h4>Logged Activities</h4>
+
+            {% if item.logged is empty %}
+                <p style="color: #888;">No logged activity yet.</p>
+            {% else %}
+                <ul>
+                    {% for activity in item.logged %}
+                        <li>
+                            {{ activity.type }} — {{ activity.duration }}
+                            {% if activity.distance %}
+                                — {{ activity.distance }}
+                            {% endif %}
+                            {% if activity.notes %}
+                                — {{ activity.notes }}
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+    {% endfor %}
+
+</div>
+
+<div style="margin-top: 20px;">
+    <a class="button" href="/home">Back to Home</a>
+</div>
+
+<style>
+    .today-card {
+        border: 2px solid #00b894;
+        background-color: #ecfdf5;
+    }
+</style>
+{% endblock %}

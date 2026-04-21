@@ -1,0 +1,64 @@
+{% extends "base" %}
+
+{% block title %}Register{% endblock %}
+
+{% block content %}
+<h2>Create Account</h2>
+<p style="margin-top: -8px; color: #555;">Set up your fitness account to start tracking your training.</p>
+
+<div class="card">
+
+    {% if error %}
+        <p style="color: red; margin-bottom: 16px;">
+            {{ error }}
+        </p>
+    {% endif %}
+
+    <form method="post" action="/register">
+
+        <label for="name">Name</label>
+        <input
+            id="name"
+            name="name"
+            type="text"
+            placeholder="Enter your name"
+            value="{{ name }}"
+            required
+        >
+
+        <label for="email">Email</label>
+        <input
+            id="email"
+            name="email"
+            type="email"
+            placeholder="Enter your email"
+            value="{{ email }}"
+            required
+        >
+
+        <label for="password">Password</label>
+        <input
+            id="password"
+            name="password"
+            type="password"
+            placeholder="Create a password"
+            required
+        >
+
+        <label for="fitnessLevel">Fitness Level</label>
+        <select id="fitnessLevel" name="fitnessLevel" required>
+            <option value="">Select your level</option>
+            <option value="Beginner">Beginner</option>
+            <option value="Intermediate">Intermediate</option>
+            <option value="Advanced">Advanced</option>
+        </select>
+
+        <button type="submit">Create Account</button>
+
+    </form>
+</div>
+
+<div style="margin-top: 20px;">
+    <a class="button" href="/login">Back to Login</a>
+</div>
+{% endblock %}
