@@ -1,6 +1,6 @@
 package com.fitness64
 
-import com.fitness64.tcx.*
+import com.fitness64.activities.*
 import com.fitness64.users.*
 import io.ktor.server.application.*
 
@@ -12,7 +12,7 @@ fun Application.module() {
     // Service Init
     val database = configureDatabases()
     val userService = UserService(database)
-    val tcxService = TcxService(database)
+    val activityService = ActivityService(database)
 
     // Setup
     configureTemplating()
@@ -22,5 +22,5 @@ fun Application.module() {
     // Routing
     configureRouting()
     configureUsersRoutes(userService)
-    configureTcxRoutes(tcxService)
+    configureActivityRoutes(activityService)
 }
