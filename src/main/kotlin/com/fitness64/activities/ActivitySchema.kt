@@ -6,6 +6,7 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.v1.core.*
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
@@ -159,6 +160,45 @@ class ActivityService(database: Database) {
             it[calories] = workout.calories
             it[workoutSource] = workout.source
         }[WorkoutLogs.id]
+    }
+
+    suspend fun getWorkoutLog(id: Int): ExposedWorkoutLog? = dbQuery {
+        WorkoutLogs.selectAll()
+            .where { WorkoutLogs.id eq id }
+            .map {
+                ExposedWorkoutLog(
+                    userId = it[WorkoutLogs.userId],
+                    activityTypeId = it[WorkoutLogs.activityTypeId],
+                    logDate = it[WorkoutLogs.logDate],
+                    duration = it[WorkoutLogs.duration],
+                    distance = it[WorkoutLogs.distance],
+                    notes = it[WorkoutLogs.notes],
+                    calories = it[WorkoutLogs.calories],
+                    source = it[WorkoutLogs.workoutSource]
+                )
+            }
+            .singleOrNull()
+    }
+
+    suspend fun getWorkoutsForUser(userIdValue: Int): List<ExposedWorkoutLog> = dbQuery {
+        WorkoutLogs.selectAll()
+            .where { WorkoutLogs.userId eq userIdValue }
+            .map {
+                ExposedWorkoutLog(
+                    userId = it[WorkoutLogs.userId],
+                    activityTypeId = it[WorkoutLogs.activityTypeId],
+                    logDate = it[WorkoutLogs.logDate],
+                    duration = it[WorkoutLogs.duration],
+                    distance = it[WorkoutLogs.distance],
+                    notes = it[WorkoutLogs.notes],
+                    calories = it[WorkoutLogs.calories],
+                    source = it[WorkoutLogs.workoutSource]
+                )
+            }
+    }
+
+    suspend fun deleteWorkoutLog(id: Int) = dbQuery {
+        WorkoutLogs.deleteWhere { WorkoutLogs.id eq id }
     }
 
     suspend fun createWorkoutExercise(workoutExercise: ExposedWorkoutExercise): Int = dbQuery {

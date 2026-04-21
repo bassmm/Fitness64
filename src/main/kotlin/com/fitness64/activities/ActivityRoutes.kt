@@ -8,31 +8,83 @@ import io.ktor.server.routing.*
 
 fun Application.configureActivityRoutes(activityService: ActivityService) {
     routing {
-        // Create a workout log
+
+        // --- Activity Types ---
+
+        post("/activity-types") {
+            val activityType = call.receive<ExposedActivityType>()
+            val id = activityService.createActivityType(activityType)
+            call.respond(HttpStatusCode.Created, id)
+        }
+
+        // --- Exercises ---
+
+        post("/exercises") {
+            val exercise = call.receive<ExposedExercise>()
+            val id = activityService.createExercise(exercise)
+            call.respond(HttpStatusCode.Created, id)
+        }
+
+        // --- Workout Logs ---
+
         post("/workouts") {
             val workout = call.receive<ExposedWorkoutLog>()
             val id = activityService.createWorkoutLog(workout)
             call.respond(HttpStatusCode.Created, id)
         }
 
-        // Create a workout lap
+        get("/workouts/{id}") {
+            val id = call.parameters["id"]?.toInt()
+                ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid workout ID")
+            val workout = activityService.getWorkoutLog(id)
+            if (workout != null) {
+                call.respond(HttpStatusCode.OK, workout)
+            } else {
+                call.respond(HttpStatusCode.NotFound, "Workout not found")
+            }
+        }
+
+        get("/users/{userId}/workouts") {
+            val userId = call.parameters["userId"]?.toInt()
+                ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid user ID")
+            val workouts = activityService.getWorkoutsForUser(userId)
+            call.respond(HttpStatusCode.OK, workouts)
+        }
+
+        delete("/workouts/{id}") {
+            val id = call.parameters["id"]?.toInt()
+                ?: return@delete call.respond(HttpStatusCode.BadRequest, "Invalid workout ID")
+            activityService.deleteWorkoutLog(id)
+            call.respond(HttpStatusCode.OK, "Workout deleted")
+        }
+
+        // --- Workout Exercises ---
+
+        post("/workout-exercises") {
+            val workoutExercise = call.receive<ExposedWorkoutExercise>()
+            val id = activityService.createWorkoutExercise(workoutExercise)
+            call.respond(HttpStatusCode.Created, id)
+        }
+
+        // --- Laps ---
+
         post("/laps") {
             val lap = call.receive<ExposedWorkoutLap>()
             val id = activityService.createWorkoutLap(lap)
             call.respond(HttpStatusCode.Created, id)
         }
 
-        // Create a trackpoint
+        // --- Trackpoints ---
+
         post("/trackpoints") {
             val trackpoint = call.receive<ExposedTrackpoint>()
             val id = activityService.createTrackpoint(trackpoint)
             call.respond(HttpStatusCode.Created, id)
         }
 
-        // Read all trackpoints for a lap
         get("/laps/{id}/trackpoints") {
             val id = call.parameters["id"]?.toInt()
-                ?: throw IllegalArgumentException("Invalid lap ID")
+                ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid lap ID")
             val trackpoints = activityService.getTrackpointsForLap(id)
             call.respond(HttpStatusCode.OK, trackpoints)
         }
