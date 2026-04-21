@@ -17,6 +17,14 @@ data class ExposedActivityType(
 )
 
 @Serializable
+data class ExposedExercise(
+    val name: String,
+    val activityTypeId: Int,
+    val category: String? = null,
+    val measurementType: String? = null
+)
+
+@Serializable
 data class ExposedWorkoutLog(
     val userId: Int,
     val activityTypeId: Int,
@@ -26,6 +34,12 @@ data class ExposedWorkoutLog(
     val notes: String? = null,
     val calories: Int? = null,
     val source: String? = null
+)
+
+@Serializable
+data class ExposedWorkoutExercise(
+    val workoutLogId: Int,
+    val exerciseId: Int
 )
 
 @Serializable
@@ -57,6 +71,16 @@ class ActivityService(database: Database) {
         override val primaryKey = PrimaryKey(id)
     }
 
+    object Exercises : Table("exercises") {
+        val id = integer("exercise_id").autoIncrement()
+        val name = varchar("name", 255)
+        val activityTypeId = integer("activity_type_id").references(ActivityTypes.id)
+        val category = varchar("category", 100).nullable()
+        val measurementType = varchar("measurement_type", 50).nullable()
+
+        override val primaryKey = PrimaryKey(id)
+    }
+
     object WorkoutLogs : Table("workout_logs") {
         val id = integer("workout_log_id").autoIncrement()
         val userId = integer("user_id")
@@ -67,6 +91,14 @@ class ActivityService(database: Database) {
         val notes = varchar("notes", 255).nullable()
         val calories = integer("calories").nullable()
         val workoutSource = varchar("source", 50).nullable()
+
+        override val primaryKey = PrimaryKey(id)
+    }
+
+    object WorkoutExercises : Table("workout_exercises") {
+        val id = integer("workout_exercise_id").autoIncrement()
+        val workoutLogId = integer("workout_log_id").references(WorkoutLogs.id)
+        val exerciseId = integer("exercise_id").references(Exercises.id)
 
         override val primaryKey = PrimaryKey(id)
     }
@@ -97,7 +129,7 @@ class ActivityService(database: Database) {
 
     init {
         transaction(database) {
-            SchemaUtils.create(ActivityTypes, WorkoutLogs, WorkoutLaps, Trackpoints)
+            SchemaUtils.create(ActivityTypes, Exercises, WorkoutLogs, WorkoutExercises, WorkoutLaps, Trackpoints)
         }
     }
 
@@ -105,6 +137,15 @@ class ActivityService(database: Database) {
         ActivityTypes.insert {
             it[name] = activityType.name
         }[ActivityTypes.id]
+    }
+
+    suspend fun createExercise(exercise: ExposedExercise): Int = dbQuery {
+        Exercises.insert {
+            it[name] = exercise.name
+            it[activityTypeId] = exercise.activityTypeId
+            it[category] = exercise.category
+            it[measurementType] = exercise.measurementType
+        }[Exercises.id]
     }
 
     suspend fun createWorkoutLog(workout: ExposedWorkoutLog): Int = dbQuery {
@@ -118,6 +159,13 @@ class ActivityService(database: Database) {
             it[calories] = workout.calories
             it[workoutSource] = workout.source
         }[WorkoutLogs.id]
+    }
+
+    suspend fun createWorkoutExercise(workoutExercise: ExposedWorkoutExercise): Int = dbQuery {
+        WorkoutExercises.insert {
+            it[workoutLogId] = workoutExercise.workoutLogId
+            it[exerciseId] = workoutExercise.exerciseId
+        }[WorkoutExercises.id]
     }
 
     suspend fun createWorkoutLap(lap: ExposedWorkoutLap): Int = dbQuery {
