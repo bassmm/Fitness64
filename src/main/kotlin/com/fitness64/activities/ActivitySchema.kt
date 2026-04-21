@@ -12,11 +12,17 @@ import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 
 @Serializable
+data class ExposedActivityType(
+    val name: String
+)
+
+@Serializable
 data class ExposedWorkoutLog(
     val userId: Int,
+    val activityTypeId: Int,
     val logDate: String,
     val duration: Int,
-    val distance: Double,
+    val distance: Double? = null,
     val notes: String? = null,
     val calories: Int? = null,
     val source: String? = null
@@ -44,12 +50,20 @@ data class ExposedTrackpoint(
 
 class ActivityService(database: Database) {
 
-    object WorkoutLogs : Table() {
-        val id = integer("id").autoIncrement()
+    object ActivityTypes : Table("activity_types") {
+        val id = integer("activity_type_id").autoIncrement()
+        val name = varchar("name", 50).uniqueIndex()
+
+        override val primaryKey = PrimaryKey(id)
+    }
+
+    object WorkoutLogs : Table("workout_logs") {
+        val id = integer("workout_log_id").autoIncrement()
         val userId = integer("user_id")
+        val activityTypeId = integer("activity_type_id").references(ActivityTypes.id)
         val logDate = varchar("log_date", 30)
         val duration = integer("duration")
-        val distance = double("distance")
+        val distance = double("distance").nullable()
         val notes = varchar("notes", 255).nullable()
         val calories = integer("calories").nullable()
         val workoutSource = varchar("source", 50).nullable()
@@ -57,8 +71,8 @@ class ActivityService(database: Database) {
         override val primaryKey = PrimaryKey(id)
     }
 
-    object WorkoutLaps : Table() {
-        val id = integer("id").autoIncrement()
+    object WorkoutLaps : Table("workout_laps") {
+        val id = integer("lap_id").autoIncrement()
         val workoutLogId = integer("workout_log_id").references(WorkoutLogs.id)
         val startTime = varchar("start_time", 40)
         val totalTimeSeconds = integer("total_time_seconds")
@@ -68,8 +82,8 @@ class ActivityService(database: Database) {
         override val primaryKey = PrimaryKey(id)
     }
 
-    object Trackpoints : Table() {
-        val id = integer("id").autoIncrement()
+    object Trackpoints : Table("trackpoints") {
+        val id = integer("trackpoint_id").autoIncrement()
         val lapId = integer("lap_id").references(WorkoutLaps.id)
         val time = varchar("time", 40)
         val latitude = double("latitude").nullable()
@@ -83,13 +97,20 @@ class ActivityService(database: Database) {
 
     init {
         transaction(database) {
-            SchemaUtils.create(WorkoutLogs, WorkoutLaps, Trackpoints)
+            SchemaUtils.create(ActivityTypes, WorkoutLogs, WorkoutLaps, Trackpoints)
         }
+    }
+
+    suspend fun createActivityType(activityType: ExposedActivityType): Int = dbQuery {
+        ActivityTypes.insert {
+            it[name] = activityType.name
+        }[ActivityTypes.id]
     }
 
     suspend fun createWorkoutLog(workout: ExposedWorkoutLog): Int = dbQuery {
         WorkoutLogs.insert {
             it[userId] = workout.userId
+            it[activityTypeId] = workout.activityTypeId
             it[logDate] = workout.logDate
             it[duration] = workout.duration
             it[distance] = workout.distance
