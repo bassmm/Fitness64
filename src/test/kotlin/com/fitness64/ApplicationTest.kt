@@ -5,7 +5,7 @@ import io.ktor.http.*
 import io.ktor.server.testing.*
 import kotlin.test.BeforeTest
 import kotlin.test.Test
-import kotlin.test.assertTrue
+import kotlin.test.assertEquals
 
 class ApplicationTest {
 
@@ -22,7 +22,7 @@ class ApplicationTest {
             module()
         }
         // Verify the application started without errors
-        assertTrue(true)
+        // If we get here without exception, the test passes
     }
 
     @Test
@@ -31,7 +31,7 @@ class ApplicationTest {
             module()
         }
         val response = client.get("/login")
-        assertTrue(response.status == HttpStatusCode.OK)
+        assertEquals(HttpStatusCode.OK, response.status)
     }
 
     @Test
@@ -40,6 +40,6 @@ class ApplicationTest {
             module()
         }
         val response = client.get("/register")
-        assertTrue(response.status == HttpStatusCode.OK)
+        assertEquals(HttpStatusCode.OK, response.status)
     }
 }
