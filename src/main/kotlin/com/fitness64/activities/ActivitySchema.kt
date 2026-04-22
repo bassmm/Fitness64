@@ -13,12 +13,12 @@ import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 
 @Serializable
-data class ExposedActivityType(
+data class ActivityType(
     val name: String
 )
 
 @Serializable
-data class ExposedExercise(
+data class Exercise(
     val name: String,
     val activityTypeId: Int,
     val category: String? = null,
@@ -26,7 +26,7 @@ data class ExposedExercise(
 )
 
 @Serializable
-data class ExposedWorkoutLog(
+data class WorkoutLog(
     val userId: Int,
     val activityTypeId: Int,
     val logDate: String,
@@ -38,13 +38,13 @@ data class ExposedWorkoutLog(
 )
 
 @Serializable
-data class ExposedWorkoutExercise(
+data class WorkoutExercise(
     val workoutLogId: Int,
     val exerciseId: Int
 )
 
 @Serializable
-data class ExposedWorkoutLap(
+data class WorkoutLap(
     val workoutLogId: Int,
     val startTime: String,
     val totalTimeSeconds: Int,
@@ -53,7 +53,7 @@ data class ExposedWorkoutLap(
 )
 
 @Serializable
-data class ExposedTrackpoint(
+data class Trackpoint(
     val lapId: Int,
     val time: String,
     val latitude: Double? = null,
@@ -134,13 +134,13 @@ class ActivityService(database: Database) {
         }
     }
 
-    suspend fun createActivityType(activityType: ExposedActivityType): Int = dbQuery {
+    suspend fun createActivityType(activityType: ActivityType): Int = dbQuery {
         ActivityTypes.insert {
             it[name] = activityType.name
         }[ActivityTypes.id]
     }
 
-    suspend fun createExercise(exercise: ExposedExercise): Int = dbQuery {
+    suspend fun createExercise(exercise: Exercise): Int = dbQuery {
         Exercises.insert {
             it[name] = exercise.name
             it[activityTypeId] = exercise.activityTypeId
@@ -149,7 +149,7 @@ class ActivityService(database: Database) {
         }[Exercises.id]
     }
 
-    suspend fun createWorkoutLog(workout: ExposedWorkoutLog): Int = dbQuery {
+    suspend fun createWorkoutLog(workout: WorkoutLog): Int = dbQuery {
         WorkoutLogs.insert {
             it[userId] = workout.userId
             it[activityTypeId] = workout.activityTypeId
@@ -162,11 +162,11 @@ class ActivityService(database: Database) {
         }[WorkoutLogs.id]
     }
 
-    suspend fun getWorkoutLog(id: Int): ExposedWorkoutLog? = dbQuery {
+    suspend fun getWorkoutLog(id: Int): WorkoutLog? = dbQuery {
         WorkoutLogs.selectAll()
             .where { WorkoutLogs.id eq id }
             .map {
-                ExposedWorkoutLog(
+                WorkoutLog(
                     userId = it[WorkoutLogs.userId],
                     activityTypeId = it[WorkoutLogs.activityTypeId],
                     logDate = it[WorkoutLogs.logDate],
@@ -180,11 +180,11 @@ class ActivityService(database: Database) {
             .singleOrNull()
     }
 
-    suspend fun getWorkoutsForUser(userIdValue: Int): List<ExposedWorkoutLog> = dbQuery {
+    suspend fun getWorkoutsForUser(userIdValue: Int): List<WorkoutLog> = dbQuery {
         WorkoutLogs.selectAll()
             .where { WorkoutLogs.userId eq userIdValue }
             .map {
-                ExposedWorkoutLog(
+                WorkoutLog(
                     userId = it[WorkoutLogs.userId],
                     activityTypeId = it[WorkoutLogs.activityTypeId],
                     logDate = it[WorkoutLogs.logDate],
@@ -201,14 +201,14 @@ class ActivityService(database: Database) {
         WorkoutLogs.deleteWhere { WorkoutLogs.id eq id }
     }
 
-    suspend fun createWorkoutExercise(workoutExercise: ExposedWorkoutExercise): Int = dbQuery {
+    suspend fun createWorkoutExercise(workoutExercise: WorkoutExercise): Int = dbQuery {
         WorkoutExercises.insert {
             it[workoutLogId] = workoutExercise.workoutLogId
             it[exerciseId] = workoutExercise.exerciseId
         }[WorkoutExercises.id]
     }
 
-    suspend fun createWorkoutLap(lap: ExposedWorkoutLap): Int = dbQuery {
+    suspend fun createWorkoutLap(lap: WorkoutLap): Int = dbQuery {
         WorkoutLaps.insert {
             it[workoutLogId] = lap.workoutLogId
             it[startTime] = lap.startTime
@@ -218,7 +218,7 @@ class ActivityService(database: Database) {
         }[WorkoutLaps.id]
     }
 
-    suspend fun createTrackpoint(trackpoint: ExposedTrackpoint): Int = dbQuery {
+    suspend fun createTrackpoint(trackpoint: Trackpoint): Int = dbQuery {
         Trackpoints.insert {
             it[lapId] = trackpoint.lapId
             it[time] = trackpoint.time
@@ -230,11 +230,11 @@ class ActivityService(database: Database) {
         }[Trackpoints.id]
     }
 
-    suspend fun getTrackpointsForLap(lapIdValue: Int): List<ExposedTrackpoint> = dbQuery {
+    suspend fun getTrackpointsForLap(lapIdValue: Int): List<Trackpoint> = dbQuery {
         Trackpoints.selectAll()
             .where { Trackpoints.lapId eq lapIdValue }
             .map {
-                ExposedTrackpoint(
+                Trackpoint(
                     lapId = it[Trackpoints.lapId],
                     time = it[Trackpoints.time],
                     latitude = it[Trackpoints.latitude],

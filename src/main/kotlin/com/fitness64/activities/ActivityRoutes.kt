@@ -12,7 +12,7 @@ fun Application.configureActivityRoutes(activityService: ActivityService) {
         // --- Activity Types ---
 
         post("/activity-types") {
-            val activityType = call.receive<ExposedActivityType>()
+            val activityType = call.receive<ActivityType>()
             val id = activityService.createActivityType(activityType)
             call.respond(HttpStatusCode.Created, id)
         }
@@ -20,7 +20,7 @@ fun Application.configureActivityRoutes(activityService: ActivityService) {
         // --- Exercises ---
 
         post("/exercises") {
-            val exercise = call.receive<ExposedExercise>()
+            val exercise = call.receive<Exercise>()
             val id = activityService.createExercise(exercise)
             call.respond(HttpStatusCode.Created, id)
         }
@@ -28,7 +28,7 @@ fun Application.configureActivityRoutes(activityService: ActivityService) {
         // --- Workout Logs ---
 
         post("/workouts") {
-            val workout = call.receive<ExposedWorkoutLog>()
+            val workout = call.receive<WorkoutLog>()
             val id = activityService.createWorkoutLog(workout)
             call.respond(HttpStatusCode.Created, id)
         }
@@ -61,7 +61,7 @@ fun Application.configureActivityRoutes(activityService: ActivityService) {
         // --- Workout Exercises ---
 
         post("/workout-exercises") {
-            val workoutExercise = call.receive<ExposedWorkoutExercise>()
+            val workoutExercise = call.receive<WorkoutExercise>()
             val id = activityService.createWorkoutExercise(workoutExercise)
             call.respond(HttpStatusCode.Created, id)
         }
@@ -69,7 +69,7 @@ fun Application.configureActivityRoutes(activityService: ActivityService) {
         // --- Laps ---
 
         post("/laps") {
-            val lap = call.receive<ExposedWorkoutLap>()
+            val lap = call.receive<WorkoutLap>()
             val id = activityService.createWorkoutLap(lap)
             call.respond(HttpStatusCode.Created, id)
         }
@@ -77,7 +77,7 @@ fun Application.configureActivityRoutes(activityService: ActivityService) {
         // --- Trackpoints ---
 
         post("/trackpoints") {
-            val trackpoint = call.receive<ExposedTrackpoint>()
+            val trackpoint = call.receive<Trackpoint>()
             val id = activityService.createTrackpoint(trackpoint)
             call.respond(HttpStatusCode.Created, id)
         }
