@@ -1,0 +1,80 @@
+{% extends "base" %}
+
+{% block title %}Log Weightlifting Activity{% endblock %}
+
+{% block content %}
+<h2>Log Weightlifting Activity</h2>
+
+<div class="card">
+    <form method="post" action="/weightlifting/log">
+        <label for="exerciseId">Exercise</label>
+        <select id="exerciseId" name="exerciseId" required>
+            <option value="">Select an exercise</option>
+            {% for exercise in exercises %}
+                <option value="{{ exercise.id }}">{{ exercise.name }}</option>
+            {% endfor %}
+        </select>
+
+        <div style="margin-top: 8px; margin-bottom: 8px;">
+            <a class="button" href="/weightlifting/exercises/new">+ Add New Exercise</a>
+        </div>
+
+        <label for="sets">Sets</label>
+        <input
+            id="sets"
+            name="sets"
+            type="number"
+            min="1"
+            required
+        >
+
+        <label for="reps">Reps</label>
+        <input
+            id="reps"
+            name="reps"
+            type="number"
+            min="1"
+            required
+        >
+
+        <label for="weight">Weight (kg)</label>
+        <input
+            id="weight"
+            name="weight"
+            type="number"
+            min="0"
+            step="0.1"
+            required
+        >
+
+        <label for="duration">Duration (minutes)</label>
+        <input
+            id="duration"
+            name="duration"
+            type="number"
+            min="1"
+            required
+        >
+
+        <label for="logDate">Date</label>
+        <input
+            id="logDate"
+            name="logDate"
+            type="date"
+            value="{{ today }}"
+            required
+        >
+
+        <label for="notes">Notes</label>
+        <textarea
+            id="notes"
+            name="notes"
+            rows="4"
+            style="padding: 8px; border-radius: 6px; border: 1px solid #ccc; font-size: 14px;"
+            placeholder="Optional notes about your workout"
+        ></textarea>
+
+        <button type="submit">Save Log</button>
+    </form>
+</div>
+{% endblock %}

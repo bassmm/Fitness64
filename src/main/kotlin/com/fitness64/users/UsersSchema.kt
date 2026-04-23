@@ -17,13 +17,14 @@ import java.time.LocalDateTime
 
 @Serializable
 data class User(
+    val id: Int? = null,
     val name: String,
     val email: String,
     val passwordHash: String,
     val fitnessLevel: String? = null,
     val goal: String? = null,
     val trainingDaysPerWeek: Int? = null,
-    val createdAt: String? = null // Handled as string in JSON, managed as LocalDateTime in DB
+    val createdAt: String? = null
 )
 
 class UserService(database: Database) {
@@ -35,7 +36,7 @@ class UserService(database: Database) {
         val fitnessLevel = varchar("fitness_level", length = 50).nullable()
         val goal = varchar("goal", length = 255).nullable()
         val trainingDaysPerWeek = integer("training_days_per_week").nullable()
-        val createdAt = varchar("created_at", length = 50) // Simplified representation for now
+        val createdAt = varchar("created_at", length = 50)
 
         override val primaryKey = PrimaryKey(userId)
     }
@@ -65,6 +66,7 @@ class UserService(database: Database) {
                 .where { Users.userId eq id }
                 .map {
                     User(
+                        id = it[Users.userId],
                         name = it[Users.name],
                         email = it[Users.email],
                         passwordHash = it[Users.passwordHash],
@@ -84,6 +86,7 @@ class UserService(database: Database) {
                 .where { Users.email eq email }
                 .map {
                     User(
+                        id = it[Users.userId],
                         name = it[Users.name],
                         email = it[Users.email],
                         passwordHash = it[Users.passwordHash],

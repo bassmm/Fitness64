@@ -1,0 +1,50 @@
+{% extends "base" %}
+
+{% block title %}Weightlifting History{% endblock %}
+
+{% block content %}
+<h2>Weightlifting History</h2>
+
+<div class="card">
+    <a class="button" href="/weightlifting/log">Log Another Weightlifting Activity</a>
+</div>
+
+<div class="card" style="margin-top: 16px;">
+    {% if history.size > 0 %}
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr>
+                    <th style="text-align: left; padding: 10px; border-bottom: 1px solid #ddd;">Date</th>
+                    <th style="text-align: left; padding: 10px; border-bottom: 1px solid #ddd;">Exercise</th>
+                    <th style="text-align: left; padding: 10px; border-bottom: 1px solid #ddd;">Sets</th>
+                    <th style="text-align: left; padding: 10px; border-bottom: 1px solid #ddd;">Reps</th>
+                    <th style="text-align: left; padding: 10px; border-bottom: 1px solid #ddd;">Weight (kg)</th>
+                    <th style="text-align: left; padding: 10px; border-bottom: 1px solid #ddd;">Duration</th>
+                    <th style="text-align: left; padding: 10px; border-bottom: 1px solid #ddd;">Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in history %}
+                    <tr>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">{{ item.logDate }}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">{{ item.exerciseName }}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">{{ item.sets }}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">{{ item.reps }}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">{{ item.weight }}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">{{ item.duration }} min</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">
+                            {% if item.notes %}
+                                {{ item.notes }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No weightlifting records yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

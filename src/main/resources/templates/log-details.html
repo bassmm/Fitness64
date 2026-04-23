@@ -1,0 +1,61 @@
+{% extends "base" %}
+
+{% block title %}Log Activity Details{% endblock %}
+
+{% block content %}
+<h2>Log {{ selectedType }}</h2>
+
+<div class="card">
+
+    {% if error %}
+        <p style="color: red; margin-bottom: 16px;">
+            {{ error }}
+        </p>
+    {% endif %}
+
+    <form method="post" action="/log/details">
+
+        <input type="hidden" name="type" value="{{ selectedType }}">
+
+        <label for="activityDate">Date</label>
+        <input
+            id="activityDate"
+            name="activityDate"
+            type="date"
+            value="{{ activityDate }}"
+            required
+        >
+
+        <label for="distance">Distance</label>
+        <input
+            id="distance"
+            name="distance"
+            type="text"
+            placeholder="e.g. 5 km"
+            value="{{ distance }}"
+        >
+
+        <label for="duration">Duration</label>
+        <input
+            id="duration"
+            name="duration"
+            type="text"
+            placeholder="e.g. 30 min"
+            value="{{ duration }}"
+            required
+        >
+
+        <label for="notes">Notes</label>
+        <input
+            id="notes"
+            name="notes"
+            type="text"
+            placeholder="Optional notes"
+            value="{{ notes }}"
+        >
+
+        <button type="submit">Save Activity</button>
+
+    </form>
+</div>
+{% endblock %}
