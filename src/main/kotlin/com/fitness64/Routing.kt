@@ -1,6 +1,5 @@
 package com.fitness64
 
-import com.fitness64.users.User
 import com.fitness64.users.UserService
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -9,7 +8,6 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
-import io.pebbletemplates.pebble.loader.ClasspathLoader
 import org.mindrot.jbcrypt.BCrypt
 import java.time.LocalDate
 import java.time.format.TextStyle
@@ -143,10 +141,6 @@ fun Application.configureRouting(userService: UserService) {
 
                 val today = LocalDate.now()
                 val todayDate = today.toString()
-                val todayDayName = today.dayOfWeek.getDisplayName(
-                    TextStyle.FULL,
-                    Locale.ENGLISH
-                )
                 val todayTraining = "Rest"
 
                 call.respondTemplate(
@@ -179,12 +173,55 @@ fun Application.configureRouting(userService: UserService) {
                 )
             }
 
+            // Step 1: activity type selection page
             get("/log") {
-                val selectedType = call.request.queryParameters["type"] ?: ""
                 val activityDate = call.request.queryParameters["date"] ?: LocalDate.now().toString()
 
                 call.respondTemplate(
                     "log",
+                    mapOf(
+                        "error" to "",
+                        "activityDate" to activityDate
+                    )
+                )
+            }
+
+            // Step 2: redirect by chosen activity type
+            get("/log/redirect") {
+                val activityType = call.request.queryParameters["activityType"]?.trim().orEmpty()
+                val activityDate = call.request.queryParameters["activityDate"] ?: LocalDate.now().toString()
+
+                if (activityType.isBlank()) {
+                    call.respondTemplate(
+                        "log",
+                        mapOf(
+                            "error" to "Please select an activity type.",
+                            "activityDate" to activityDate
+                        )
+                    )
+                    return@get
+                }
+
+                when (activityType) {
+                    "Gym" -> call.respondRedirect("/weightlifting/log")
+                    "Running", "Cycling", "Swimming" ->
+                        call.respondRedirect("/log/details?type=$activityType&date=$activityDate")
+                    else -> call.respondRedirect("/log")
+                }
+            }
+
+            // Step 3: generic details page for non-gym activities
+            get("/log/details") {
+                val selectedType = call.request.queryParameters["type"]?.trim().orEmpty()
+                val activityDate = call.request.queryParameters["date"] ?: LocalDate.now().toString()
+
+                if (selectedType.isBlank()) {
+                    call.respondRedirect("/log")
+                    return@get
+                }
+
+                call.respondTemplate(
+                    "log-details",
                     mapOf(
                         "error" to "",
                         "selectedType" to selectedType,
@@ -196,8 +233,7 @@ fun Application.configureRouting(userService: UserService) {
                 )
             }
 
-            post("/log") {
-                val session = call.principal<UserSession>()!!
+            post("/log/details") {
                 val params = call.receiveParameters()
                 val type = params["type"]?.trim().orEmpty()
                 val activityDate = params["activityDate"]?.trim().orEmpty()
@@ -207,7 +243,7 @@ fun Application.configureRouting(userService: UserService) {
 
                 if (type.isBlank() || activityDate.isBlank() || duration.isBlank()) {
                     call.respondTemplate(
-                        "log",
+                        "log-details",
                         mapOf(
                             "error" to "Please complete the required fields.",
                             "selectedType" to type,
@@ -255,11 +291,11 @@ fun Application.configureRouting(userService: UserService) {
                 val todayDate = LocalDate.now().toString()
 
                 when (type.lowercase()) {
-                    "running" -> call.respondRedirect("/log?type=Running&date=$todayDate")
-                    "cycling" -> call.respondRedirect("/log?type=Cycling&date=$todayDate")
-                    "gym" -> call.respondRedirect("/log?type=Gym&date=$todayDate")
-                    "swimming" -> call.respondRedirect("/log?type=Swimming&date=$todayDate")
-                    else -> call.respondRedirect("/log?date=$todayDate")
+                    "gym" -> call.respondRedirect("/weightlifting/log")
+                    "running" -> call.respondRedirect("/log/details?type=Running&date=$todayDate")
+                    "cycling" -> call.respondRedirect("/log/details?type=Cycling&date=$todayDate")
+                    "swimming" -> call.respondRedirect("/log/details?type=Swimming&date=$todayDate")
+                    else -> call.respondRedirect("/log")
                 }
             }
 

@@ -1,0 +1,46 @@
+{% extends "base" %}
+
+{% block title %}Add New Exercise{% endblock %}
+
+{% block content %}
+<h2>Add New Weightlifting Exercise</h2>
+
+<div class="card">
+    {% if error %}
+        <p style="color: red; margin-bottom: 16px;">{{ error }}</p>
+    {% endif %}
+
+    <form method="post" action="/weightlifting/exercises/new">
+        <label for="name">Exercise Name</label>
+        <input
+            id="name"
+            name="name"
+            type="text"
+            value="{{ name }}"
+            placeholder="e.g. Leg Press"
+            required
+        >
+
+        <label for="category">Category</label>
+        <input
+            id="category"
+            name="category"
+            type="text"
+            value="{{ category }}"
+            placeholder="e.g. Legs"
+        >
+
+        <label for="measurementType">Measurement Type</label>
+        <select id="measurementType" name="measurementType">
+            <option value="reps" {% if measurementType == "reps" %}selected{% endif %}>Reps</option>
+            <option value="time" {% if measurementType == "time" %}selected{% endif %}>Time</option>
+        </select>
+
+        <button type="submit">Save Exercise</button>
+    </form>
+
+    <div style="margin-top: 12px;">
+        <a class="button" href="/weightlifting/log">Back to Weightlifting Log</a>
+    </div>
+</div>
+{% endblock %}

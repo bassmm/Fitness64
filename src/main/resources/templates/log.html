@@ -13,15 +13,15 @@
         </p>
     {% endif %}
 
-    <form method="post" action="/log">
+    <form method="get" action="/log/redirect">
 
-        <label for="type">Activity Type</label>
-        <select id="type" name="type" required>
+        <label for="activityType">Activity Type</label>
+        <select id="activityType" name="activityType" required>
             <option value="">Select an activity</option>
-            <option value="Running" {% if selectedType == "Running" %}selected{% endif %}>Running</option>
-            <option value="Cycling" {% if selectedType == "Cycling" %}selected{% endif %}>Cycling</option>
-            <option value="Gym" {% if selectedType == "Gym" %}selected{% endif %}>Gym</option>
-            <option value="Swimming" {% if selectedType == "Swimming" %}selected{% endif %}>Swimming</option>
+            <option value="Running">Running</option>
+            <option value="Cycling">Cycling</option>
+            <option value="Gym">Gym</option>
+            <option value="Swimming">Swimming</option>
         </select>
 
         <label for="activityDate">Date</label>
@@ -33,35 +33,7 @@
             required
         >
 
-        <label for="distance">Distance</label>
-        <input
-            id="distance"
-            name="distance"
-            type="text"
-            placeholder="e.g. 5 km"
-            value="{{ distance }}"
-        >
-
-        <label for="duration">Duration</label>
-        <input
-            id="duration"
-            name="duration"
-            type="text"
-            placeholder="e.g. 30 min"
-            value="{{ duration }}"
-            required
-        >
-
-        <label for="notes">Notes</label>
-        <input
-            id="notes"
-            name="notes"
-            type="text"
-            placeholder="Optional notes"
-            value="{{ notes }}"
-        >
-
-        <button type="submit">Save Activity</button>
+        <button type="submit">Continue</button>
 
     </form>
 </div>
