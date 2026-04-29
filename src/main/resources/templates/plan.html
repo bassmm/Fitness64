@@ -4,20 +4,58 @@
 
 {% block content %}
 <h2>Weekly Training Plan</h2>
-<p style="margin-top: -8px; color: #555;">Your planned sessions for this real calendar week.</p>
 
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+<p style="margin-top: -8px; color: #555;">
+    Your planned sessions for this real calendar week.
+</p>
 
-    {% for item in weeklyPlan %}
-        <div class="card">
-            <h3>{{ item.day }}</h3>
-            <p><strong>Date:</strong> {{ item.date }}</p>
-            <p><strong>Planned session:</strong> {{ item.session }}</p>
-            <a class="button" href="/plan/replace?day={{ item.day }}">Replace Session</a>
-        </div>
-    {% endfor %}
+<div class="card" style="margin-bottom: 20px;">
+    <h3>Personal Weekly Plan</h3>
+    <p>
+        Generate a weekly plan based on your registered fitness level:
+        <strong>{{ fitnessLevel }}</strong>.
+    </p>
 
+    <form method="post" action="/plan/generate">
+        <button class="button" type="submit">
+            Generate My Weekly Plan
+        </button>
+    </form>
 </div>
+
+{% if weeklyPlan is empty %}
+    <div class="card">
+        <p>No weekly plan has been generated yet.</p>
+        <p>
+            Click <strong>Generate My Weekly Plan</strong> to create a plan based on your fitness level.
+        </p>
+    </div>
+{% else %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+
+        {% for item in weeklyPlan %}
+            <div class="card">
+                <h3>{{ item.day }}</h3>
+
+                <p><strong>Date:</strong> {{ item.date }}</p>
+                <p><strong>Planned session:</strong> {{ item.session }}</p>
+                <p><strong>Duration:</strong> {{ item.durationMinutes }} minutes</p>
+                <p><strong>Intensity:</strong> {{ item.intensity }}</p>
+
+                {% if item.isRestDay %}
+                    <p><strong>Status:</strong> Rest day</p>
+                {% else %}
+                    <p><strong>Status:</strong> Planned activity</p>
+                {% endif %}
+
+                <a class="button" href="/plan/replace?day={{ item.day }}">
+                    Replace Session
+                </a>
+            </div>
+        {% endfor %}
+
+    </div>
+{% endif %}
 
 <div style="margin-top: 20px;">
     <a class="button" href="/home">Back to Home</a>

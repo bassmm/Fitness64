@@ -5,12 +5,15 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.v1.core.*
 import org.jetbrains.exposed.v1.jdbc.Database
-import org.jetbrains.exposed.v1.jdbc.SchemaUtils
+import org.jetbrains.exposed.v1.jdbc.SchemaUtilsq
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.update
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import java.time.LocalDate
+import java.time.LocalDateTime
 
 @Serializable
 data class ActivityType(
@@ -83,6 +86,15 @@ data class WeightliftingHistoryItem(
     val notes: String? = null
 )
 
+@Serializable
+data class PlanSessionView(
+    val day: String,
+    val session: String,
+    val durationMinutes: Int,
+    val intensity: String,
+    val isRestDay: Boolean
+)
+
 class ActivityService(database: Database) {
 
     object ActivityTypes : Table("activity_types") {
@@ -151,9 +163,41 @@ class ActivityService(database: Database) {
         override val primaryKey = PrimaryKey(id)
     }
 
+    object TrainingPlans : Table("training_plans") {
+        val id = integer("plan_id").autoIncrement()
+        val userId = integer("user_id")
+        val planType = varchar("plan_type", 50)
+        val weekStartDate = varchar("week_start_date", 30)
+        val createdAt = varchar("created_at", 40)
+
+        override val primaryKey = PrimaryKey(id)
+    }
+
+    object PlanSessions : Table("plan_sessions") {
+        val id = integer("session_id").autoIncrement()
+        val planId = integer("plan_id").references(TrainingPlans.id)
+        val day = varchar("day", 20)
+        val sessionName = varchar("session_name", 255)
+        val durationMinutes = integer("duration_minutes")
+        val intensity = varchar("intensity", 50)
+        val isRestDay = bool("is_rest_day")
+        val displayOrder = integer("display_order")
+
+        override val primaryKey = PrimaryKey(id)
+    }
+
     init {
         transaction(database) {
-            SchemaUtils.create(ActivityTypes, Exercises, WorkoutLogs, WorkoutExercises, WorkoutLaps, Trackpoints)
+            SchemaUtils.create(
+                ActivityTypes,
+                Exercises,
+                WorkoutLogs,
+                WorkoutExercises,
+                WorkoutLaps,
+                Trackpoints,
+                TrainingPlans,
+                PlanSessions
+            )
         }
     }
 
@@ -314,6 +358,132 @@ class ActivityService(database: Database) {
                     heartRate = it[Trackpoints.heartRate]
                 )
             }
+    }
+
+    suspend fun generatePlanForLevel(userIdValue: Int, fitnessLevel: String): Int = dbQuery {
+        val existingPlanIds = TrainingPlans.selectAll()
+            .where { TrainingPlans.userId eq userIdValue }
+            .map { it[TrainingPlans.id] }
+
+        if (existingPlanIds.isNotEmpty()) {
+            PlanSessions.deleteWhere { PlanSessions.planId inList existingPlanIds }
+        }
+
+        TrainingPlans.deleteWhere { TrainingPlans.userId eq userIdValue }
+
+        val today = LocalDate.now()
+        val startOfWeek = today.minusDays(today.dayOfWeek.value.toLong() - 1)
+
+        val normalizedLevel = fitnessLevel.lowercase()
+
+        val planId = TrainingPlans.insert {
+            it[userId] = userIdValue
+            it[planType] = normalizedLevel
+            it[weekStartDate] = startOfWeek.toString()
+            it[createdAt] = LocalDateTime.now().toString()
+        }[TrainingPlans.id]
+
+        val sessions = when (normalizedLevel) {
+            "intermediate" -> listOf(
+                PlanSessionView("Monday", "30-minute steady run", 30, "Moderate", false),
+                PlanSessionView("Tuesday", "Full-body strength training", 45, "Moderate", false),
+                PlanSessionView("Wednesday", "Rest or mobility", 15, "Low", true),
+                PlanSessionView("Thursday", "40-minute cycling or cardio", 40, "Moderate", false),
+                PlanSessionView("Friday", "Core and upper body workout", 35, "Moderate", false),
+                PlanSessionView("Saturday", "45-minute moderate run", 45, "Moderate", false),
+                PlanSessionView("Sunday", "Rest day", 0, "Rest", true)
+            )
+
+            "advanced" -> listOf(
+                PlanSessionView("Monday", "Recovery run", 40, "Low", false),
+                PlanSessionView("Tuesday", "Interval training - 6 x 800m", 60, "High", false),
+                PlanSessionView("Wednesday", "Strength training and mobility", 50, "Moderate", false),
+                PlanSessionView("Thursday", "Tempo run", 50, "High", false),
+                PlanSessionView("Friday", "Rest or easy cross-training", 30, "Low", true),
+                PlanSessionView("Saturday", "Long run - marathon preparation", 90, "High", false),
+                PlanSessionView("Sunday", "Recovery walk and stretching", 30, "Low", false)
+            )
+
+            else -> listOf(
+                PlanSessionView("Monday", "20-minute easy walk", 20, "Low", false),
+                PlanSessionView("Tuesday", "Rest day", 0, "Rest", true),
+                PlanSessionView("Wednesday", "15-minute beginner home workout", 15, "Low", false),
+                PlanSessionView("Thursday", "20-minute light cycling or walking", 20, "Low", false),
+                PlanSessionView("Friday", "Rest day", 0, "Rest", true),
+                PlanSessionView("Saturday", "10-minute stretching and mobility", 10, "Very low", false),
+                PlanSessionView("Sunday", "Rest day", 0, "Rest", true)
+            )
+        }
+
+        sessions.forEachIndexed { index, session ->
+            PlanSessions.insert {
+                it[PlanSessions.planId] = planId
+                it[day] = session.day
+                it[sessionName] = session.session
+                it[durationMinutes] = session.durationMinutes
+                it[intensity] = session.intensity
+                it[isRestDay] = session.isRestDay
+                it[displayOrder] = index
+            }
+        }
+
+        planId
+    }
+
+    suspend fun getPlanForUser(userIdValue: Int): List<PlanSessionView> = dbQuery {
+        (TrainingPlans innerJoin PlanSessions)
+            .selectAll()
+            .where { TrainingPlans.userId eq userIdValue }
+            .orderBy(PlanSessions.displayOrder to SortOrder.ASC)
+            .map {
+                PlanSessionView(
+                    day = it[PlanSessions.day],
+                    session = it[PlanSessions.sessionName],
+                    durationMinutes = it[PlanSessions.durationMinutes],
+                    intensity = it[PlanSessions.intensity],
+                    isRestDay = it[PlanSessions.isRestDay]
+                )
+            }
+    }
+
+    suspend fun getPlanSessionByDay(userIdValue: Int, dayValue: String): PlanSessionView? = dbQuery {
+        (TrainingPlans innerJoin PlanSessions)
+            .selectAll()
+            .where {
+                (TrainingPlans.userId eq userIdValue) and
+                        (PlanSessions.day eq dayValue)
+            }
+            .map {
+                PlanSessionView(
+                    day = it[PlanSessions.day],
+                    session = it[PlanSessions.sessionName],
+                    durationMinutes = it[PlanSessions.durationMinutes],
+                    intensity = it[PlanSessions.intensity],
+                    isRestDay = it[PlanSessions.isRestDay]
+                )
+            }
+            .singleOrNull()
+    }
+
+    suspend fun updatePlanSession(userIdValue: Int, dayValue: String, newSession: String) = dbQuery {
+        val planId = TrainingPlans.selectAll()
+            .where { TrainingPlans.userId eq userIdValue }
+            .map { it[TrainingPlans.id] }
+            .singleOrNull()
+
+        if (planId != null) {
+            PlanSessions.update(
+                where = {
+                    (PlanSessions.planId eq planId) and
+                            (PlanSessions.day eq dayValue)
+                }
+            ) {
+                it[sessionName] = newSession
+                it[durationMinutes] = 20
+                it[intensity] = "Low"
+                it[isRestDay] = newSession.lowercase().contains("rest")
+            }
+        }
     }
 
     private suspend fun <T> dbQuery(block: suspend () -> T): T =

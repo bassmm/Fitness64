@@ -1,5 +1,6 @@
 package com.fitness64
 
+import com.fitness64.activities.ActivityService
 import com.fitness64.users.UserService
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -13,10 +14,12 @@ import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.*
 
-fun Application.configureRouting(userService: UserService) {
+fun Application.configureRouting(
+    userService: UserService,
+    activityService: ActivityService
+) {
     routing {
 
-        // Public routes
         get("/") {
             call.respondRedirect("/login")
         }
@@ -128,8 +131,8 @@ fun Application.configureRouting(userService: UserService) {
             }
         }
 
-        // Protected routes
         authenticate("auth-session") {
+
             get("/logout") {
                 call.sessions.clear<UserSession>()
                 call.respondRedirect("/login")
@@ -173,7 +176,6 @@ fun Application.configureRouting(userService: UserService) {
                 )
             }
 
-            // Step 1: activity type selection page
             get("/log") {
                 val activityDate = call.request.queryParameters["date"] ?: LocalDate.now().toString()
 
@@ -186,7 +188,6 @@ fun Application.configureRouting(userService: UserService) {
                 )
             }
 
-            // Step 2: redirect by chosen activity type
             get("/log/redirect") {
                 val activityType = call.request.queryParameters["activityType"]?.trim().orEmpty()
                 val activityDate = call.request.queryParameters["activityDate"] ?: LocalDate.now().toString()
@@ -210,7 +211,6 @@ fun Application.configureRouting(userService: UserService) {
                 }
             }
 
-            // Step 3: generic details page for non-gym activities
             get("/log/details") {
                 val selectedType = call.request.queryParameters["type"]?.trim().orEmpty()
                 val activityDate = call.request.queryParameters["date"] ?: LocalDate.now().toString()
@@ -300,26 +300,70 @@ fun Application.configureRouting(userService: UserService) {
             }
 
             get("/plan") {
+                val session = call.principal<UserSession>()!!
+                val user = userService.findByEmail(session.email)
+                    ?: return@get call.respondRedirect("/login")
+
+                val userId = user.id
+                    ?: return@get call.respondRedirect("/login")
+
                 val startOfWeek = getStartOfWeek(LocalDate.now())
-                val weeklyPlan = weeklyPlanData.entries.mapIndexed { index, entry ->
+                val planFromDatabase = activityService.getPlanForUser(userId)
+
+                val weeklyPlan = planFromDatabase.mapIndexed { index, entry ->
                     val date = startOfWeek.plusDays(index.toLong())
                     mapOf(
-                        "day" to entry.key,
+                        "day" to entry.day,
                         "date" to date.toString(),
-                        "session" to entry.value
+                        "session" to entry.session,
+                        "durationMinutes" to entry.durationMinutes,
+                        "intensity" to entry.intensity,
+                        "isRestDay" to entry.isRestDay
                     )
                 }
 
                 call.respondTemplate(
                     "plan",
-                    mapOf("weeklyPlan" to weeklyPlan)
+                    mapOf(
+                        "weeklyPlan" to weeklyPlan,
+                        "fitnessLevel" to (user.fitnessLevel ?: "Beginner")
+                    )
                 )
             }
 
+            post("/plan/generate") {
+                val session = call.principal<UserSession>()!!
+                val user = userService.findByEmail(session.email)
+                    ?: return@post call.respondRedirect("/login")
+
+                val userId = user.id
+                    ?: return@post call.respondRedirect("/login")
+
+                val fitnessLevel = user.fitnessLevel ?: "Beginner"
+
+                activityService.generatePlanForLevel(userId, fitnessLevel)
+
+                call.respondRedirect("/plan")
+            }
+
             get("/plan/replace") {
+                val session = call.principal<UserSession>()!!
+                val user = userService.findByEmail(session.email)
+                    ?: return@get call.respondRedirect("/login")
+
+                val userId = user.id
+                    ?: return@get call.respondRedirect("/login")
+
                 val day = call.request.queryParameters["day"]?.trim().orEmpty()
 
-                if (day.isBlank() || !weeklyPlanData.containsKey(day)) {
+                if (day.isBlank()) {
+                    call.respondRedirect("/plan")
+                    return@get
+                }
+
+                val currentSession = activityService.getPlanSessionByDay(userId, day)
+
+                if (currentSession == null) {
                     call.respondRedirect("/plan")
                     return@get
                 }
@@ -329,45 +373,65 @@ fun Application.configureRouting(userService: UserService) {
                     mapOf(
                         "error" to "",
                         "day" to day,
-                        "currentSession" to weeklyPlanData[day].orEmpty()
+                        "currentSession" to currentSession.session
                     )
                 )
             }
 
             post("/plan/replace") {
+                val session = call.principal<UserSession>()!!
+                val user = userService.findByEmail(session.email)
+                    ?: return@post call.respondRedirect("/login")
+
+                val userId = user.id
+                    ?: return@post call.respondRedirect("/login")
+
                 val params = call.receiveParameters()
                 val day = params["day"]?.trim().orEmpty()
                 val newSession = params["newSession"]?.trim().orEmpty()
 
-                if (day.isBlank() || !weeklyPlanData.containsKey(day)) {
+                if (day.isBlank()) {
                     call.respondRedirect("/plan")
                     return@post
                 }
 
                 if (newSession.isBlank()) {
+                    val currentSession = activityService.getPlanSessionByDay(userId, day)
+
                     call.respondTemplate(
                         "replace-session",
                         mapOf(
                             "error" to "Please select a replacement session.",
                             "day" to day,
-                            "currentSession" to weeklyPlanData[day].orEmpty()
+                            "currentSession" to (currentSession?.session ?: "")
                         )
                     )
                     return@post
                 }
 
-                weeklyPlanData[day] = newSession
-                call.respondRedirect("/calendar")
+                activityService.updatePlanSession(userId, day, newSession)
+
+                call.respondRedirect("/plan")
             }
 
             get("/calendar") {
+                val session = call.principal<UserSession>()!!
+                val user = userService.findByEmail(session.email)
+                    ?: return@get call.respondRedirect("/login")
+
+                val userId = user.id
+                    ?: return@get call.respondRedirect("/login")
+
                 val today = LocalDate.now()
                 val startOfWeek = getStartOfWeek(today)
+                val planFromDatabase = activityService.getPlanForUser(userId)
+
+                val planByDay = planFromDatabase.associateBy { it.day }
 
                 val calendarItems = (0..6).map { index ->
                     val date = startOfWeek.plusDays(index.toLong())
                     val dayName = date.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.ENGLISH)
-                    val plannedSession = weeklyPlanData[dayName].orEmpty()
+                    val plannedSession = planByDay[dayName]?.session ?: ""
                     val loggedForDate = loggedActivities.filter { it.date == date.toString() }
 
                     mapOf(
@@ -425,7 +489,6 @@ fun Application.configureRouting(userService: UserService) {
     }
 }
 
-// Demo data structures and helpers for UI development
 data class LoggedActivity(
     val date: String,
     val type: String,
@@ -435,16 +498,6 @@ data class LoggedActivity(
 )
 
 val loggedActivities = mutableListOf<LoggedActivity>()
-
-val weeklyPlanData = mutableMapOf(
-    "Monday" to "Upper Body Strength",
-    "Tuesday" to "Cardio & Core",
-    "Wednesday" to "Lower Body Strength",
-    "Thursday" to "Rest",
-    "Friday" to "Full Body",
-    "Saturday" to "Long Run",
-    "Sunday" to "Yoga & Recovery"
-)
 
 fun getStartOfWeek(date: LocalDate): LocalDate {
     return date.minusDays(date.dayOfWeek.value.toLong() - 1)
