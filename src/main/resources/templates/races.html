@@ -1,0 +1,65 @@
+{% extends "base" %}
+
+{% block title %}Race History{% endblock %}
+
+{% block content %}
+<h2>Race History</h2>
+<p style="margin-top: -8px; color: #555;">All your logged race results in one place.</p>
+
+<div style="margin-bottom: 20px;">
+    <a class="button" href="/races/log">Log a New Race</a>
+</div>
+
+{% if races is empty %}
+    <div class="card">
+        <p style="color: #888;">You haven't logged any races yet. Log your first race above!</p>
+    </div>
+{% else %}
+    <div style="display: grid; gap: 16px;">
+        {% for race in races %}
+            <div class="card">
+                <h3>
+                    {{ race.eventName }}
+                    {% if race.isPersonalBest %}
+                        <span style="color: #00b894; font-size: 14px;">⭐ Personal Best</span>
+                    {% endif %}
+                </h3>
+
+                <p><strong>Date:</strong> {{ race.eventDate }}</p>
+
+                {% if race.location %}
+                    <p><strong>Location:</strong> {{ race.location }}</p>
+                {% endif %}
+
+                {% if race.category %}
+                    <p><strong>Category:</strong> {{ race.category }}</p>
+                {% endif %}
+
+                {% if race.finishTime %}
+                    <p><strong>Finish Time:</strong> {{ race.finishTime }}</p>
+                {% endif %}
+
+                {% if race.overallRank %}
+                    <p><strong>Overall Rank:</strong> {{ race.overallRank }}</p>
+                {% endif %}
+
+                {% if race.categoryRank %}
+                    <p><strong>Category Rank:</strong> {{ race.categoryRank }}</p>
+                {% endif %}
+
+                {% if race.certificateUrl %}
+                    <p>
+                        <a href="{{ race.certificateUrl }}" target="_blank" class="button">
+                            View Certificate
+                        </a>
+                    </p>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<div style="margin-top: 20px;">
+    <a class="button" href="/home">Back to Home</a>
+</div>
+{% endblock %}
