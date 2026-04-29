@@ -1,48 +1,109 @@
-{% extends "base" %}
+{% extends "base" %} {% block title %}Home{% endblock %} {% block page_heading
+%}Dashboard{% endblock %} {% block content %}
+<section class="hero-card card shadow-soft mb-6">
+  <div class="card-body p-5 p-lg-6 position-relative z-1">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-8">
+        <p class="text-uppercase fw-bold text-primary ls-tight mb-3">
+          Welcome back
+        </p>
+        <h2 class="display-6 fw-bolder text-heading mb-3">
+          {{ user }}, ready for today?
+        </h2>
+        <p class="lead text-muted mb-5">
+          Your plan for {{ todayDate }} is
+          <strong class="text-heading">{{ today }}</strong>. Keep the streak
+          alive with one focused session.
+        </p>
+        <div class="d-flex flex-wrap gap-3">
+          <a class="btn btn-primary" href="/log"
+            ><i class="bi bi-plus-circle me-2"></i>Start Activity</a
+          >
+          <a class="btn btn-neutral" href="/plan"
+            ><i class="bi bi-calendar2-week me-2"></i>View Plan</a
+          >
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="rounded-4 border bg-body p-4 shadow-sm">
+          <div class="d-flex align-items-center gap-3 mb-4">
+            <span class="stat-icon bg-primary-subtle text-primary"
+              ><i class="bi bi-activity"></i
+            ></span>
+            <div>
+              <div class="text-muted text-sm">Today</div>
+              <div class="h4 mb-0 text-heading">{{ today }}</div>
+            </div>
+          </div>
+          <div class="mini-progress mb-3">
+            <span style="width: 72%"></span>
+          </div>
+          <p class="text-sm text-muted mb-0">72% weekly momentum</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
-{% block title %}Home{% endblock %}
-
-{% block content %}
-<h2>Welcome {{ user }}</h2>
-<p style="margin-top: -8px; color: #555;">Here is your training overview for today.</p>
+<div class="row g-4 mb-6">
+  <div class="col-md-4">
+    <div class="card card-hover h-100">
+      <div class="card-body p-5">
+        <span class="stat-icon bg-primary-subtle text-primary mb-4"
+          ><i class="bi bi-fire"></i
+        ></span>
+        <p class="text-muted text-sm mb-1">Consistency</p>
+        <h3 class="h5 mb-0">{{ streak }}</h3>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card card-hover h-100">
+      <div class="card-body p-5">
+        <span class="stat-icon bg-info-subtle text-info mb-4"
+          ><i class="bi bi-bullseye"></i
+        ></span>
+        <p class="text-muted text-sm mb-1">Next Goal</p>
+        <h3 class="h5 mb-0">{{ nextGoal }}</h3>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card card-hover h-100">
+      <div class="card-body p-5">
+        <span class="stat-icon bg-warning-subtle text-warning mb-4"
+          ><i class="bi bi-trophy"></i
+        ></span>
+        <p class="text-muted text-sm mb-1">Latest Achievement</p>
+        <h3 class="h5 mb-0">{{ achievement }}</h3>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="card">
-    <h3>Today's Training</h3>
-    <p><strong>Date:</strong> {{ todayDate }}</p>
-    <p style="font-size: 18px; margin-bottom: 16px;">
-        <strong>Today's Training:</strong> {{ today }}
-    </p>
-    <a class="button" href="/log">Start Activity</a>
-</div>
-
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
-
-    <div class="card">
-        <h3>Consistency</h3>
-        <p>{{ streak }}</p>
+  <div class="card-body p-5">
+    <div
+      class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4"
+    >
+      <div>
+        <p class="page-kicker">Quick actions</p>
+        <h2 class="h4 mb-1">Move through your workflow</h2>
+        <p class="text-muted mb-0">
+          Jump straight into the screens you use most.
+        </p>
+      </div>
+      <a class="btn btn-neutral" href="/logout"
+        ><i class="bi bi-box-arrow-right me-2"></i>Logout</a
+      >
     </div>
-
-    <div class="card">
-        <h3>Next Goal</h3>
-        <p>{{ nextGoal }}</p>
+    <div class="d-flex flex-wrap gap-3">
+      <a class="btn btn-primary" href="/log">Log Workout</a>
+      <a class="btn btn-neutral" href="/plan">Weekly Plan</a>
+      <a class="btn btn-neutral" href="/calendar">Calendar</a>
+      <a class="btn btn-neutral" href="/progress">Progress</a>
+      <a class="btn btn-neutral" href="/profile">Profile</a>
     </div>
-
-    <div class="card">
-        <h3>Latest Achievement</h3>
-        <p>{{ achievement }}</p>
-    </div>
-
-</div>
-
-<div class="card" style="margin-top: 16px;">
-    <h3>Quick Actions</h3>
-    <div style="display: flex; flex-wrap: wrap; gap: 12px;">
-        <a class="button" href="/log">Quick Log Workout</a>
-        <a class="button" href="/plan">View Weekly Plan</a>
-        <a class="button" href="/calendar">View Calendar</a>
-        <a class="button" href="/progress">Check Progress</a>
-        <a class="button" href="/profile">View Profile</a>
-        <a class="button" href="/logout">Logout</a>
-    </div>
+  </div>
 </div>
 {% endblock %}

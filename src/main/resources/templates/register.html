@@ -1,64 +1,77 @@
-{% extends "base" %}
+{% extends "auth-base" %} {% block title %}Register{% endblock %} {% block
+page_heading %}Create your account{% endblock %} {% block page_summary %}Set up
+your profile and start building better training habits.{% endblock %} {% block
+content %}
+<div class="p-4">
+  {% if error %}
+  <div class="alert alert-danger d-flex align-items-center gap-2" role="alert">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <span>{{ error }}</span>
+  </div>
+  {% endif %}
 
-{% block title %}Register{% endblock %}
+  <form method="post" action="/register" class="vstack gap-3">
+    <div>
+      <label class="form-label" for="name">Name</label>
+      <input
+        class="form-control"
+        id="name"
+        name="name"
+        type="text"
+        placeholder="Your name"
+        value="{{ name }}"
+        required
+      />
+    </div>
 
-{% block content %}
-<h2>Create Account</h2>
-<p style="margin-top: -8px; color: #555;">Set up your fitness account to start tracking your training.</p>
+    <div>
+      <label class="form-label" for="email">Email</label>
+      <input
+        class="form-control"
+        id="email"
+        name="email"
+        type="email"
+        placeholder="you@example.com"
+        value="{{ email }}"
+        required
+      />
+    </div>
 
-<div class="card">
+    <div>
+      <label class="form-label" for="password">Password</label>
+      <input
+        class="form-control"
+        id="password"
+        name="password"
+        type="password"
+        placeholder="Create a secure password"
+        required
+      />
+    </div>
 
-    {% if error %}
-        <p style="color: red; margin-bottom: 16px;">
-            {{ error }}
-        </p>
-    {% endif %}
+    <div>
+      <label class="form-label" for="fitnessLevel">Fitness Level</label>
+      <select
+        class="form-select"
+        id="fitnessLevel"
+        name="fitnessLevel"
+        required
+      >
+        <option value="">Select your level</option>
+        <option value="Beginner">Beginner</option>
+        <option value="Intermediate">Intermediate</option>
+        <option value="Advanced">Advanced</option>
+      </select>
+    </div>
 
-    <form method="post" action="/register">
+    <button class="btn btn-primary w-100" type="submit">Create Account</button>
+  </form>
 
-        <label for="name">Name</label>
-        <input
-            id="name"
-            name="name"
-            type="text"
-            placeholder="Enter your name"
-            value="{{ name }}"
-            required
-        >
-
-        <label for="email">Email</label>
-        <input
-            id="email"
-            name="email"
-            type="email"
-            placeholder="Enter your email"
-            value="{{ email }}"
-            required
-        >
-
-        <label for="password">Password</label>
-        <input
-            id="password"
-            name="password"
-            type="password"
-            placeholder="Create a password"
-            required
-        >
-
-        <label for="fitnessLevel">Fitness Level</label>
-        <select id="fitnessLevel" name="fitnessLevel" required>
-            <option value="">Select your level</option>
-            <option value="Beginner">Beginner</option>
-            <option value="Intermediate">Intermediate</option>
-            <option value="Advanced">Advanced</option>
-        </select>
-
-        <button type="submit">Create Account</button>
-
-    </form>
-</div>
-
-<div style="margin-top: 20px;">
-    <a class="button" href="/login">Back to Login</a>
+  <p class="text-center text-muted mt-4 mb-0">
+    Already have an account?
+    <a class="fw-semibold text-primary text-decoration-none" href="/login"
+      >Back to login</a
+    >
+  </p>
 </div>
 {% endblock %}

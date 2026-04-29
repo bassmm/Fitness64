@@ -1,50 +1,57 @@
 {% extends "base" %}
 
 {% block title %}Weightlifting History{% endblock %}
+{% block page_heading %}Lifting History{% endblock %}
 
 {% block content %}
-<h2>Weightlifting History</h2>
-
-<div class="card">
-    <a class="button" href="/weightlifting/log">Log Another Weightlifting Activity</a>
+<div class="d-flex flex-column flex-lg-row align-items-lg-end justify-content-between gap-3 mb-5">
+    <div>
+        <p class="page-kicker">Strength records</p>
+        <h2 class="h3 mb-2">Weightlifting History</h2>
+        <p class="page-summary mb-0">Review logged strength sessions and spot progression over time.</p>
+    </div>
+    <a class="btn btn-primary" href="/weightlifting/log"><i class="bi bi-plus-circle me-2"></i>Log Lifting Activity</a>
 </div>
 
-<div class="card" style="margin-top: 16px;">
-    {% if history.size > 0 %}
-        <table style="width: 100%; border-collapse: collapse;">
-            <thead>
-                <tr>
-                    <th style="text-align: left; padding: 10px; border-bottom: 1px solid #ddd;">Date</th>
-                    <th style="text-align: left; padding: 10px; border-bottom: 1px solid #ddd;">Exercise</th>
-                    <th style="text-align: left; padding: 10px; border-bottom: 1px solid #ddd;">Sets</th>
-                    <th style="text-align: left; padding: 10px; border-bottom: 1px solid #ddd;">Reps</th>
-                    <th style="text-align: left; padding: 10px; border-bottom: 1px solid #ddd;">Weight (kg)</th>
-                    <th style="text-align: left; padding: 10px; border-bottom: 1px solid #ddd;">Duration</th>
-                    <th style="text-align: left; padding: 10px; border-bottom: 1px solid #ddd;">Notes</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in history %}
-                    <tr>
-                        <td style="padding: 10px; border-bottom: 1px solid #eee;">{{ item.logDate }}</td>
-                        <td style="padding: 10px; border-bottom: 1px solid #eee;">{{ item.exerciseName }}</td>
-                        <td style="padding: 10px; border-bottom: 1px solid #eee;">{{ item.sets }}</td>
-                        <td style="padding: 10px; border-bottom: 1px solid #eee;">{{ item.reps }}</td>
-                        <td style="padding: 10px; border-bottom: 1px solid #eee;">{{ item.weight }}</td>
-                        <td style="padding: 10px; border-bottom: 1px solid #eee;">{{ item.duration }} min</td>
-                        <td style="padding: 10px; border-bottom: 1px solid #eee;">
-                            {% if item.notes %}
-                                {{ item.notes }}
-                            {% else %}
-                                -
-                            {% endif %}
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p>No weightlifting records yet.</p>
-    {% endif %}
+<div class="card shadow-soft">
+    <div class="card-body p-0">
+        {% if history.size > 0 %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="bg-body-secondary">
+                        <tr>
+                            <th class="ps-5">Date</th>
+                            <th>Exercise</th>
+                            <th>Sets</th>
+                            <th>Reps</th>
+                            <th>Weight</th>
+                            <th>Duration</th>
+                            <th class="pe-5">Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in history %}
+                            <tr>
+                                <td class="ps-5 fw-semibold">{{ item.logDate }}</td>
+                                <td>{{ item.exerciseName }}</td>
+                                <td>{{ item.sets }}</td>
+                                <td>{{ item.reps }}</td>
+                                <td>{{ item.weight }} kg</td>
+                                <td>{{ item.duration }} min</td>
+                                <td class="pe-5">{% if item.notes %}{{ item.notes }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state m-5">
+                <span class="stat-icon bg-primary-subtle text-primary mb-4"><i class="bi bi-bar-chart"></i></span>
+                <h3 class="h5">No weightlifting records yet</h3>
+                <p class="text-muted">Log your first lifting session to start building a history.</p>
+                <a class="btn btn-primary" href="/weightlifting/log">Log now</a>
+            </div>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}
