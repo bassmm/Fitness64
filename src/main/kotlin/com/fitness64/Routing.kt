@@ -130,6 +130,7 @@ fun Application.configureRouting(userService: UserService) {
 
         // Protected routes
         authenticate("auth-session") {
+
             get("/logout") {
                 call.sessions.clear<UserSession>()
                 call.respondRedirect("/login")
@@ -173,7 +174,6 @@ fun Application.configureRouting(userService: UserService) {
                 )
             }
 
-            // Step 1: activity type selection page
             get("/log") {
                 val activityDate = call.request.queryParameters["date"] ?: LocalDate.now().toString()
 
@@ -186,7 +186,6 @@ fun Application.configureRouting(userService: UserService) {
                 )
             }
 
-            // Step 2: redirect by chosen activity type
             get("/log/redirect") {
                 val activityType = call.request.queryParameters["activityType"]?.trim().orEmpty()
                 val activityDate = call.request.queryParameters["activityDate"] ?: LocalDate.now().toString()
@@ -210,7 +209,6 @@ fun Application.configureRouting(userService: UserService) {
                 }
             }
 
-            // Step 3: generic details page for non-gym activities
             get("/log/details") {
                 val selectedType = call.request.queryParameters["type"]?.trim().orEmpty()
                 val activityDate = call.request.queryParameters["date"] ?: LocalDate.now().toString()
@@ -420,6 +418,75 @@ fun Application.configureRouting(userService: UserService) {
                         "user" to mapOf("name" to "John")
                     )
                 )
+            }
+
+            // --- Race routes ---
+
+            get("/races") {
+                val session = call.principal<UserSession>()!!
+                val user = userService.findByEmail(session.email)
+
+                if (user == null) {
+                    call.respondRedirect("/login")
+                    return@get
+                }
+
+                call.respondTemplate(
+                    "races",
+                    mapOf("races" to emptyList<Any>())
+                )
+            }
+
+            get("/races/log") {
+                call.respondTemplate(
+                    "race-log",
+                    mapOf(
+                        "error" to "",
+                        "eventName" to "",
+                        "eventDate" to "",
+                        "location" to "",
+                        "category" to "",
+                        "finishTime" to "",
+                        "overallRank" to "",
+                        "categoryRank" to "",
+                        "certificateUrl" to "",
+                        "isPersonalBest" to false
+                    )
+                )
+            }
+
+            post("/races/log") {
+                val params = call.receiveParameters()
+                val eventName = params["eventName"]?.trim().orEmpty()
+                val eventDate = params["eventDate"]?.trim().orEmpty()
+                val location = params["location"]?.trim().orEmpty()
+                val category = params["category"]?.trim().orEmpty()
+                val finishTime = params["finishTime"]?.trim().orEmpty()
+                val overallRank = params["overallRank"]?.trim()?.toIntOrNull()
+                val categoryRank = params["categoryRank"]?.trim()?.toIntOrNull()
+                val certificateUrl = params["certificateUrl"]?.trim().orEmpty()
+                val isPersonalBest = params["isPersonalBest"] == "true"
+
+                if (eventName.isBlank() || eventDate.isBlank()) {
+                    call.respondTemplate(
+                        "race-log",
+                        mapOf(
+                            "error" to "Please enter the race name and date.",
+                            "eventName" to eventName,
+                            "eventDate" to eventDate,
+                            "location" to location,
+                            "category" to category,
+                            "finishTime" to finishTime,
+                            "overallRank" to (overallRank ?: ""),
+                            "categoryRank" to (categoryRank ?: ""),
+                            "certificateUrl" to certificateUrl,
+                            "isPersonalBest" to isPersonalBest
+                        )
+                    )
+                    return@post
+                }
+
+                call.respondRedirect("/races")
             }
         }
     }
