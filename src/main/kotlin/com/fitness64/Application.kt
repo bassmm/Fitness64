@@ -10,12 +10,10 @@ fun main(args: Array<String>) {
 }
 
 fun Application.module() {
-    // Service Init
     val database = configureDatabases()
     val userService = UserService(database)
     val activityService = ActivityService(database)
 
-    // Seed default activity type and exercises for weightlifting
     runBlocking {
         val weightliftingTypeId = activityService.getActivityTypeByName("Weightlifting")
             ?: activityService.createActivityType(ActivityType("Weightlifting"))
@@ -30,7 +28,6 @@ fun Application.module() {
                 )
             )
         }
-
         if (activityService.getExerciseByName("Squat") == null) {
             activityService.createExercise(
                 Exercise(
@@ -41,7 +38,6 @@ fun Application.module() {
                 )
             )
         }
-
         if (activityService.getExerciseByName("Deadlift") == null) {
             activityService.createExercise(
                 Exercise(
@@ -52,7 +48,6 @@ fun Application.module() {
                 )
             )
         }
-
         if (activityService.getExerciseByName("Shoulder Press") == null) {
             activityService.createExercise(
                 Exercise(
@@ -65,12 +60,10 @@ fun Application.module() {
         }
     }
 
-    // Setup
     configureTemplating()
     configureSerialization()
     configureSecurity(userService)
 
-    // Routing
     configureRouting(userService)
     configureUsersRoutes(userService)
     configureActivityRoutes(activityService, userService)
