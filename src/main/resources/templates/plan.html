@@ -10,25 +10,26 @@
 </p>
 
 <div class="card" style="margin-bottom: 20px;">
-    <h3>Personal Weekly Plan</h3>
-    <p>
-        Generate a weekly plan based on your registered fitness level:
-        <strong>{{ fitnessLevel }}</strong>.
-    </p>
+    <h3>Your Current Plan</h3>
 
-    <form method="post" action="/plan/generate">
-        <button class="button" type="submit">
-            Generate My Weekly Plan
-        </button>
-    </form>
+    <p><strong>Fitness level:</strong> {{ fitnessLevel }}</p>
+    <p><strong>Plan type:</strong> {{ planType }}</p>
+
+    <a class="button" href="/onboarding">
+        Change Training Plan
+    </a>
 </div>
 
 {% if weeklyPlan is empty %}
     <div class="card">
-        <p>No weekly plan has been generated yet.</p>
+        <p>No weekly plan has been selected yet.</p>
         <p>
-            Click <strong>Generate My Weekly Plan</strong> to create a plan based on your fitness level.
+            Go to onboarding to choose a training plan.
         </p>
+
+        <a class="button" href="/onboarding">
+            Choose Training Plan
+        </a>
     </div>
 {% else %}
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">

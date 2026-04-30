@@ -360,7 +360,7 @@ class ActivityService(database: Database) {
             }
     }
 
-    suspend fun generatePlanForLevel(userIdValue: Int, fitnessLevel: String): Int = dbQuery {
+    suspend fun generatePlanForType(userIdValue: Int, planTypeValue: String): Int = dbQuery {
         val existingPlanIds = TrainingPlans.selectAll()
             .where { TrainingPlans.userId eq userIdValue }
             .map { it[TrainingPlans.id] }
@@ -374,34 +374,44 @@ class ActivityService(database: Database) {
         val today = LocalDate.now()
         val startOfWeek = today.minusDays(today.dayOfWeek.value.toLong() - 1)
 
-        val normalizedLevel = fitnessLevel.lowercase()
+        val normalizedPlanType = planTypeValue.lowercase()
 
         val planId = TrainingPlans.insert {
             it[userId] = userIdValue
-            it[planType] = normalizedLevel
+            it[planType] = normalizedPlanType
             it[weekStartDate] = startOfWeek.toString()
             it[createdAt] = LocalDateTime.now().toString()
         }[TrainingPlans.id]
 
-        val sessions = when (normalizedLevel) {
-            "intermediate" -> listOf(
+        val sessions = when (normalizedPlanType) {
+            "cardio" -> listOf(
                 PlanSessionView("Monday", "30-minute steady run", 30, "Moderate", false),
-                PlanSessionView("Tuesday", "Full-body strength training", 45, "Moderate", false),
-                PlanSessionView("Wednesday", "Rest or mobility", 15, "Low", true),
-                PlanSessionView("Thursday", "40-minute cycling or cardio", 40, "Moderate", false),
-                PlanSessionView("Friday", "Core and upper body workout", 35, "Moderate", false),
-                PlanSessionView("Saturday", "45-minute moderate run", 45, "Moderate", false),
-                PlanSessionView("Sunday", "Rest day", 0, "Rest", true)
+                PlanSessionView("Tuesday", "20-minute easy cycling", 20, "Low", false),
+                PlanSessionView("Wednesday", "Rest or stretching", 10, "Low", true),
+                PlanSessionView("Thursday", "Interval cardio session", 35, "High", false),
+                PlanSessionView("Friday", "Rest day", 0, "Rest", true),
+                PlanSessionView("Saturday", "45-minute long walk or run", 45, "Moderate", false),
+                PlanSessionView("Sunday", "Recovery mobility", 15, "Low", false)
             )
 
-            "advanced" -> listOf(
-                PlanSessionView("Monday", "Recovery run", 40, "Low", false),
-                PlanSessionView("Tuesday", "Interval training - 6 x 800m", 60, "High", false),
-                PlanSessionView("Wednesday", "Strength training and mobility", 50, "Moderate", false),
-                PlanSessionView("Thursday", "Tempo run", 50, "High", false),
-                PlanSessionView("Friday", "Rest or easy cross-training", 30, "Low", true),
-                PlanSessionView("Saturday", "Long run - marathon preparation", 90, "High", false),
-                PlanSessionView("Sunday", "Recovery walk and stretching", 30, "Low", false)
+            "weightlifting" -> listOf(
+                PlanSessionView("Monday", "Upper body strength training", 45, "Moderate", false),
+                PlanSessionView("Tuesday", "Rest or light walk", 20, "Low", true),
+                PlanSessionView("Wednesday", "Lower body strength training", 45, "Moderate", false),
+                PlanSessionView("Thursday", "Core and mobility", 25, "Low", false),
+                PlanSessionView("Friday", "Full body strength training", 50, "Moderate", false),
+                PlanSessionView("Saturday", "Rest day", 0, "Rest", true),
+                PlanSessionView("Sunday", "Stretching and recovery", 15, "Low", false)
+            )
+
+            "custom" -> listOf(
+                PlanSessionView("Monday", "Custom session", 30, "Custom", false),
+                PlanSessionView("Tuesday", "Custom session", 30, "Custom", false),
+                PlanSessionView("Wednesday", "Custom session", 30, "Custom", false),
+                PlanSessionView("Thursday", "Custom session", 30, "Custom", false),
+                PlanSessionView("Friday", "Custom session", 30, "Custom", false),
+                PlanSessionView("Saturday", "Custom session", 30, "Custom", false),
+                PlanSessionView("Sunday", "Rest or custom recovery", 0, "Custom", true)
             )
 
             else -> listOf(
@@ -428,6 +438,20 @@ class ActivityService(database: Database) {
         }
 
         planId
+    }
+
+    suspend fun hasPlanForUser(userIdValue: Int): Boolean = dbQuery {
+        TrainingPlans.selectAll()
+            .where { TrainingPlans.userId eq userIdValue }
+            .map { it[TrainingPlans.id] }
+            .isNotEmpty()
+    }
+
+    suspend fun getPlanTypeForUser(userIdValue: Int): String? = dbQuery {
+        TrainingPlans.selectAll()
+            .where { TrainingPlans.userId eq userIdValue }
+            .map { it[TrainingPlans.planType] }
+            .singleOrNull()
     }
 
     suspend fun getPlanForUser(userIdValue: Int): List<PlanSessionView> = dbQuery {

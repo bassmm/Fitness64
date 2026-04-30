@@ -64,7 +64,13 @@ fun Application.configureRouting(
             }
 
             call.sessions.set(UserSession(email = email))
-            call.respondRedirect("/home")
+
+            val userId = user.id
+            if (userId != null && !activityService.hasPlanForUser(userId)) {
+                call.respondRedirect("/onboarding")
+            } else {
+                call.respondRedirect("/home")
+            }
         }
 
         get("/register") {
@@ -138,13 +144,75 @@ fun Application.configureRouting(
                 call.respondRedirect("/login")
             }
 
+            get("/onboarding") {
+                val session = call.principal<UserSession>()!!
+                val user = userService.findByEmail(session.email)
+                    ?: return@get call.respondRedirect("/login")
+
+                val fitnessLevel = user.fitnessLevel ?: "Not set"
+
+                val recommendedPlan = when (fitnessLevel.lowercase()) {
+                    "beginner" -> "beginner"
+                    "advanced" -> "custom"
+                    else -> ""
+                }
+
+                call.respondTemplate(
+                    "onboarding",
+                    mapOf(
+                        "fitnessLevel" to fitnessLevel,
+                        "recommendedPlan" to recommendedPlan,
+                        "error" to ""
+                    )
+                )
+            }
+
+            post("/onboarding") {
+                val session = call.principal<UserSession>()!!
+                val user = userService.findByEmail(session.email)
+                    ?: return@post call.respondRedirect("/login")
+
+                val userId = user.id
+                    ?: return@post call.respondRedirect("/login")
+
+                val params = call.receiveParameters()
+                val planType = params["planType"]?.trim().orEmpty()
+
+                if (planType.isBlank()) {
+                    val fitnessLevel = user.fitnessLevel ?: "Not set"
+
+                    val recommendedPlan = when (fitnessLevel.lowercase()) {
+                        "beginner" -> "beginner"
+                        "advanced" -> "custom"
+                        else -> ""
+                    }
+
+                    call.respondTemplate(
+                        "onboarding",
+                        mapOf(
+                            "fitnessLevel" to fitnessLevel,
+                            "recommendedPlan" to recommendedPlan,
+                            "error" to "Please choose a training plan."
+                        )
+                    )
+                    return@post
+                }
+
+                activityService.generatePlanForType(userId, planType)
+                call.respondRedirect("/plan")
+            }
+
             get("/home") {
                 val session = call.principal<UserSession>()!!
                 val user = userService.findByEmail(session.email)
 
                 val today = LocalDate.now()
                 val todayDate = today.toString()
-                val todayTraining = "Rest"
+                val todayDayName = today.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.ENGLISH)
+
+                val todayTraining = user?.id?.let { userId ->
+                    activityService.getPlanSessionByDay(userId, todayDayName)?.session
+                } ?: "No training planned"
 
                 call.respondTemplate(
                     "home",
@@ -309,6 +377,7 @@ fun Application.configureRouting(
 
                 val startOfWeek = getStartOfWeek(LocalDate.now())
                 val planFromDatabase = activityService.getPlanForUser(userId)
+                val currentPlanType = activityService.getPlanTypeForUser(userId) ?: "No plan selected"
 
                 val weeklyPlan = planFromDatabase.mapIndexed { index, entry ->
                     val date = startOfWeek.plusDays(index.toLong())
@@ -326,24 +395,14 @@ fun Application.configureRouting(
                     "plan",
                     mapOf(
                         "weeklyPlan" to weeklyPlan,
-                        "fitnessLevel" to (user.fitnessLevel ?: "Beginner")
+                        "fitnessLevel" to (user.fitnessLevel ?: "Beginner"),
+                        "planType" to currentPlanType
                     )
                 )
             }
 
             post("/plan/generate") {
-                val session = call.principal<UserSession>()!!
-                val user = userService.findByEmail(session.email)
-                    ?: return@post call.respondRedirect("/login")
-
-                val userId = user.id
-                    ?: return@post call.respondRedirect("/login")
-
-                val fitnessLevel = user.fitnessLevel ?: "Beginner"
-
-                activityService.generatePlanForLevel(userId, fitnessLevel)
-
-                call.respondRedirect("/plan")
+                call.respondRedirect("/onboarding")
             }
 
             get("/plan/replace") {
