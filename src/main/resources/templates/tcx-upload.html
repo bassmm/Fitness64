@@ -1,0 +1,42 @@
+{% extends "base" %}
+
+{% block title %}Import TCX File{% endblock %}
+
+{% block content %}
+<h2>Import TCX File</h2>
+<p style="margin-top: -8px; color: #555;">Upload a TCX file from your fitness device or Strava/Garmin export to import your cardio activity.</p>
+
+<div class="card">
+
+    {% if error %}
+        <p style="color: red; margin-bottom: 16px;">{{ error }}</p>
+    {% endif %}
+
+    {% if success %}
+        <p style="color: #00b894; margin-bottom: 16px;">{{ success }}</p>
+    {% endif %}
+
+    <form method="post" action="/tcx/upload" enctype="multipart/form-data">
+
+        <label for="file">Select TCX File</label>
+        <input
+            id="file"
+            name="file"
+            type="file"
+            accept=".tcx"
+            required
+        >
+
+        <p style="color: #888; font-size: 13px; margin-top: -4px;">
+            Supported format: .tcx (Garmin, Strava, most GPS fitness devices)
+        </p>
+
+        <button type="submit">Upload and Import</button>
+
+    </form>
+</div>
+
+<div style="margin-top: 20px;">
+    <a class="button" href="/home">Back to Home</a>
+</div>
+{% endblock %}
