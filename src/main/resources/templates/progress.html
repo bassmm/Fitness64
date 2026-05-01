@@ -15,9 +15,30 @@
     </div>
 
     <div class="card">
-        <h3>Personal Bests</h3>
-        <p>Run: {{ pbRun }}</p>
-        <p>Cycle: {{ pbCycle }}</p>
+        <h3>Running Records</h3>
+        <p style="color: #666; font-size: 13px;">
+            Times are estimated from your logged distance and duration.
+        </p>
+
+        <ul>
+            {% for record in runningRecords %}
+                <li>
+                    <strong>{{ record.label }}:</strong> {{ record.value }}
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="card">
+        <h3>Cycling Records</h3>
+
+        <ul>
+            {% for record in cyclingRecords %}
+                <li>
+                    <strong>{{ record.label }}:</strong> {{ record.value }}
+                </li>
+            {% endfor %}
+        </ul>
     </div>
 
     <div class="card">
