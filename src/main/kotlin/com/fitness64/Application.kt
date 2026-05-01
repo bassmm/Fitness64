@@ -71,7 +71,7 @@ fun Application.module() {
     configureSecurity(userService)
 
     // Routing
-    configureRouting(userService)
+    configureRouting(userService, activityService)
     configureUsersRoutes(userService)
     configureActivityRoutes(activityService, userService)
 }
