@@ -153,7 +153,14 @@ class ActivityService(database: Database) {
 
     init {
         transaction(database) {
-            SchemaUtils.create(ActivityTypes, Exercises, WorkoutLogs, WorkoutExercises, WorkoutLaps, Trackpoints)
+            SchemaUtils.create(
+                ActivityTypes,
+                Exercises,
+                WorkoutLogs,
+                WorkoutExercises,
+                WorkoutLaps,
+                Trackpoints
+            )
         }
     }
 
@@ -168,6 +175,18 @@ class ActivityService(database: Database) {
             .where { ActivityTypes.name eq typeName }
             .map { it[ActivityTypes.id] }
             .singleOrNull()
+    }
+
+    suspend fun getActivityTypeName(activityTypeIdValue: Int): String? = dbQuery {
+        ActivityTypes.selectAll()
+            .where { ActivityTypes.id eq activityTypeIdValue }
+            .map { it[ActivityTypes.name] }
+            .singleOrNull()
+    }
+
+    suspend fun getOrCreateActivityType(typeName: String): Int {
+        val existingActivityTypeId = getActivityTypeByName(typeName)
+        return existingActivityTypeId ?: createActivityType(ActivityType(typeName))
     }
 
     suspend fun createExercise(exercise: Exercise): Int = dbQuery {
