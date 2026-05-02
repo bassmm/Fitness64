@@ -1,6 +1,7 @@
 package com.fitness64
 
 import com.fitness64.activities.ActivityService
+import com.fitness64.plans.PlanService
 import com.fitness64.users.UserService
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -16,7 +17,8 @@ import java.util.*
 
 fun Application.configureRouting(
     userService: UserService,
-    activityService: ActivityService
+    activityService: ActivityService,
+    planService: PlanService
 ) {
     routing {
 
@@ -66,7 +68,7 @@ fun Application.configureRouting(
             call.sessions.set(UserSession(email = email))
 
             val userId = user.id
-            if (userId != null && !activityService.hasPlanForUser(userId)) {
+            if (userId != null && !planService.hasPlan(userId)) {
                 call.respondRedirect("/onboarding")
             } else {
                 call.respondRedirect("/home")
@@ -144,64 +146,6 @@ fun Application.configureRouting(
                 call.respondRedirect("/login")
             }
 
-            get("/onboarding") {
-                val session = call.principal<UserSession>()!!
-                val user = userService.findByEmail(session.email)
-                    ?: return@get call.respondRedirect("/login")
-
-                val fitnessLevel = user.fitnessLevel ?: "Not set"
-
-                val recommendedPlan = when (fitnessLevel.lowercase()) {
-                    "beginner" -> "beginner"
-                    "advanced" -> "custom"
-                    else -> ""
-                }
-
-                call.respondTemplate(
-                    "onboarding",
-                    mapOf(
-                        "fitnessLevel" to fitnessLevel,
-                        "recommendedPlan" to recommendedPlan,
-                        "error" to ""
-                    )
-                )
-            }
-
-            post("/onboarding") {
-                val session = call.principal<UserSession>()!!
-                val user = userService.findByEmail(session.email)
-                    ?: return@post call.respondRedirect("/login")
-
-                val userId = user.id
-                    ?: return@post call.respondRedirect("/login")
-
-                val params = call.receiveParameters()
-                val planType = params["planType"]?.trim().orEmpty()
-
-                if (planType.isBlank()) {
-                    val fitnessLevel = user.fitnessLevel ?: "Not set"
-
-                    val recommendedPlan = when (fitnessLevel.lowercase()) {
-                        "beginner" -> "beginner"
-                        "advanced" -> "custom"
-                        else -> ""
-                    }
-
-                    call.respondTemplate(
-                        "onboarding",
-                        mapOf(
-                            "fitnessLevel" to fitnessLevel,
-                            "recommendedPlan" to recommendedPlan,
-                            "error" to "Please choose a training plan."
-                        )
-                    )
-                    return@post
-                }
-
-                activityService.generatePlanForType(userId, planType)
-                call.respondRedirect("/plan")
-            }
-
             get("/home") {
                 val session = call.principal<UserSession>()!!
                 val user = userService.findByEmail(session.email)
@@ -211,7 +155,7 @@ fun Application.configureRouting(
                 val todayDayName = today.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.ENGLISH)
 
                 val todayTraining = user?.id?.let { userId ->
-                    activityService.getPlanSessionByDay(userId, todayDayName)?.session
+                    planService.getPlanSessionByDay(userId, todayDayName)?.session
                 } ?: "No training planned"
 
                 call.respondTemplate(
@@ -367,112 +311,6 @@ fun Application.configureRouting(
                 }
             }
 
-            get("/plan") {
-                val session = call.principal<UserSession>()!!
-                val user = userService.findByEmail(session.email)
-                    ?: return@get call.respondRedirect("/login")
-
-                val userId = user.id
-                    ?: return@get call.respondRedirect("/login")
-
-                val startOfWeek = getStartOfWeek(LocalDate.now())
-                val planFromDatabase = activityService.getPlanForUser(userId)
-                val currentPlanType = activityService.getPlanTypeForUser(userId) ?: "No plan selected"
-
-                val weeklyPlan = planFromDatabase.mapIndexed { index, entry ->
-                    val date = startOfWeek.plusDays(index.toLong())
-                    mapOf(
-                        "day" to entry.day,
-                        "date" to date.toString(),
-                        "session" to entry.session,
-                        "durationMinutes" to entry.durationMinutes,
-                        "intensity" to entry.intensity,
-                        "isRestDay" to entry.isRestDay
-                    )
-                }
-
-                call.respondTemplate(
-                    "plan",
-                    mapOf(
-                        "weeklyPlan" to weeklyPlan,
-                        "fitnessLevel" to (user.fitnessLevel ?: "Beginner"),
-                        "planType" to currentPlanType
-                    )
-                )
-            }
-
-            post("/plan/generate") {
-                call.respondRedirect("/onboarding")
-            }
-
-            get("/plan/replace") {
-                val session = call.principal<UserSession>()!!
-                val user = userService.findByEmail(session.email)
-                    ?: return@get call.respondRedirect("/login")
-
-                val userId = user.id
-                    ?: return@get call.respondRedirect("/login")
-
-                val day = call.request.queryParameters["day"]?.trim().orEmpty()
-
-                if (day.isBlank()) {
-                    call.respondRedirect("/plan")
-                    return@get
-                }
-
-                val currentSession = activityService.getPlanSessionByDay(userId, day)
-
-                if (currentSession == null) {
-                    call.respondRedirect("/plan")
-                    return@get
-                }
-
-                call.respondTemplate(
-                    "replace-session",
-                    mapOf(
-                        "error" to "",
-                        "day" to day,
-                        "currentSession" to currentSession.session
-                    )
-                )
-            }
-
-            post("/plan/replace") {
-                val session = call.principal<UserSession>()!!
-                val user = userService.findByEmail(session.email)
-                    ?: return@post call.respondRedirect("/login")
-
-                val userId = user.id
-                    ?: return@post call.respondRedirect("/login")
-
-                val params = call.receiveParameters()
-                val day = params["day"]?.trim().orEmpty()
-                val newSession = params["newSession"]?.trim().orEmpty()
-
-                if (day.isBlank()) {
-                    call.respondRedirect("/plan")
-                    return@post
-                }
-
-                if (newSession.isBlank()) {
-                    val currentSession = activityService.getPlanSessionByDay(userId, day)
-
-                    call.respondTemplate(
-                        "replace-session",
-                        mapOf(
-                            "error" to "Please select a replacement session.",
-                            "day" to day,
-                            "currentSession" to (currentSession?.session ?: "")
-                        )
-                    )
-                    return@post
-                }
-
-                activityService.updatePlanSession(userId, day, newSession)
-
-                call.respondRedirect("/plan")
-            }
-
             get("/calendar") {
                 val session = call.principal<UserSession>()!!
                 val user = userService.findByEmail(session.email)
@@ -483,7 +321,7 @@ fun Application.configureRouting(
 
                 val today = LocalDate.now()
                 val startOfWeek = getStartOfWeek(today)
-                val planFromDatabase = activityService.getPlanForUser(userId)
+                val planFromDatabase = planService.getPlan(userId)
 
                 val planByDay = planFromDatabase.associateBy { it.day }
 
