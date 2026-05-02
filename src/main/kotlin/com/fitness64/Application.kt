@@ -1,6 +1,7 @@
 package com.fitness64
 
 import com.fitness64.activities.*
+import com.fitness64.plans.*
 import com.fitness64.users.*
 import io.ktor.server.application.*
 import kotlinx.coroutines.runBlocking
@@ -14,6 +15,7 @@ fun Application.module() {
     val database = configureDatabases()
     val userService = UserService(database)
     val activityService = ActivityService(database)
+    val planService = PlanService(database)
 
     // Seed default activity type and exercises for weightlifting
     runBlocking {
@@ -71,7 +73,8 @@ fun Application.module() {
     configureSecurity(userService)
 
     // Routing
-    configureRouting(userService)
+    configureRouting(userService, activityService, planService)
     configureUsersRoutes(userService)
     configureActivityRoutes(activityService, userService)
+    configurePlanRoutes(planService, userService)
 }
