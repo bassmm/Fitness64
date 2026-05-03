@@ -1,0 +1,100 @@
+{% extends "base" %}
+
+{% block title %}Choose Training Plan{% endblock %}
+
+{% block content %}
+
+<h2>Choose Your Training Plan</h2>
+
+<p style="margin-top: -8px; color: #555;">
+    Select a weekly training plan that fits your goals and lifestyle.
+</p>
+
+<!-- 用户信息 + 推荐 -->
+<div class="card" style="margin-bottom: 20px;">
+    <p><strong>Your fitness level:</strong> {{ fitnessLevel }}</p>
+
+    {% if recommendedPlan == "beginner" %}
+        <p style="color: green;">
+            ✅ Recommended for you: Beginner All-Rounder Plan
+        </p>
+    {% elseif recommendedPlan == "custom" %}
+        <p style="color: green;">
+            ✅ Recommended for you: Custom Plan
+        </p>
+    {% else %}
+        <p style="color: #666;">
+            ℹ️ No specific recommendation — choose what suits you best.
+        </p>
+    {% endif %}
+</div>
+
+{% if error %}
+    <p style="color: red; margin-bottom: 12px;">
+        {{ error }}
+    </p>
+{% endif %}
+
+<form method="post" action="/onboarding">
+
+    <div style="
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 16px;
+    ">
+
+        <!-- Beginner -->
+        <label class="card" style="cursor: pointer;">
+            <input type="radio" name="planType" value="beginner" style="margin-bottom: 8px;">
+
+            <h3>Beginner All-Rounder</h3>
+            <p>Light walking, home workouts, stretching, and rest days.</p>
+
+            {% if recommendedPlan == "beginner" %}
+                <p style="color: green;"><strong>Recommended</strong></p>
+            {% endif %}
+        </label>
+
+        <!-- Cardio -->
+        <label class="card" style="cursor: pointer;">
+            <input type="radio" name="planType" value="cardio" style="margin-bottom: 8px;">
+
+            <h3>Cardio Focused</h3>
+            <p>Running, cycling, interval training, and endurance workouts.</p>
+        </label>
+
+        <!-- Weightlifting -->
+        <label class="card" style="cursor: pointer;">
+            <input type="radio" name="planType" value="weightlifting" style="margin-bottom: 8px;">
+
+            <h3>Weightlifting Focused</h3>
+            <p>Strength training, upper/lower splits, and gym sessions.</p>
+        </label>
+
+        <!-- Custom -->
+        <label class="card" style="cursor: pointer;">
+            <input type="radio" name="planType" value="custom" style="margin-bottom: 8px;">
+
+            <h3>Custom Plan</h3>
+            <p>Flexible plan you can edit and personalise later.</p>
+
+            {% if recommendedPlan == "custom" %}
+                <p style="color: green;"><strong>Recommended</strong></p>
+            {% endif %}
+        </label>
+
+    </div>
+
+    <div style="margin-top: 24px;">
+        <button class="button" type="submit">
+            Create My Plan
+        </button>
+    </div>
+
+</form>
+
+<div style="margin-top: 20px;">
+    <a class="button" href="/home">Skip for now</a>
+</div>
+
+{% endblock %}
