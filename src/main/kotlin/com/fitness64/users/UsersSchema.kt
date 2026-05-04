@@ -24,6 +24,8 @@ data class User(
     val fitnessLevel: String? = null,
     val goal: String? = null,
     val trainingDaysPerWeek: Int? = null,
+    val preferredActivities: String? = null,
+    val community: String? = null,
     val createdAt: String? = null
 )
 
@@ -36,6 +38,11 @@ class UserService(database: Database) {
         val fitnessLevel = varchar("fitness_level", length = 50).nullable()
         val goal = varchar("goal", length = 255).nullable()
         val trainingDaysPerWeek = integer("training_days_per_week").nullable()
+
+        // New profile fields
+        val preferredActivities = varchar("preferred_activities", length = 255).nullable()
+        val community = varchar("community", length = 255).nullable()
+
         val createdAt = varchar("created_at", length = 50)
 
         override val primaryKey = PrimaryKey(userId)
@@ -49,6 +56,7 @@ class UserService(database: Database) {
 
     suspend fun create(user: User): Int = dbQuery {
         val hashed = BCrypt.hashpw(user.passwordHash, BCrypt.gensalt())
+
         Users.insert {
             it[name] = user.name
             it[email] = user.email
@@ -56,6 +64,8 @@ class UserService(database: Database) {
             it[fitnessLevel] = user.fitnessLevel
             it[goal] = user.goal
             it[trainingDaysPerWeek] = user.trainingDaysPerWeek
+            it[preferredActivities] = user.preferredActivities
+            it[community] = user.community
             it[createdAt] = LocalDateTime.now().toString()
         }[Users.userId]
     }
@@ -73,6 +83,8 @@ class UserService(database: Database) {
                         fitnessLevel = it[Users.fitnessLevel],
                         goal = it[Users.goal],
                         trainingDaysPerWeek = it[Users.trainingDaysPerWeek],
+                        preferredActivities = it[Users.preferredActivities],
+                        community = it[Users.community],
                         createdAt = it[Users.createdAt]
                     )
                 }
@@ -93,6 +105,8 @@ class UserService(database: Database) {
                         fitnessLevel = it[Users.fitnessLevel],
                         goal = it[Users.goal],
                         trainingDaysPerWeek = it[Users.trainingDaysPerWeek],
+                        preferredActivities = it[Users.preferredActivities],
+                        community = it[Users.community],
                         createdAt = it[Users.createdAt]
                     )
                 }
@@ -109,6 +123,31 @@ class UserService(database: Database) {
                 it[fitnessLevel] = user.fitnessLevel
                 it[goal] = user.goal
                 it[trainingDaysPerWeek] = user.trainingDaysPerWeek
+                it[preferredActivities] = user.preferredActivities
+                it[community] = user.community
+            }
+        }
+    }
+
+    suspend fun updateProfile(
+        userId: Int,
+        name: String,
+        email: String,
+        fitnessLevel: String?,
+        goal: String?,
+        trainingDaysPerWeek: Int?,
+        preferredActivities: String?,
+        community: String?
+    ) {
+        dbQuery {
+            Users.update({ Users.userId eq userId }) {
+                it[Users.name] = name
+                it[Users.email] = email
+                it[Users.fitnessLevel] = fitnessLevel
+                it[Users.goal] = goal
+                it[Users.trainingDaysPerWeek] = trainingDaysPerWeek
+                it[Users.preferredActivities] = preferredActivities
+                it[Users.community] = community
             }
         }
     }

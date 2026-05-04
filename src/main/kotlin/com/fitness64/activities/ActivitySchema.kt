@@ -83,6 +83,14 @@ data class WeightliftingHistoryItem(
     val notes: String? = null
 )
 
+@Serializable
+data class LatestWorkoutSummary(
+    val logDate: String,
+    val activityType: String,
+    val duration: Int,
+    val distance: Double? = null
+)
+
 class ActivityService(database: Database) {
 
     object ActivityTypes : Table("activity_types") {
@@ -251,6 +259,36 @@ class ActivityService(database: Database) {
                     source = it[WorkoutLogs.workoutSource]
                 )
             }
+    }
+
+    suspend fun countWorkoutsForUserBetween(
+        userIdValue: Int,
+        startDate: String,
+        endDate: String
+    ): Int = dbQuery {
+        WorkoutLogs.selectAll()
+            .where {
+                (WorkoutLogs.userId eq userIdValue) and
+                    (WorkoutLogs.logDate greaterEq startDate) and
+                    (WorkoutLogs.logDate lessEq endDate)
+            }
+            .map { it[WorkoutLogs.id] }
+            .size
+    }
+
+    suspend fun getLatestWorkoutSummaryForUser(userIdValue: Int): LatestWorkoutSummary? = dbQuery {
+        (WorkoutLogs innerJoin ActivityTypes)
+            .selectAll()
+            .where { WorkoutLogs.userId eq userIdValue }
+            .map {
+                LatestWorkoutSummary(
+                    logDate = it[WorkoutLogs.logDate],
+                    activityType = it[ActivityTypes.name],
+                    duration = it[WorkoutLogs.duration],
+                    distance = it[WorkoutLogs.distance]
+                )
+            }
+            .maxByOrNull { it.logDate }
     }
 
     suspend fun deleteWorkoutLog(id: Int) = dbQuery {

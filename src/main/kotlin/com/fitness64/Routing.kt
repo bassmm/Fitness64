@@ -1,6 +1,8 @@
 package com.fitness64
 
 import com.fitness64.activities.ActivityService
+import com.fitness64.activities.ActivityType
+import com.fitness64.activities.WorkoutLog
 import com.fitness64.plans.PlanService
 import com.fitness64.users.UserService
 import io.ktor.server.application.*
@@ -153,24 +155,53 @@ fun Application.configureRouting(
             get("/home") {
                 val session = call.principal<UserSession>()!!
                 val user = userService.findByEmail(session.email)
+                    ?: return@get call.respondRedirect("/login")
+
+                val userId = user.id
+                    ?: return@get call.respondRedirect("/login")
 
                 val today = LocalDate.now()
                 val todayDate = today.toString()
                 val todayDayName = today.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.ENGLISH)
 
-                val todayTraining = user?.id?.let { userId ->
-                    planService.getPlanSessionByDay(userId, todayDayName)?.session
-                } ?: "No training planned"
+                val todayTraining = planService.getPlanSessionByDay(userId, todayDayName)?.session
+                    ?: "No training planned"
+
+                val startOfWeek = getStartOfWeek(today)
+
+                val workoutsThisWeek = activityService.countWorkoutsForUserBetween(
+                    userIdValue = userId,
+                    startDate = startOfWeek.toString(),
+                    endDate = today.toString()
+                )
+
+                val consistency = if (workoutsThisWeek > 0) {
+                    "$workoutsThisWeek workout${if (workoutsThisWeek == 1) "" else "s"} this week"
+                } else {
+                    "Start your weekly streak"
+                }
+
+                val nextGoal = when {
+                    !user.goal.isNullOrBlank() -> user.goal
+                    user.trainingDaysPerWeek != null -> "Complete ${user.trainingDaysPerWeek} workouts this week"
+                    else -> "Set your next fitness goal"
+                }
+
+                val latestWorkout = activityService.getLatestWorkoutSummaryForUser(userId)
+
+                val latestAchievement = latestWorkout?.let {
+                    "Latest ${it.activityType} session logged"
+                } ?: "Complete your next workout"
 
                 call.respondTemplate(
                     "home",
                     mapOf(
-                        "user" to (user?.name ?: session.email),
+                        "user" to user.name,
                         "today" to todayTraining,
                         "todayDate" to todayDate,
-                        "streak" to "3-week streak",
-                        "nextGoal" to "Complete 6 workouts next week",
-                        "achievement" to "New 5km personal best"
+                        "streak" to consistency,
+                        "nextGoal" to nextGoal,
+                        "achievement" to latestAchievement
                     )
                 )
             }
@@ -178,18 +209,83 @@ fun Application.configureRouting(
             get("/profile") {
                 val session = call.principal<UserSession>()!!
                 val user = userService.findByEmail(session.email)
+                    ?: return@get call.respondRedirect("/login")
+
+                val activities = splitPreferredActivities(user.preferredActivities)
 
                 call.respondTemplate(
                     "profile",
                     mapOf(
-                        "name" to (user?.name ?: session.email),
-                        "email" to session.email,
-                        "fitnessLevel" to (user?.fitnessLevel ?: "Not set"),
-                        "goals" to (user?.goal ?: "No goals set"),
-                        "activities" to listOf("Running", "Cycling", "Gym"),
-                        "community" to "Training group: Leeds Runners"
+                        "name" to user.name,
+                        "email" to user.email,
+                        "fitnessLevel" to (user.fitnessLevel ?: "Not set"),
+                        "goals" to (user.goal ?: "No goals set"),
+                        "activities" to activities,
+                        "community" to if (user.community.isNullOrBlank()) {
+                            "No community set"
+                        } else {
+                            "Training group: ${user.community}"
+                        }
                     )
                 )
+            }
+
+            get("/profile/edit") {
+                val session = call.principal<UserSession>()!!
+                val user = userService.findByEmail(session.email)
+                    ?: return@get call.respondRedirect("/login")
+
+                call.respondTemplate(
+                    "edit-profile",
+                    mapOf(
+                        "user" to user,
+                        "error" to ""
+                    )
+                )
+            }
+
+            post("/profile/edit") {
+                val session = call.principal<UserSession>()!!
+                val currentUser = userService.findByEmail(session.email)
+                    ?: return@post call.respondRedirect("/login")
+
+                val currentUserId = currentUser.id
+                    ?: return@post call.respondRedirect("/login")
+
+                val params = call.receiveParameters()
+
+                val name = params["name"]?.trim().orEmpty()
+                val email = params["email"]?.trim().orEmpty()
+                val fitnessLevel = params["fitnessLevel"]?.trim()?.ifBlank { null }
+                val goal = params["goal"]?.trim()?.ifBlank { null }
+                val trainingDaysPerWeek = params["trainingDaysPerWeek"]?.trim()?.toIntOrNull()
+                val preferredActivities = params["preferredActivities"]?.trim()?.ifBlank { null }
+                val community = params["community"]?.trim()?.ifBlank { null }
+
+                if (name.isBlank() || email.isBlank()) {
+                    call.respondTemplate(
+                        "edit-profile",
+                        mapOf(
+                            "user" to currentUser,
+                            "error" to "Name and email cannot be empty."
+                        )
+                    )
+                    return@post
+                }
+
+                userService.updateProfile(
+                    userId = currentUserId,
+                    name = name,
+                    email = email,
+                    fitnessLevel = fitnessLevel,
+                    goal = goal,
+                    trainingDaysPerWeek = trainingDaysPerWeek,
+                    preferredActivities = preferredActivities,
+                    community = community
+                )
+
+                call.sessions.set(UserSession(email = email))
+                call.respondRedirect("/profile")
             }
 
             get("/log") {
@@ -251,34 +347,75 @@ fun Application.configureRouting(
             }
 
             post("/log/details") {
+                val session = call.principal<UserSession>()!!
+                val user = userService.findByEmail(session.email)
+                    ?: return@post call.respondRedirect("/login")
+
+                val userId = user.id
+                    ?: return@post call.respondRedirect("/login")
+
                 val params = call.receiveParameters()
                 val type = params["type"]?.trim().orEmpty()
                 val activityDate = params["activityDate"]?.trim().orEmpty()
-                val distance = params["distance"]?.trim().orEmpty()
-                val duration = params["duration"]?.trim().orEmpty()
+                val distanceText = params["distance"]?.trim().orEmpty()
+                val durationText = params["duration"]?.trim().orEmpty()
                 val notes = params["notes"]?.trim().orEmpty()
 
-                if (type.isBlank() || activityDate.isBlank() || duration.isBlank()) {
+                val duration = durationText.toIntOrNull()
+                val distance = distanceText.toDoubleOrNull()
+
+                if (type.isBlank() || activityDate.isBlank() || duration == null) {
                     call.respondTemplate(
                         "log-details",
                         mapOf(
-                            "error" to "Please complete the required fields.",
+                            "error" to "Please complete the required fields with a valid duration.",
                             "selectedType" to type,
                             "activityDate" to activityDate,
-                            "distance" to distance,
-                            "duration" to duration,
+                            "distance" to distanceText,
+                            "duration" to durationText,
                             "notes" to notes
                         )
                     )
                     return@post
                 }
 
+                if (duration <= 0) {
+                    call.respondTemplate(
+                        "log-details",
+                        mapOf(
+                            "error" to "Duration must be greater than 0.",
+                            "selectedType" to type,
+                            "activityDate" to activityDate,
+                            "distance" to distanceText,
+                            "duration" to durationText,
+                            "notes" to notes
+                        )
+                    )
+                    return@post
+                }
+
+                val activityTypeId = activityService.getActivityTypeByName(type)
+                    ?: activityService.createActivityType(ActivityType(type))
+
+                activityService.createWorkoutLog(
+                    WorkoutLog(
+                        userId = userId,
+                        activityTypeId = activityTypeId,
+                        logDate = activityDate,
+                        duration = duration,
+                        distance = distance,
+                        notes = notes.ifBlank { null },
+                        calories = null,
+                        source = "manual"
+                    )
+                )
+
                 loggedActivities.add(
                     LoggedActivity(
                         date = activityDate,
                         type = type,
-                        duration = duration,
-                        distance = distance,
+                        duration = durationText,
+                        distance = distanceText,
                         notes = notes
                     )
                 )
@@ -472,4 +609,12 @@ val loggedActivities = mutableListOf<LoggedActivity>()
 
 fun getStartOfWeek(date: LocalDate): LocalDate {
     return date.minusDays(date.dayOfWeek.value.toLong() - 1)
+}
+
+fun splitPreferredActivities(preferredActivities: String?): List<String> {
+    return preferredActivities
+        ?.split(",")
+        ?.map { it.trim() }
+        ?.filter { it.isNotBlank() }
+        ?: emptyList()
 }
