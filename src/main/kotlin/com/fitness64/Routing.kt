@@ -419,17 +419,7 @@ fun Application.configureRouting(
                         distance = distance,
                         notes = notes.ifBlank { null },
                         calories = null,
-                        source = "manual"
-                    )
-                )
-
-                loggedActivities.add(
-                    LoggedActivity(
-                        date = activityDate,
-                        type = type,
-                        duration = durationText,
-                        distance = distanceText,
-                        notes = notes
+                        source = type
                     )
                 )
 
@@ -476,31 +466,69 @@ fun Application.configureRouting(
 
                 val today = LocalDate.now()
                 val startOfWeek = getStartOfWeek(today)
-                val planFromDatabase = planService.getPlan(userId)
+                val endOfWeek = startOfWeek.plusDays(6)
 
+                // Get all logged activities from database
+                val workouts = activityService.getWorkoutsForUser(userId)
+                val workoutsByDate = workouts.groupBy { it.logDate }
+
+                // Get current weekly plan from database
+                val planFromDatabase = planService.getPlan(userId)
                 val planByDay = planFromDatabase.associateBy { it.day }
 
-                val calendarItems = (0..6).map { index ->
-                    val date = startOfWeek.plusDays(index.toLong())
+                // Find earliest workout date
+                val earliestWorkoutDate = workouts
+                    .mapNotNull { workout ->
+                        try {
+                            LocalDate.parse(workout.logDate)
+                        } catch (e: Exception) {
+                            null
+                        }
+                    }
+                    .minOrNull()
+
+                // Calendar should include:
+                // 1. Current full weekly plan: Monday to Sunday
+                // 2. Historical workout logs if they exist
+                val earliestDate = listOfNotNull(
+                    earliestWorkoutDate,
+                    startOfWeek
+                ).minOrNull() ?: startOfWeek
+
+                val latestDate = endOfWeek
+
+                val calendarItems = generateSequence(latestDate) { date ->
+                    if (date.isAfter(earliestDate)) {
+                        date.minusDays(1)
+                    } else {
+                        null
+                    }
+                }.map { date ->
+                    val dateString = date.toString()
                     val dayName = date.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.ENGLISH)
-                    val plannedSession = planByDay[dayName]?.session ?: ""
-                    val loggedForDate = loggedActivities.filter { it.date == date.toString() }
+                    val workoutsForDate = workoutsByDate[dateString] ?: emptyList()
+
+                    val plannedSession = if (!date.isBefore(startOfWeek) && !date.isAfter(endOfWeek)) {
+                        planByDay[dayName]?.session ?: ""
+                    } else {
+                        ""
+                    }
 
                     mapOf(
                         "day" to dayName,
-                        "date" to date.toString(),
+                        "date" to dateString,
                         "planned" to plannedSession,
                         "isToday" to (date == today),
-                        "logged" to loggedForDate.map {
+                        "logged" to workoutsForDate.map {
                             mapOf(
-                                "type" to it.type,
-                                "duration" to it.duration,
-                                "distance" to it.distance,
-                                "notes" to it.notes
+                                "type" to (it.source ?: "Workout"),
+                                "duration" to "${it.duration} min",
+                                "distance" to (it.distance?.let { distance -> "${distance} km" } ?: ""),
+                                "notes" to (it.notes ?: "")
                             )
                         }
                     )
-                }
+                }.toList()
 
                 call.respondTemplate(
                     "calendar",
@@ -609,16 +637,6 @@ fun Application.configureRouting(
         }
     }
 }
-
-data class LoggedActivity(
-    val date: String,
-    val type: String,
-    val duration: String,
-    val distance: String,
-    val notes: String
-)
-
-val loggedActivities = mutableListOf<LoggedActivity>()
 
 fun getStartOfWeek(date: LocalDate): LocalDate {
     return date.minusDays(date.dayOfWeek.value.toLong() - 1)
