@@ -4,33 +4,103 @@
 {% block page_heading %}Profile{% endblock %}
 
 {% block content %}
-<div class="mb-5">
-    <p class="page-kicker">Member profile</p>
-    <h2 class="h3 mb-2">Your fitness information</h2>
-    <p class="page-summary mb-0">View your personal details, goals, and training preferences.</p>
+<div class="mb-5 d-flex justify-content-between align-items-start gap-3 flex-wrap">
+    <div>
+        <p class="page-kicker">Member profile</p>
+        <h2 class="h3 mb-2">Your fitness information</h2>
+        <p class="page-summary mb-0">View and update your personal details, goals, and training preferences.</p>
+    </div>
+
+    <a class="btn btn-primary" href="/profile/edit">
+        <i class="bi bi-pencil-square me-2"></i>Edit Profile
+    </a>
 </div>
 
 <div class="row g-4">
     <div class="col-lg-5">
         <div class="card shadow-soft h-100">
             <div class="card-body p-5">
-                <div class="avatar avatar-xl bg-primary text-white rounded-5 mb-4"><i class="bi bi-person-fill fs-2"></i></div>
+                <div class="avatar avatar-xl bg-primary text-white rounded-5 mb-4">
+                    <i class="bi bi-person-fill fs-2"></i>
+                </div>
+
                 <h3 class="h4 mb-1">{{ name }}</h3>
                 <p class="text-muted mb-4">{{ email }}</p>
-                <div class="d-flex align-items-center gap-3"><span class="badge bg-primary-subtle text-primary rounded-pill">{{ fitnessLevel }}</span><span class="text-sm text-muted">Fitness level</span></div>
+
+                <div class="d-flex align-items-center gap-3">
+                    <span class="badge bg-primary-subtle text-primary rounded-pill">
+                        {{ fitnessLevel | default("Not set") }}
+                    </span>
+                    <span class="text-sm text-muted">Fitness level</span>
+                </div>
             </div>
         </div>
     </div>
+
     <div class="col-lg-7">
         <div class="row g-4">
-            <div class="col-12"><div class="card card-hover"><div class="card-body p-5"><span class="stat-icon bg-success-subtle text-success mb-4"><i class="bi bi-bullseye"></i></span><h3 class="h5">Goals</h3><p class="text-muted mb-0">{{ goals }}</p></div></div></div>
-            <div class="col-md-6"><div class="card card-hover h-100"><div class="card-body p-5"><span class="stat-icon bg-info-subtle text-info mb-4"><i class="bi bi-heart-pulse"></i></span><h3 class="h5">Preferred Activities</h3><div class="d-flex flex-wrap gap-2">{% for activity in activities %}<span class="badge bg-body-secondary text-heading rounded-pill">{{ activity }}</span>{% endfor %}</div></div></div></div>
-            <div class="col-md-6"><div class="card card-hover h-100"><div class="card-body p-5"><span class="stat-icon bg-warning-subtle text-warning mb-4"><i class="bi bi-people"></i></span><h3 class="h5">Community</h3><p class="text-muted mb-0">{{ community }}</p></div></div></div>
+            <div class="col-12">
+                <div class="card card-hover">
+                    <div class="card-body p-5">
+                        <span class="stat-icon bg-success-subtle text-success mb-4">
+                            <i class="bi bi-bullseye"></i>
+                        </span>
+
+                        <h3 class="h5">Goals</h3>
+
+                        <p class="text-muted mb-0">
+                            {{ goals | default("No goals set") }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card card-hover h-100">
+                    <div class="card-body p-5">
+                        <span class="stat-icon bg-info-subtle text-info mb-4">
+                            <i class="bi bi-heart-pulse"></i>
+                        </span>
+
+                        <h3 class="h5">Preferred Activities</h3>
+
+                        <div class="d-flex flex-wrap gap-2">
+                            {% if activities is empty %}
+                                <span class="text-muted">No preferred activities set</span>
+                            {% else %}
+                                {% for activity in activities %}
+                                    <span class="badge bg-body-secondary text-heading rounded-pill">
+                                        {{ activity }}
+                                    </span>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card card-hover h-100">
+                    <div class="card-body p-5">
+                        <span class="stat-icon bg-warning-subtle text-warning mb-4">
+                            <i class="bi bi-people"></i>
+                        </span>
+
+                        <h3 class="h5">Community</h3>
+
+                        <p class="text-muted mb-0">
+                            {{ community | default("No community set") }}
+                        </p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <div class="mt-5">
-    <a class="btn btn-neutral" href="/home"><i class="bi bi-arrow-left me-2"></i>Back to Home</a>
+    <a class="btn btn-neutral" href="/home">
+        <i class="bi bi-arrow-left me-2"></i>Back to Home
+    </a>
 </div>
 {% endblock %}

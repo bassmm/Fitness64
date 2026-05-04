@@ -164,7 +164,7 @@ fun Application.configureActivityRoutes(
                         distance = null,
                         notes = notes,
                         calories = null,
-                        source = "manual"
+                        source = "gym"
                     )
                 )
 
