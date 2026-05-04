@@ -1,0 +1,91 @@
+{% extends "base" %} {% block title %}Race History{% endblock %} {% block
+page_heading %}Race History{% endblock %} {% block content %}
+<div
+    class="d-flex flex-column flex-lg-row align-items-lg-end justify-content-between gap-3 mb-5"
+>
+    <div>
+        <p class="page-kicker">Competition log</p>
+        <h2 class="h3 mb-2">Race History</h2>
+        <p class="page-summary mb-0">
+            All your logged race results in one place.
+        </p>
+    </div>
+    <a class="btn btn-primary" href="/races/log"
+        ><i class="bi bi-flag me-2"></i>Log a Race</a
+    >
+</div>
+
+{% if races is empty %}
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-5 text-center">
+        <h3 class="h5 mb-2">No races logged yet</h3>
+        <p class="text-muted mb-4">
+            Log your first race result to start tracking personal bests.
+        </p>
+        <a class="btn btn-primary" href="/races/log"
+            ><i class="bi bi-plus-circle me-2"></i>Log your first race</a
+        >
+    </div>
+</div>
+{% else %}
+<div class="row g-4">
+    {% for race in races %}
+    <div class="col-md-6 col-xl-4">
+        <div class="card card-hover h-100">
+            <div class="card-body p-5">
+                <div
+                    class="d-flex align-items-start justify-content-between gap-3 mb-3"
+                >
+                    <div>
+                        <h3 class="h5 mb-1">{{ race.eventName }}</h3>
+                        <p class="text-sm text-muted mb-0">
+                            <i class="bi bi-calendar-event me-2"></i>{{
+                            race.eventDate }}
+                        </p>
+                    </div>
+                    {% if race.isPersonalBest %}
+                    <span class="badge bg-success-subtle text-success"
+                        >Personal Best</span
+                    >
+                    {% endif %}
+                </div>
+                <div class="d-flex flex-column gap-2 text-sm text-muted mb-4">
+                    {% if race.location %}<span
+                        ><i class="bi bi-geo-alt me-2"></i>{{ race.location
+                        }}</span
+                    >{% endif %} {% if race.category %}<span
+                        ><i class="bi bi-tag me-2"></i>{{ race.category }}</span
+                    >{% endif %} {% if race.finishTime %}<span
+                        ><i class="bi bi-stopwatch me-2"></i>{{ race.finishTime
+                        }}</span
+                    >{% endif %} {% if race.overallRank %}<span
+                        ><i class="bi bi-trophy me-2"></i>Overall rank: {{
+                        race.overallRank }}</span
+                    >{% endif %} {% if race.categoryRank %}<span
+                        ><i class="bi bi-award me-2"></i>Category rank: {{
+                        race.categoryRank }}</span
+                    >{% endif %}
+                </div>
+                {% if race.certificateUrl %}
+                <a
+                    href="{{ race.certificateUrl }}"
+                    target="_blank"
+                    class="btn btn-sm btn-neutral"
+                >
+                    <i class="bi bi-box-arrow-up-right me-2"></i>View
+                    Certificate
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="mt-5">
+    <a class="btn btn-neutral" href="/home"
+        ><i class="bi bi-arrow-left me-2"></i>Back to Home</a
+    >
+</div>
+{% endblock %}

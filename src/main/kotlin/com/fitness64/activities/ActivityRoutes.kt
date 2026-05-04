@@ -3,6 +3,7 @@ package com.fitness64.activities
 import com.fitness64.UserSession
 import com.fitness64.users.UserService
 import io.ktor.http.*
+import io.ktor.http.content.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.pebble.*
@@ -178,6 +179,105 @@ fun Application.configureActivityRoutes(
                 )
 
                 call.respondRedirect("/weightlifting/history")
+            }
+
+            // --- TCX Upload ---
+
+            get("/tcx/upload") {
+                call.respond(
+                    PebbleContent(
+                        "tcx-upload",
+                        mapOf("error" to "", "success" to "")
+                    )
+                )
+            }
+
+            post("/tcx/upload") {
+                val session = call.principal<UserSession>()
+                    ?: return@post call.respond(HttpStatusCode.Unauthorized, "Not logged in")
+
+                val user = userService.findByEmail(session.email)
+                    ?: return@post call.respond(HttpStatusCode.NotFound, "User not found")
+
+                val userId = user.id
+                    ?: return@post call.respond(HttpStatusCode.InternalServerError, "User ID not found")
+
+                val multipart = call.receiveMultipart()
+                var parsed: ParsedTcxData? = null
+
+                multipart.forEachPart { part ->
+                    if (part is PartData.FileItem) {
+                        val inputStream = part.streamProvider()
+                        parsed = TcxParser.parse(inputStream)
+                        part.dispose()
+                    }
+                }
+
+                val tcxData = parsed
+                if (tcxData == null) {
+                    call.respond(
+                        PebbleContent(
+                            "tcx-upload",
+                            mapOf(
+                                "error" to "No file uploaded or file could not be parsed.",
+                                "success" to ""
+                            )
+                        )
+                    )
+                    return@post
+                }
+
+                val activityTypeId = activityService.getActivityTypeByName("Running")
+                    ?: activityService.createActivityType(ActivityType("Running"))
+
+                val workoutLogId = activityService.createWorkoutLog(
+                    WorkoutLog(
+                        userId = userId,
+                        activityTypeId = activityTypeId,
+                        logDate = java.time.LocalDate.now().toString(),
+                        duration = tcxData.totalDuration,
+                        distance = tcxData.totalDistance,
+                        notes = "Imported from TCX file",
+                        calories = tcxData.totalCalories,
+                        source = "tcx_import"
+                    )
+                )
+
+                for (lap in tcxData.laps) {
+                    val lapId = activityService.createWorkoutLap(
+                        WorkoutLap(
+                            workoutLogId = workoutLogId,
+                            startTime = lap.startTime,
+                            totalTimeSeconds = lap.totalTimeSeconds,
+                            distance = lap.distance,
+                            calories = lap.calories
+                        )
+                    )
+
+                    for (trackpoint in lap.trackpoints) {
+                        activityService.createTrackpoint(
+                            Trackpoint(
+                                lapId = lapId,
+                                time = trackpoint.time,
+                                latitude = trackpoint.latitude,
+                                longitude = trackpoint.longitude,
+                                altitude = trackpoint.altitude,
+                                distance = trackpoint.distance,
+                                heartRate = trackpoint.heartRate
+                            )
+                        )
+                    }
+                }
+
+                call.respond(
+                    PebbleContent(
+                        "tcx-upload",
+                        mapOf(
+                            "error" to "",
+                            "success" to "TCX file imported successfully! ${tcxData.laps.size} laps and ${tcxData.laps.sumOf { it.trackpoints.size }} trackpoints saved."
+                        )
+                    )
+                )
             }
         }
 

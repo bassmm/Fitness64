@@ -153,7 +153,14 @@ class ActivityService(database: Database) {
 
     init {
         transaction(database) {
-            SchemaUtils.create(ActivityTypes, Exercises, WorkoutLogs, WorkoutExercises, WorkoutLaps, Trackpoints)
+            SchemaUtils.create(
+                ActivityTypes,
+                Exercises,
+                WorkoutLogs,
+                WorkoutExercises,
+                WorkoutLaps,
+                Trackpoints
+            )
         }
     }
 
