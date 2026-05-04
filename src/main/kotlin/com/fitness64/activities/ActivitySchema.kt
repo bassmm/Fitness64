@@ -3,7 +3,11 @@ package com.fitness64.activities
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
-import org.jetbrains.exposed.v1.core.*
+import org.jetbrains.exposed.v1.core.SortOrder
+import org.jetbrains.exposed.v1.core.Table
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
@@ -14,20 +18,6 @@ import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 
 @Serializable
 data class ActivityType(
-    val name: String
-)
-
-@Serializable
-data class Exercise(
-    val name: String,
-    val activityTypeId: Int,
-    val category: String? = null,
-    val measurementType: String? = null
-)
-
-@Serializable
-data class ExerciseOption(
-    val id: Int,
     val name: String
 )
 
@@ -44,12 +34,13 @@ data class WorkoutLog(
 )
 
 @Serializable
-data class WorkoutExercise(
-    val workoutLogId: Int,
-    val exerciseId: Int,
-    val sets: Int,
-    val reps: Int,
-    val weight: Double
+data class CardioHistoryItem(
+    val logDate: String,
+    val activityType: String,
+    val duration: Int,
+    val distance: Double? = null,
+    val notes: String? = null,
+    val source: String? = null
 )
 
 @Serializable
@@ -72,32 +63,11 @@ data class Trackpoint(
     val heartRate: Int? = null
 )
 
-@Serializable
-data class WeightliftingHistoryItem(
-    val logDate: String,
-    val exerciseName: String,
-    val sets: Int,
-    val reps: Int,
-    val weight: Double,
-    val duration: Int,
-    val notes: String? = null
-)
-
 class ActivityService(database: Database) {
 
     object ActivityTypes : Table("activity_types") {
         val id = integer("activity_type_id").autoIncrement()
         val name = varchar("name", 50).uniqueIndex()
-
-        override val primaryKey = PrimaryKey(id)
-    }
-
-    object Exercises : Table("exercises") {
-        val id = integer("exercise_id").autoIncrement()
-        val name = varchar("name", 255)
-        val activityTypeId = integer("activity_type_id").references(ActivityTypes.id)
-        val category = varchar("category", 100).nullable()
-        val measurementType = varchar("measurement_type", 50).nullable()
 
         override val primaryKey = PrimaryKey(id)
     }
@@ -112,17 +82,6 @@ class ActivityService(database: Database) {
         val notes = varchar("notes", 255).nullable()
         val calories = integer("calories").nullable()
         val workoutSource = varchar("source", 50).nullable()
-
-        override val primaryKey = PrimaryKey(id)
-    }
-
-    object WorkoutExercises : Table("workout_exercises") {
-        val id = integer("workout_exercise_id").autoIncrement()
-        val workoutLogId = integer("workout_log_id").references(WorkoutLogs.id)
-        val exerciseId = integer("exercise_id").references(Exercises.id)
-        val sets = integer("sets")
-        val reps = integer("reps")
-        val weight = double("weight")
 
         override val primaryKey = PrimaryKey(id)
     }
@@ -155,9 +114,7 @@ class ActivityService(database: Database) {
         transaction(database) {
             SchemaUtils.create(
                 ActivityTypes,
-                Exercises,
                 WorkoutLogs,
-                WorkoutExercises,
                 WorkoutLaps,
                 Trackpoints
             )
@@ -175,34 +132,6 @@ class ActivityService(database: Database) {
             .where { ActivityTypes.name eq typeName }
             .map { it[ActivityTypes.id] }
             .singleOrNull()
-    }
-
-    suspend fun createExercise(exercise: Exercise): Int = dbQuery {
-        Exercises.insert {
-            it[name] = exercise.name
-            it[activityTypeId] = exercise.activityTypeId
-            it[category] = exercise.category
-            it[measurementType] = exercise.measurementType
-        }[Exercises.id]
-    }
-
-    suspend fun getExerciseByName(exerciseName: String): Int? = dbQuery {
-        Exercises.selectAll()
-            .where { Exercises.name eq exerciseName }
-            .map { it[Exercises.id] }
-            .singleOrNull()
-    }
-
-    suspend fun getExercisesByActivityType(activityTypeIdValue: Int): List<ExerciseOption> = dbQuery {
-        Exercises.selectAll()
-            .where { Exercises.activityTypeId eq activityTypeIdValue }
-            .map {
-                ExerciseOption(
-                    id = it[Exercises.id],
-                    name = it[Exercises.name]
-                )
-            }
-            .sortedBy { it.name }
     }
 
     suspend fun createWorkoutLog(workout: WorkoutLog): Int = dbQuery {
@@ -253,36 +182,29 @@ class ActivityService(database: Database) {
             }
     }
 
-    suspend fun deleteWorkoutLog(id: Int) = dbQuery {
-        WorkoutLogs.deleteWhere { WorkoutLogs.id eq id }
-    }
+    suspend fun getCardioHistory(userIdValue: Int): List<CardioHistoryItem> = dbQuery {
+        val cardioTypes = listOf("Running", "Cycling", "Swimming")
 
-    suspend fun createWorkoutExercise(workoutExercise: WorkoutExercise): Int = dbQuery {
-        WorkoutExercises.insert {
-            it[workoutLogId] = workoutExercise.workoutLogId
-            it[exerciseId] = workoutExercise.exerciseId
-            it[sets] = workoutExercise.sets
-            it[reps] = workoutExercise.reps
-            it[weight] = workoutExercise.weight
-        }[WorkoutExercises.id]
-    }
-
-    suspend fun getWeightliftingHistory(userIdValue: Int): List<WeightliftingHistoryItem> = dbQuery {
-        (WorkoutExercises innerJoin WorkoutLogs innerJoin Exercises)
+        (WorkoutLogs innerJoin ActivityTypes)
             .selectAll()
-            .where { WorkoutLogs.userId eq userIdValue }
+            .where {
+                (WorkoutLogs.userId eq userIdValue) and (ActivityTypes.name inList cardioTypes)
+            }
+            .orderBy(WorkoutLogs.logDate to SortOrder.DESC)
             .map {
-                WeightliftingHistoryItem(
+                CardioHistoryItem(
                     logDate = it[WorkoutLogs.logDate],
-                    exerciseName = it[Exercises.name],
-                    sets = it[WorkoutExercises.sets],
-                    reps = it[WorkoutExercises.reps],
-                    weight = it[WorkoutExercises.weight],
+                    activityType = it[ActivityTypes.name],
                     duration = it[WorkoutLogs.duration],
-                    notes = it[WorkoutLogs.notes]
+                    distance = it[WorkoutLogs.distance],
+                    notes = it[WorkoutLogs.notes],
+                    source = it[WorkoutLogs.workoutSource]
                 )
             }
-            .sortedByDescending { it.logDate }
+    }
+
+    suspend fun deleteWorkoutLog(id: Int) = dbQuery {
+        WorkoutLogs.deleteWhere { WorkoutLogs.id eq id }
     }
 
     suspend fun createWorkoutLap(lap: WorkoutLap): Int = dbQuery {

@@ -1,0 +1,112 @@
+{% extends "base" %}
+
+{% block title %}Activity History{% endblock %}
+{% block page_heading %}Activity History{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-lg-row align-items-lg-end justify-content-between gap-3 mb-5">
+    <div>
+        <p class="page-kicker">Training records</p>
+        <h2 class="h3 mb-2">Activity History</h2>
+        <p class="page-summary mb-0">Review your cardio and weightlifting sessions in one place.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-primary" href="/log"><i class="bi bi-plus-circle me-2"></i>Log Cardio</a>
+        <a class="btn btn-neutral" href="/weightlifting/log"><i class="bi bi-barbell me-2"></i>Log Weightlifting</a>
+    </div>
+</div>
+
+<div class="card shadow-soft mb-4">
+    <div class="card-header border-0 pb-0 pt-4 px-5">
+        <h3 class="h5 mb-1">Cardio Activity</h3>
+        <p class="text-sm text-muted mb-0">Running, cycling, and swimming logs.</p>
+    </div>
+    <div class="card-body p-0">
+        {% if cardioHistory.size > 0 %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="bg-body-secondary">
+                        <tr>
+                            <th class="ps-5">Date</th>
+                            <th>Type</th>
+                            <th>Duration</th>
+                            <th>Distance</th>
+                            <th>Source</th>
+                            <th class="pe-5">Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in cardioHistory %}
+                            <tr>
+                                <td class="ps-5 fw-semibold">{{ item.logDate }}</td>
+                                <td>{{ item.activityType }}</td>
+                                <td>{{ item.duration }} min</td>
+                                <td>{% if item.distance != null %}{{ item.distance }} km{% else %}<span class="text-muted">—</span>{% endif %}</td>
+                                <td>{% if item.source %}{{ item.source }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
+                                <td class="pe-5">{% if item.notes %}{{ item.notes }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state m-5">
+                <span class="stat-icon bg-info-subtle text-info mb-4"><i class="bi bi-activity"></i></span>
+                <h3 class="h5">No cardio activity yet</h3>
+                <p class="text-muted">Log your first cardio workout to start your history.</p>
+                <a class="btn btn-primary" href="/log">Log cardio</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card shadow-soft">
+    <div class="card-header border-0 pb-0 pt-4 px-5">
+        <h3 class="h5 mb-1">Weightlifting Activity</h3>
+        <p class="text-sm text-muted mb-0">Session-level strength logs with total training volume.</p>
+    </div>
+    <div class="card-body p-0">
+        {% if weightliftingHistory.size > 0 %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="bg-body-secondary">
+                        <tr>
+                            <th class="ps-5">Date</th>
+                            <th>Exercises</th>
+                            <th>Duration</th>
+                            <th>Total volume</th>
+                            <th class="pe-5">Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in weightliftingHistory %}
+                            <tr>
+                                <td class="ps-5 fw-semibold">{{ item.logDate }}</td>
+                                <td>
+                                    <div class="vstack gap-1">
+                                        {% for exercise in item.exercises %}
+                                            <span class="text-sm">
+                                                {{ exercise.exerciseName }} — {{ exercise.sets }}×{{ exercise.reps }}{% if exercise.weight != null %} @ {{ exercise.weight }} kg{% endif %}
+                                            </span>
+                                        {% endfor %}
+                                    </div>
+                                </td>
+                                <td>{{ item.duration }} min</td>
+                                <td>{{ item.totalVolume }} kg</td>
+                                <td class="pe-5">{% if item.notes %}{{ item.notes }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state m-5">
+                <span class="stat-icon bg-primary-subtle text-primary mb-4"><i class="bi bi-bar-chart"></i></span>
+                <h3 class="h5">No weightlifting activity yet</h3>
+                <p class="text-muted">Log your first weightlifting session to start your history.</p>
+                <a class="btn btn-primary" href="/weightlifting/log">Log weightlifting</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

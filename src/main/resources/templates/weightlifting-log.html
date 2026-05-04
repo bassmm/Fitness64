@@ -7,35 +7,84 @@
 <div class="d-flex flex-column flex-lg-row align-items-lg-end justify-content-between gap-3 mb-5">
     <div>
         <p class="page-kicker">Strength session</p>
-        <h2 class="h3 mb-2">Log Weightlifting Activity</h2>
-        <p class="page-summary mb-0">Track sets, reps, load, duration, and notes for your lifting history.</p>
+        <h2 class="h3 mb-2">Log Weightlifting Session</h2>
+        <p class="page-summary mb-0">Log one session with all exercises performed, including sets, reps, and weight used.</p>
     </div>
-    <a class="btn btn-neutral" href="/weightlifting/exercises/new"><i class="bi bi-plus-lg me-2"></i>Add Exercise</a>
 </div>
 
 <div class="card shadow-soft">
     <div class="card-body p-5">
         <form method="post" action="/weightlifting/log" class="row g-4">
-            <div class="col-md-6">
-                <label class="form-label" for="exerciseId">Exercise</label>
-                <select class="form-select" id="exerciseId" name="exerciseId" required>
-                    <option value="">Select an exercise</option>
-                    {% for exercise in exercises %}
-                        <option value="{{ exercise.id }}">{{ exercise.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-3"><label class="form-label" for="sets">Sets</label><input class="form-control" id="sets" name="sets" type="number" min="1" required></div>
-            <div class="col-md-3"><label class="form-label" for="reps">Reps</label><input class="form-control" id="reps" name="reps" type="number" min="1" required></div>
-            <div class="col-md-4"><label class="form-label" for="weight">Weight (kg)</label><input class="form-control" id="weight" name="weight" type="number" min="0" step="0.1" required></div>
             <div class="col-md-4"><label class="form-label" for="duration">Duration (minutes)</label><input class="form-control" id="duration" name="duration" type="number" min="1" required></div>
             <div class="col-md-4"><label class="form-label" for="logDate">Date</label><input class="form-control" id="logDate" name="logDate" type="date" value="{{ today }}" required></div>
-            <div class="col-12"><label class="form-label" for="notes">Notes</label><textarea class="form-control" id="notes" name="notes" rows="4" placeholder="Optional notes about your workout"></textarea></div>
+            <div class="col-md-4"><label class="form-label" for="notes">Notes</label><input class="form-control" id="notes" name="notes" type="text" placeholder="Optional workout notes"></div>
+
+            <div class="col-12">
+                <div class="d-flex align-items-center justify-content-between gap-3 mb-3">
+                    <h3 class="h5 mb-0">Exercises in this session</h3>
+                    <button class="btn btn-sm btn-neutral" type="button" id="add-sub-exercise"><i class="bi bi-plus-lg me-2"></i>Add exercise</button>
+                </div>
+
+                <div class="vstack gap-3" id="sub-exercise-list">
+                    <div class="border rounded-3 p-3 sub-exercise-row">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-lg-5"><label class="form-label">Exercise name</label><input class="form-control" name="exerciseName" type="text" placeholder="e.g. Bench Press" required></div>
+                            <div class="col-lg-2"><label class="form-label">Sets</label><input class="form-control" name="sets" type="number" min="1" required></div>
+                            <div class="col-lg-2"><label class="form-label">Reps</label><input class="form-control" name="reps" type="number" min="1" required></div>
+                            <div class="col-lg-2"><label class="form-label">Weight (kg)</label><input class="form-control" name="weight" type="number" min="0" step="0.1" placeholder="Optional"></div>
+                            <div class="col-lg-1 d-grid"><button class="btn btn-sm btn-neutral remove-sub-exercise" type="button" title="Remove row"><i class="bi bi-x-lg"></i></button></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="col-12 d-flex flex-wrap gap-3">
-                <button class="btn btn-primary" type="submit"><i class="bi bi-check2-circle me-2"></i>Save Log</button>
-                <a class="btn btn-neutral" href="/weightlifting/history">View History</a>
+                <button class="btn btn-primary" type="submit"><i class="bi bi-check2-circle me-2"></i>Save Session</button>
+                <a class="btn btn-neutral" href="/activities/history">View History</a>
             </div>
         </form>
     </div>
 </div>
+
+<script>
+    (function () {
+        const list = document.getElementById("sub-exercise-list");
+        const addButton = document.getElementById("add-sub-exercise");
+
+        if (!list || !addButton) return;
+
+        const createRow = () => {
+            const firstRow = list.querySelector(".sub-exercise-row");
+            const row = firstRow.cloneNode(true);
+            row.querySelectorAll("input").forEach((input) => {
+                input.value = "";
+            });
+            return row;
+        };
+
+        const wireRemoveButton = (row) => {
+            const removeButton = row.querySelector(".remove-sub-exercise");
+            if (!removeButton) return;
+            removeButton.addEventListener("click", () => {
+                const rows = list.querySelectorAll(".sub-exercise-row");
+                if (rows.length === 1) {
+                    row.querySelectorAll("input").forEach((input) => {
+                        input.value = "";
+                    });
+                    return;
+                }
+                row.remove();
+            });
+        };
+
+        addButton.addEventListener("click", () => {
+            const row = createRow();
+            wireRemoveButton(row);
+            list.appendChild(row);
+        });
+
+        list.querySelectorAll(".sub-exercise-row").forEach(wireRemoveButton);
+    })();
+</script>
 {% endblock %}
+
