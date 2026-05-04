@@ -1,139 +1,301 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>{% block title %}Fitness App{% endblock %}</title>
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>{% block title %}Fitness64{% endblock %} · Fitness64</title>
 
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            background-color: #f5f6fa;
-        }
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+            rel="stylesheet"
+        />
 
-        header {
-            background-color: #2f3640;
-            color: white;
-            padding: 16px 24px;
-        }
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/@webpixels/css@3.0.4/dist/all.css"
+        />
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+        />
+        <link rel="stylesheet" href="/assets/app.css" />
 
-        header h1 {
-            margin: 0;
-            font-size: 22px;
-        }
+        {% block head %}{% endblock %}
+    </head>
 
-        nav {
-            margin-top: 8px;
-        }
+    <body class="bg-body-secondary">
+        <div class="app-shell min-vh-100">
+            <aside class="app-sidebar border-end bg-body shadow-soft">
+                <div
+                    class="d-flex align-items-center justify-content-center px-6 py-4 border-bottom text-center"
+                >
+                    <a
+                        href="/home"
+                        class="d-block h4 mb-0 text-primary fw-bolder text-decoration-none text-uppercase"
+                        >Fitness64</a
+                    >
+                </div>
 
-        nav a {
-            color: white;
-            margin-right: 16px;
-            text-decoration: none;
-            font-size: 14px;
-        }
+                <nav
+                    class="navbar navbar-vertical navbar-expand-lg p-0"
+                    aria-label="Primary navigation"
+                >
+                    <div class="collapse navbar-collapse show">
+                        <ul class="navbar-nav px-4 py-5 gap-1">
+                            <li class="nav-item">
+                                <a class="nav-link rounded-3" href="/home"
+                                    ><i class="bi bi-grid-1x2 me-3"></i
+                                    >Dashboard</a
+                                >
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link rounded-3" href="/log"
+                                    ><i class="bi bi-plus-circle me-3"></i>Log
+                                    Activity</a
+                                >
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link rounded-3" href="/quick-log"
+                                    ><i class="bi bi-lightning-charge me-3"></i
+                                    >Quick Log</a
+                                >
+                            </li>
+                            <li class="nav-item">
+                                <a
+                                    class="nav-link rounded-3"
+                                    href="/weightlifting/history"
+                                    ><i class="bi bi-bar-chart-line me-3"></i
+                                    >Lifting History</a
+                                >
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link rounded-3" href="/plan"
+                                    ><i class="bi bi-calendar2-week me-3"></i
+                                    >Weekly Plan</a
+                                >
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link rounded-3" href="/calendar"
+                                    ><i class="bi bi-calendar3 me-3"></i
+                                    >Calendar</a
+                                >
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link rounded-3" href="/progress"
+                                    ><i class="bi bi-trophy me-3"></i
+                                    >Progress</a
+                                >
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link rounded-3" href="/races"
+                                    ><i class="bi bi-flag me-3"></i>Races</a
+                                >
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link rounded-3" href="/tcx/upload"
+                                    ><i class="bi bi-upload me-3"></i>Import
+                                    TCX</a
+                                >
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link rounded-3" href="/profile"
+                                    ><i class="bi bi-person-circle me-3"></i
+                                    >Profile</a
+                                >
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
 
-        nav a:hover {
-            text-decoration: underline;
-        }
+                <div class="mt-auto p-4">
+                    <div class="card bg-primary-subtle border-0">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <span
+                                    class="icon icon-sm bg-primary text-white rounded-circle"
+                                >
+                                    <i class="bi bi-stars"></i>
+                                </span>
+                                <span class="fw-semibold text-heading"
+                                    >Stay consistent</span
+                                >
+                            </div>
+                            <p class="text-sm text-muted mb-3">
+                                Small daily wins build the strongest training
+                                habits.
+                            </p>
+                            <a
+                                href="/quick-log"
+                                class="btn btn-sm btn-primary w-100"
+                                >Log now</a
+                            >
+                        </div>
+                    </div>
+                </div>
+            </aside>
 
-        .container {
-            padding: 24px;
-            max-width: 1000px;
-            margin: auto;
-        }
+            <div class="app-main">
+                <header
+                    class="sticky-top bg-body border-bottom"
+                    style="
+                        --bs-bg-opacity: 0.95;
+                        backdrop-filter: blur(18px);
+                        -webkit-backdrop-filter: blur(18px);
+                    "
+                >
+                    <div class="container-fluid px-4 px-lg-6">
+                        <div
+                            class="d-flex align-items-center justify-content-between py-3"
+                        >
+                            <div class="d-flex align-items-center gap-3">
+                                <button
+                                    class="btn btn-sm btn-neutral d-lg-none"
+                                    type="button"
+                                    data-bs-toggle="offcanvas"
+                                    data-bs-target="#mobileNavigation"
+                                    aria-controls="mobileNavigation"
+                                    aria-label="Open navigation"
+                                >
+                                    <i class="bi bi-list"></i>
+                                </button>
+                                <div>
+                                    <h1 class="h4 mb-0">
+                                        {% block page_heading %}Fitness64{%
+                                        endblock %}
+                                    </h1>
+                                </div>
+                            </div>
 
-        .card {
-            background: white;
-            padding: 16px;
-            border-radius: 10px;
-            margin-bottom: 16px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-        }
+                            <div class="d-flex align-items-center gap-2">
+                                <a
+                                    href="/quick-log"
+                                    class="btn btn-sm btn-primary d-none d-sm-inline-flex"
+                                    ><i class="bi bi-lightning-charge me-2"></i
+                                    >Quick Log</a
+                                >
+                                <a href="/logout" class="btn btn-sm btn-neutral"
+                                    ><i
+                                        class="bi bi-box-arrow-right me-sm-2"
+                                    ></i
+                                    ><span class="d-none d-sm-inline"
+                                        >Logout</span
+                                    ></a
+                                >
+                            </div>
+                        </div>
+                    </div>
+                </header>
 
-        h2 {
-            margin-top: 0;
-        }
+                <main class="container-fluid px-4 px-lg-6 py-6">
+                    {% block content %}{% endblock %}
+                </main>
 
-        h3 {
-            margin-bottom: 8px;
-        }
+                <footer class="border-top bg-body">
+                    <div class="container-fluid px-4 px-lg-6 py-4">
+                        <div
+                            class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2"
+                        >
+                            <p class="text-sm text-muted mb-0">
+                                © 2026 Fitness64 · COMP2850 Project
+                            </p>
+                            <div
+                                class="d-flex align-items-center gap-3 text-sm"
+                            >
+                                <a
+                                    href="/plan"
+                                    class="text-muted text-decoration-none"
+                                    >Plan</a
+                                >
+                                <a
+                                    href="/calendar"
+                                    class="text-muted text-decoration-none"
+                                    >Calendar</a
+                                >
+                                <a
+                                    href="/progress"
+                                    class="text-muted text-decoration-none"
+                                    >Progress</a
+                                >
+                            </div>
+                        </div>
+                    </div>
+                </footer>
+            </div>
+        </div>
 
-        .button {
-            display: inline-block;
-            background-color: #0984e3;
-            color: white;
-            padding: 8px 14px;
-            border-radius: 6px;
-            text-decoration: none;
-            font-size: 14px;
-            margin-top: 8px;
-        }
+        <div
+            class="offcanvas offcanvas-start"
+            tabindex="-1"
+            id="mobileNavigation"
+            aria-labelledby="mobileNavigationLabel"
+        >
+            <div class="offcanvas-header border-bottom">
+                <div class="d-flex align-items-center gap-3">
+                    <div
+                        class="avatar avatar-sm bg-primary text-white rounded-3"
+                    >
+                        <i class="bi bi-fire"></i>
+                    </div>
+                    <div>
+                        <h2 class="h5 mb-0" id="mobileNavigationLabel">
+                            Fitness64
+                        </h2>
+                        <p class="text-xs text-muted mb-0">
+                            Training command center
+                        </p>
+                    </div>
+                </div>
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="offcanvas"
+                    aria-label="Close navigation"
+                ></button>
+            </div>
 
-        .button:hover {
-            background-color: #74b9ff;
-        }
+            <div class="offcanvas-body p-4">
+                <nav
+                    class="nav flex-column gap-1"
+                    aria-label="Mobile navigation"
+                >
+                    <a class="nav-link rounded-3" href="/home"
+                        ><i class="bi bi-grid-1x2 me-3"></i>Dashboard</a
+                    >
+                    <a class="nav-link rounded-3" href="/log"
+                        ><i class="bi bi-plus-circle me-3"></i>Log Activity</a
+                    >
+                    <a class="nav-link rounded-3" href="/quick-log"
+                        ><i class="bi bi-lightning-charge me-3"></i>Quick Log</a
+                    >
+                    <a class="nav-link rounded-3" href="/weightlifting/history"
+                        ><i class="bi bi-bar-chart-line me-3"></i>Lifting
+                        History</a
+                    >
+                    <a class="nav-link rounded-3" href="/plan"
+                        ><i class="bi bi-calendar2-week me-3"></i>Weekly Plan</a
+                    >
+                    <a class="nav-link rounded-3" href="/calendar"
+                        ><i class="bi bi-calendar3 me-3"></i>Calendar</a
+                    >
+                    <a class="nav-link rounded-3" href="/progress"
+                        ><i class="bi bi-trophy me-3"></i>Progress</a
+                    >
+                    <a class="nav-link rounded-3" href="/races"
+                        ><i class="bi bi-flag me-3"></i>Races</a
+                    >
+                    <a class="nav-link rounded-3" href="/tcx/upload"
+                        ><i class="bi bi-upload me-3"></i>Import TCX</a
+                    >
+                    <a class="nav-link rounded-3" href="/profile"
+                        ><i class="bi bi-person-circle me-3"></i>Profile</a
+                    >
+                </nav>
+            </div>
+        </div>
 
-        form {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        input, select {
-            padding: 8px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-            font-size: 14px;
-        }
-
-        button {
-            padding: 10px;
-            border: none;
-            border-radius: 6px;
-            background-color: #00b894;
-            color: white;
-            font-size: 14px;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background-color: #55efc4;
-        }
-
-        footer {
-            text-align: center;
-            padding: 16px;
-            font-size: 12px;
-            color: #888;
-        }
-    </style>
-</head>
-
-<body>
-
-<header>
-    <h1>Fitness Training App</h1>
-    <nav>
-        <a href="/home">Home</a>
-        <a href="/log">Log Activity</a>
-        <a href="/quick-log">Quick Log</a>
-        <a href="/plan">Weekly Plan</a>
-        <a href="/calendar">Calendar</a>
-        <a href="/progress">Progress</a>
-        <a href="/profile">Profile</a>
-        <a href="/races">Races</a>
-        <a href="/tcx/upload">Import TCX</a>
-    </nav>
-</header>
-
-<div class="container">
-    {% block content %}{% endblock %}
-</div>
-
-<footer>
-    <p>© 2026 Fitness App - COMP2850 Project</p>
-</footer>
-
-</body>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+        {% block scripts %}{% endblock %}
+    </body>
 </html>

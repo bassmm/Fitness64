@@ -5,6 +5,7 @@ import com.fitness64.plans.PlanService
 import com.fitness64.users.UserService
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
+import io.ktor.server.http.content.*
 import io.ktor.server.pebble.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
@@ -22,6 +23,9 @@ fun Application.configureRouting(
 ) {
     routing {
 
+        staticResources("/assets", "assets")
+
+        // Public routes
         get("/") {
             call.respondRedirect("/login")
         }
@@ -219,6 +223,7 @@ fun Application.configureRouting(
                     "Gym" -> call.respondRedirect("/weightlifting/log")
                     "Running", "Cycling", "Swimming" ->
                         call.respondRedirect("/log/details?type=$activityType&date=$activityDate")
+
                     else -> call.respondRedirect("/log")
                 }
             }

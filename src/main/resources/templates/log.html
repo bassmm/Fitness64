@@ -1,40 +1,54 @@
 {% extends "base" %}
 
 {% block title %}Log Activity{% endblock %}
+{% block page_heading %}Log Activity{% endblock %}
 
 {% block content %}
-<h2>Log Activity</h2>
+<div class="mb-5">
+    <p class="page-kicker">Activity setup</p>
+    <h2 class="h3 mb-2">Choose what you are training today</h2>
+    <p class="page-summary mb-0">Pick an activity type and date, then continue to the right logging flow.</p>
+</div>
 
-<div class="card">
+<div class="row g-5">
+    <div class="col-lg-7">
+        <div class="card shadow-soft">
+            <div class="card-body p-5">
+                {% if error %}
+                    <div class="alert alert-danger d-flex align-items-center gap-2" role="alert"><i class="bi bi-exclamation-triangle-fill"></i><span>{{ error }}</span></div>
+                {% endif %}
 
-    {% if error %}
-        <p style="color: red; margin-bottom: 16px;">
-            {{ error }}
-        </p>
-    {% endif %}
+                <form method="get" action="/log/redirect" class="vstack gap-4">
+                    <div>
+                        <label class="form-label" for="activityType">Activity Type</label>
+                        <select class="form-select" id="activityType" name="activityType" required>
+                            <option value="">Select an activity</option>
+                            <option value="Running">Running</option>
+                            <option value="Cycling">Cycling</option>
+                            <option value="Gym">Gym</option>
+                            <option value="Swimming">Swimming</option>
+                        </select>
+                    </div>
 
-    <form method="get" action="/log/redirect">
+                    <div>
+                        <label class="form-label" for="activityDate">Date</label>
+                        <input class="form-control" id="activityDate" name="activityDate" type="date" value="{{ activityDate }}" required>
+                    </div>
 
-        <label for="activityType">Activity Type</label>
-        <select id="activityType" name="activityType" required>
-            <option value="">Select an activity</option>
-            <option value="Running">Running</option>
-            <option value="Cycling">Cycling</option>
-            <option value="Gym">Gym</option>
-            <option value="Swimming">Swimming</option>
-        </select>
-
-        <label for="activityDate">Date</label>
-        <input
-            id="activityDate"
-            name="activityDate"
-            type="date"
-            value="{{ activityDate }}"
-            required
-        >
-
-        <button type="submit">Continue</button>
-
-    </form>
+                    <button class="btn btn-primary" type="submit"><i class="bi bi-arrow-right-circle me-2"></i>Continue</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card card-hover h-100">
+            <div class="card-body p-5">
+                <span class="stat-icon bg-primary-subtle text-primary mb-4"><i class="bi bi-clipboard2-pulse"></i></span>
+                <h3 class="h5">Smart routing</h3>
+                <p class="text-muted mb-4">Gym sessions open the lifting log, while cardio sessions collect distance, duration, and notes.</p>
+                <a class="btn btn-neutral" href="/quick-log">Use Quick Log</a>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

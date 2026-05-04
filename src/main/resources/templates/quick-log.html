@@ -1,45 +1,34 @@
 {% extends "base" %}
 
 {% block title %}Quick Log{% endblock %}
+{% block page_heading %}Quick Log{% endblock %}
 
 {% block content %}
-<h2>Quick Log Workout</h2>
+<div class="mb-5">
+    <p class="page-kicker">Fast entry</p>
+    <h2 class="h3 mb-2">What are you training right now?</h2>
+    <p class="page-summary mb-0">Choose a workout type and jump directly to the fastest matching log.</p>
+</div>
 
-<div class="card">
+<div class="card shadow-soft">
+    <div class="card-body p-5">
+        {% if error %}
+            <div class="alert alert-danger d-flex align-items-center gap-2" role="alert"><i class="bi bi-exclamation-triangle-fill"></i><span>{{ error }}</span></div>
+        {% endif %}
 
-    {% if error %}
-        <p style="color: red; margin-bottom: 16px;">
-            {{ error }}
-        </p>
-    {% endif %}
+        <form method="post" action="/quick-log" class="vstack gap-4">
+            <div class="row g-3">
+                <div class="col-md-6 col-xl-3"><label class="activity-option h-100"><input class="form-check-input" type="radio" name="type" value="Running"><span class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-person-running"></i></span><span class="fw-semibold">Running</span></label></div>
+                <div class="col-md-6 col-xl-3"><label class="activity-option h-100"><input class="form-check-input" type="radio" name="type" value="Cycling"><span class="stat-icon bg-info-subtle text-info"><i class="bi bi-bicycle"></i></span><span class="fw-semibold">Cycling</span></label></div>
+                <div class="col-md-6 col-xl-3"><label class="activity-option h-100"><input class="form-check-input" type="radio" name="type" value="Gym"><span class="stat-icon bg-warning-subtle text-warning"><i class="bi bi-lightning-charge"></i></span><span class="fw-semibold">Gym</span></label></div>
+                <div class="col-md-6 col-xl-3"><label class="activity-option h-100"><input class="form-check-input" type="radio" name="type" value="Swimming"><span class="stat-icon bg-success-subtle text-success"><i class="bi bi-water"></i></span><span class="fw-semibold">Swimming</span></label></div>
+            </div>
 
-    <form method="post" action="/quick-log">
-
-        <p>Select an activity:</p>
-
-        <label>
-            <input type="radio" name="type" value="Running">
-            Running
-        </label><br><br>
-
-        <label>
-            <input type="radio" name="type" value="Cycling">
-            Cycling
-        </label><br><br>
-
-        <label>
-            <input type="radio" name="type" value="Gym">
-            Gym
-        </label><br><br>
-
-        <label>
-            <input type="radio" name="type" value="Swimming">
-            Swimming
-        </label><br><br>
-
-        <button type="submit">Continue</button>
-
-    </form>
-
+            <div class="d-flex flex-wrap gap-3">
+                <button class="btn btn-primary" type="submit"><i class="bi bi-arrow-right-circle me-2"></i>Continue</button>
+                <a class="btn btn-neutral" href="/home">Back to dashboard</a>
+            </div>
+        </form>
+    </div>
 </div>
 {% endblock %}

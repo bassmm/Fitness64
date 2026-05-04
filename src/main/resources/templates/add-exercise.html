@@ -1,46 +1,42 @@
 {% extends "base" %}
 
 {% block title %}Add New Exercise{% endblock %}
+{% block page_heading %}Add Exercise{% endblock %}
 
 {% block content %}
-<h2>Add New Weightlifting Exercise</h2>
+<div class="mb-5">
+    <p class="page-kicker">Exercise library</p>
+    <h2 class="h3 mb-2">Add New Weightlifting Exercise</h2>
+    <p class="page-summary mb-0">Create reusable exercises for faster strength logging.</p>
+</div>
 
-<div class="card">
-    {% if error %}
-        <p style="color: red; margin-bottom: 16px;">{{ error }}</p>
-    {% endif %}
+<div class="card shadow-soft">
+    <div class="card-body p-5">
+        {% if error %}
+            <div class="alert alert-danger d-flex align-items-center gap-2" role="alert"><i class="bi bi-exclamation-triangle-fill"></i><span>{{ error }}</span></div>
+        {% endif %}
 
-    <form method="post" action="/weightlifting/exercises/new">
-        <label for="name">Exercise Name</label>
-        <input
-            id="name"
-            name="name"
-            type="text"
-            value="{{ name }}"
-            placeholder="e.g. Leg Press"
-            required
-        >
-
-        <label for="category">Category</label>
-        <input
-            id="category"
-            name="category"
-            type="text"
-            value="{{ category }}"
-            placeholder="e.g. Legs"
-        >
-
-        <label for="measurementType">Measurement Type</label>
-        <select id="measurementType" name="measurementType">
-            <option value="reps" {% if measurementType == "reps" %}selected{% endif %}>Reps</option>
-            <option value="time" {% if measurementType == "time" %}selected{% endif %}>Time</option>
-        </select>
-
-        <button type="submit">Save Exercise</button>
-    </form>
-
-    <div style="margin-top: 12px;">
-        <a class="button" href="/weightlifting/log">Back to Weightlifting Log</a>
+        <form method="post" action="/weightlifting/exercises/new" class="row g-4">
+            <div class="col-md-6">
+                <label class="form-label" for="name">Exercise Name</label>
+                <input class="form-control" id="name" name="name" type="text" value="{{ name }}" placeholder="e.g. Leg Press" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="category">Category</label>
+                <input class="form-control" id="category" name="category" type="text" value="{{ category }}" placeholder="e.g. Legs">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="measurementType">Measurement Type</label>
+                <select class="form-select" id="measurementType" name="measurementType">
+                    <option value="reps" {% if measurementType == "reps" %}selected{% endif %}>Reps</option>
+                    <option value="time" {% if measurementType == "time" %}selected{% endif %}>Time</option>
+                </select>
+            </div>
+            <div class="col-12 d-flex flex-wrap gap-3">
+                <button class="btn btn-primary" type="submit"><i class="bi bi-save me-2"></i>Save Exercise</button>
+                <a class="btn btn-neutral" href="/weightlifting/log">Back to Weightlifting Log</a>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}

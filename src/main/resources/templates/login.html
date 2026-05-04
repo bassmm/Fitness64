@@ -1,44 +1,48 @@
-{% extends "base" %}
+{% extends "auth-base" %} {% block title %}Login{% endblock %} {% block
+page_heading %}Welcome back{% endblock %} {% block page_summary %}Sign in to
+continue tracking your training.{% endblock %} {% block content %}
+<div class="p-4">
+  {% if error %}
+  <div class="alert alert-danger d-flex align-items-center gap-2" role="alert">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <span>{{ error }}</span>
+  </div>
+  {% endif %}
 
-{% block title %}Login{% endblock %}
+  <form method="post" action="/login" class="vstack gap-3">
+    <div>
+      <label class="form-label" for="email">Email</label>
+      <input
+        class="form-control"
+        id="email"
+        name="email"
+        type="email"
+        placeholder="you@example.com"
+        value="{{ email }}"
+        required
+      />
+    </div>
 
-{% block content %}
-<h2>Login</h2>
+    <div>
+      <label class="form-label" for="password">Password</label>
+      <input
+        class="form-control"
+        id="password"
+        name="password"
+        type="password"
+        placeholder="Enter your password"
+        required
+      />
+    </div>
 
-<div class="card">
+    <button class="btn btn-primary w-100" type="submit">Login</button>
+  </form>
 
-    {% if error %}
-        <p style="color: red; margin-bottom: 16px;">
-            {{ error }}
-        </p>
-    {% endif %}
-
-    <form method="post" action="/login">
-
-        <label for="email">Email</label>
-        <input
-            id="email"
-            name="email"
-            type="email"
-            placeholder="Enter your email"
-            value="{{ email }}"
-            required
-        >
-
-        <label for="password">Password</label>
-        <input
-            id="password"
-            name="password"
-            type="password"
-            placeholder="Enter your password"
-            required
-        >
-
-        <button type="submit">Login</button>
-    </form>
-</div>
-
-<div style="margin-top: 20px;">
-    <a class="button" href="/register">Create Account</a>
+  <p class="text-center text-muted mt-4 mb-0">
+    New here?
+    <a class="fw-semibold text-primary text-decoration-none" href="/register"
+      >Create an account</a
+    >
+  </p>
 </div>
 {% endblock %}
