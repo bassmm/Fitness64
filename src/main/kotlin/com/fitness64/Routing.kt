@@ -2,6 +2,8 @@ package com.fitness64
 
 import com.fitness64.activities.ActivityService
 import com.fitness64.plans.PlanService
+import com.fitness64.races.RaceRecord
+import com.fitness64.races.RaceService
 import com.fitness64.users.UserService
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -19,7 +21,8 @@ import java.util.*
 fun Application.configureRouting(
     userService: UserService,
     activityService: ActivityService,
-    planService: PlanService
+    planService: PlanService,
+    raceService: RaceService
 ) {
     routing {
 
@@ -223,7 +226,6 @@ fun Application.configureRouting(
                     "Gym" -> call.respondRedirect("/weightlifting/log")
                     "Running", "Cycling", "Swimming" ->
                         call.respondRedirect("/log/details?type=$activityType&date=$activityDate")
-
                     else -> call.respondRedirect("/log")
                 }
             }
@@ -399,9 +401,11 @@ fun Application.configureRouting(
                     return@get
                 }
 
+                val races = user.id?.let { raceService.getRacesForUser(it) } ?: emptyList<Any>()
+
                 call.respondTemplate(
                     "races",
-                    mapOf("races" to emptyList<Any>())
+                    mapOf("races" to races)
                 )
             }
 
@@ -453,6 +457,29 @@ fun Application.configureRouting(
                     )
                     return@post
                 }
+
+                val session = call.principal<UserSession>()!!
+                val user = userService.findByEmail(session.email)
+
+                if (user == null || user.id == null) {
+                    call.respondRedirect("/login")
+                    return@post
+                }
+
+                raceService.createRace(
+                    RaceRecord(
+                        userId = user.id!!,
+                        eventName = eventName,
+                        eventDate = eventDate,
+                        location = location.ifBlank { null },
+                        category = category.ifBlank { null },
+                        finishTime = finishTime.ifBlank { null },
+                        overallRank = overallRank,
+                        categoryRank = categoryRank,
+                        isPersonalBest = isPersonalBest,
+                        certificateUrl = certificateUrl.ifBlank { null }
+                    )
+                )
 
                 call.respondRedirect("/races")
             }
