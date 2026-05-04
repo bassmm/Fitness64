@@ -273,6 +273,19 @@ fun Application.configureRouting(
                     return@post
                 }
 
+                val existingUser = userService.findByEmail(email)
+
+                if (existingUser != null && existingUser.id != currentUserId) {
+                    call.respondTemplate(
+                        "edit-profile",
+                        mapOf(
+                            "user" to currentUser,
+                            "error" to "This email is already in use."
+                        )
+                    )
+                    return@post
+                }
+
                 userService.updateProfile(
                     userId = currentUserId,
                     name = name,
