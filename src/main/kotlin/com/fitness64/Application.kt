@@ -2,6 +2,7 @@ package com.fitness64
 
 import com.fitness64.activities.*
 import com.fitness64.plans.*
+import com.fitness64.races.*
 import com.fitness64.users.*
 import io.ktor.server.application.*
 import kotlinx.coroutines.runBlocking
@@ -14,6 +15,7 @@ fun Application.module() {
     val database = configureDatabases()
     val userService = UserService(database)
     val activityService = ActivityService(database)
+    val raceService = RaceService(database)
     val planService = PlanService(database)
 
     runBlocking {
@@ -42,5 +44,6 @@ fun Application.module() {
     configureRouting(userService, activityService, planService)
     configureUsersRoutes(userService)
     configureActivityRoutes(activityService, userService)
+    configureRaceRoutes(raceService)
     configurePlanRoutes(planService, userService)
 }
