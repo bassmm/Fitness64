@@ -117,7 +117,7 @@ fun Application.configurePlanRoutes(
                 call.respondRedirect("/onboarding")
             }
 
-            get("/plan/replace") {
+            get("/plan/update-session") {
                 val session = call.principal<UserSession>()!!
                 val user = userService.findByEmail(session.email)
                     ?: return@get call.respondRedirect("/login")
@@ -140,16 +140,19 @@ fun Application.configurePlanRoutes(
                 }
 
                 call.respondTemplate(
-                    "replace-session",
+                    "update-session",
                     mapOf(
                         "error" to "",
                         "day" to day,
-                        "currentSession" to currentSession.session
+                        "currentSession" to currentSession.session,
+                        "newSession" to currentSession.session,
+                        "newDuration" to currentSession.durationMinutes,
+                        "newIntensity" to currentSession.intensity,
                     )
                 )
             }
 
-            post("/plan/replace") {
+            post("/plan/update-session") {
                 val session = call.principal<UserSession>()!!
                 val user = userService.findByEmail(session.email)
                     ?: return@post call.respondRedirect("/login")
@@ -160,6 +163,8 @@ fun Application.configurePlanRoutes(
                 val params = call.receiveParameters()
                 val day = params["day"]?.trim().orEmpty()
                 val newSession = params["newSession"]?.trim().orEmpty()
+                val newDuration = params["newDuration"]?.trim()?.toIntOrNull() ?: 0
+                val newIntensity = params["newIntensity"]?.trim().orEmpty()
 
                 if (day.isBlank()) {
                     call.respondRedirect("/plan")
@@ -170,17 +175,20 @@ fun Application.configurePlanRoutes(
                     val currentSession = planService.getPlanSessionByDay(userId, day)
 
                     call.respondTemplate(
-                        "replace-session",
+                        "update-session",
                         mapOf(
-                            "error" to "Please select a replacement session.",
+                            "error" to "Please enter an updated session.",
                             "day" to day,
-                            "currentSession" to (currentSession?.session ?: "")
+                            "currentSession" to (currentSession?.session ?: ""),
+                            "newSession" to "",
+                            "newDuration" to (currentSession?.durationMinutes ?: 0),
+                            "newIntensity" to (currentSession?.intensity ?: ""),
                         )
                     )
                     return@post
                 }
 
-                planService.updatePlanSession(userId, day, newSession)
+                planService.updatePlanSession(userId, day, newSession, newDuration, newIntensity)
                 call.respondRedirect("/plan")
             }
 

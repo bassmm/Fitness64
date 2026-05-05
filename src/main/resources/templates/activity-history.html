@@ -63,7 +63,7 @@
 <div class="card shadow-soft">
     <div class="card-header border-0 pb-0 pt-4 px-5">
         <h3 class="h5 mb-1">Weightlifting Activity</h3>
-        <p class="text-sm text-muted mb-0">Session-level strength logs with total training volume.</p>
+        <p class="text-sm text-muted mb-0">Session-level strength logs with total sets completed.</p>
     </div>
     <div class="card-body p-0">
         {% if weightliftingHistory.size > 0 %}
@@ -74,7 +74,7 @@
                             <th class="ps-5">Date</th>
                             <th>Exercises</th>
                             <th>Duration</th>
-                            <th>Total volume</th>
+                            <th>Total sets</th>
                             <th class="pe-5">Notes</th>
                         </tr>
                     </thead>
@@ -92,7 +92,7 @@
                                     </div>
                                 </td>
                                 <td>{{ item.duration }} min</td>
-                                <td>{{ item.totalVolume }} kg</td>
+                                <td>{{ item.totalSets }}</td>
                                 <td class="pe-5">{% if item.notes %}{{ item.notes }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
                             </tr>
                         {% endfor %}
@@ -110,3 +110,4 @@
     </div>
 </div>
 {% endblock %}
+

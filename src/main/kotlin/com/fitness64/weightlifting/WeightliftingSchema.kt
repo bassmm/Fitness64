@@ -42,7 +42,7 @@ data class WeightliftingHistoryItem(
     val logDate: String,
     val duration: Int,
     val notes: String? = null,
-    val totalVolume: Double,
+    val totalSets: Int,
     val exercises: List<WeightliftingWorkoutEntry>
 )
 
@@ -123,15 +123,13 @@ class WeightliftingService(database: Database) {
         rows.groupBy { it.first }.values.map { workoutRows ->
             val firstRow = workoutRows.first().second
             val exerciseEntries = workoutRows.map { it.third }
-            val totalVolume = exerciseEntries.sumOf { entry ->
-                entry.sets * entry.reps * (entry.weight ?: 0.0)
-            }
+            val totalSets = exerciseEntries.sumOf { it.sets }
 
             WeightliftingHistoryItem(
                 logDate = firstRow[WeightliftingWorkoutLogs.logDate],
                 duration = firstRow[WeightliftingWorkoutLogs.duration],
                 notes = firstRow[WeightliftingWorkoutLogs.notes],
-                totalVolume = totalVolume,
+                totalSets = totalSets,
                 exercises = exerciseEntries
             )
         }.sortedByDescending { it.logDate }
@@ -140,3 +138,6 @@ class WeightliftingService(database: Database) {
     private suspend fun <T> dbQuery(block: suspend () -> T): T =
         withContext(Dispatchers.IO) { suspendTransaction { block() } }
 }
+
+
+
