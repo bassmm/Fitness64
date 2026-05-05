@@ -476,7 +476,8 @@ fun Application.configureRouting(
                 val endOfWeek = startOfWeek.plusDays(6)
 
                 val workouts = activityService.getWorkoutsForUser(userId)
-                val workoutsByDate = workouts.groupBy { it.logDate }
+val activityTypeNames = loadActivityTypeNames(activityService, workouts)
+val workoutsByDate = workouts.groupBy { it.logDate }
 
                 val planFromDatabase = planService.getPlan(userId)
                 val planByDay = planFromDatabase.associateBy { it.day }
@@ -520,7 +521,7 @@ fun Application.configureRouting(
                         "isToday" to (date == today),
                         "logged" to workoutsForDate.map {
                             mapOf(
-                                "type" to (activityService.getActivityTypeName(it.activityTypeId) ?: it.source ?: "Workout"),
+                                "type" to (activityTypeNames[it.activityTypeId] ?: it.source ?: "Workout"),
                                 "duration" to "${it.duration} min",
                                 "distance" to (it.distance?.let { distance -> "${formatDistance(distance)} km" } ?: ""),
                                 "notes" to (it.notes ?: "")
