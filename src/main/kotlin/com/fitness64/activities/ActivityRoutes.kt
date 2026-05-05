@@ -1,7 +1,9 @@
 package com.fitness64.activities
 
 import com.fitness64.UserSession
+import com.fitness64.races.RaceService
 import com.fitness64.users.UserService
+import com.fitness64.weightlifting.WeightliftingService
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.PartData
 import io.ktor.http.content.forEachPart
@@ -18,12 +20,97 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 
+private data class ActivityFeedItem(
+    val date: String,
+    val category: String,
+    val title: String,
+    val summary: String,
+    val metric: String,
+    val notes: String
+)
+
 fun Application.configureActivityRoutes(
     activityService: ActivityService,
-    userService: UserService
+    userService: UserService,
+    weightliftingService: WeightliftingService,
+    raceService: RaceService
 ) {
     routing {
         authenticate("auth-session") {
+            get("/activities") {
+                val session = call.principal<UserSession>()
+                    ?: return@get call.respond(HttpStatusCode.Unauthorized, "Not logged in")
+
+                val user = userService.findByEmail(session.email)
+                    ?: return@get call.respond(HttpStatusCode.NotFound, "User not found")
+
+                val userId = user.id
+                    ?: return@get call.respond(HttpStatusCode.InternalServerError, "User ID not found")
+
+                val cardioHistory = activityService.getCardioHistory(userId)
+                val weightliftingHistory = weightliftingService.getWeightliftingHistory(userId)
+                val raceHistory = raceService.getRacesForUser(userId)
+
+                val cardioItems = cardioHistory.map { item ->
+                    ActivityFeedItem(
+                        date = item.logDate,
+                        category = "Cardio",
+                        title = item.activityType,
+                        summary = item.distance?.let { "$it km" } ?: "Distance not recorded",
+                        metric = "${item.duration} min",
+                        notes = item.notes ?: ""
+                    )
+                }
+
+                val weightliftingItems = weightliftingHistory.map { item ->
+                    val exerciseSummary = item.exercises
+                        .joinToString(", ") { exercise ->
+                            "${exercise.exerciseName} ${exercise.sets}x${exercise.reps}"
+                        }
+                        .ifBlank { "${item.totalSets} total sets" }
+
+                    ActivityFeedItem(
+                        date = item.logDate,
+                        category = "Weightlifting",
+                        title = "Weightlifting session",
+                        summary = exerciseSummary,
+                        metric = "${item.duration} min",
+                        notes = item.notes ?: ""
+                    )
+                }
+
+                val raceItems = raceHistory.map { race ->
+                    val metric = race.finishTime
+                        ?: race.overallRank?.let { "Overall #$it" }
+                        ?: "Completed"
+
+                    val summary = listOfNotNull(race.location, race.category).joinToString(" • ")
+                        .ifBlank { "Race logged" }
+
+                    val notePrefix = if (race.isPersonalBest) "Personal best. " else ""
+                    val noteBody = race.certificateUrl?.let { "Certificate: $it" } ?: ""
+
+                    ActivityFeedItem(
+                        date = race.eventDate,
+                        category = "Race",
+                        title = race.eventName,
+                        summary = summary,
+                        metric = metric,
+                        notes = "$notePrefix$noteBody".trim()
+                    )
+                }
+
+                val activities = (cardioItems + weightliftingItems + raceItems)
+                    .sortedByDescending { it.date }
+
+                call.respond(
+                    PebbleContent(
+                        "activity-history",
+                        mapOf("activities" to activities)
+                    )
+                )
+            }
+
             // --- TCX Upload ---
             get("/tcx/upload") {
                 call.respond(
@@ -180,4 +267,3 @@ fun Application.configureActivityRoutes(
         }
     }
 }
-

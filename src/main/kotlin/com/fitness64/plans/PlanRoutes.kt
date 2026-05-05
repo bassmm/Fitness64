@@ -2,7 +2,6 @@ package com.fitness64.plans
 
 import com.fitness64.UserSession
 import com.fitness64.getStartOfWeek
-import com.fitness64.loggedActivities
 import com.fitness64.users.UserService
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -11,8 +10,6 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import java.time.LocalDate
-import java.time.format.TextStyle
-import java.util.*
 
 fun Application.configurePlanRoutes(
     planService: PlanService,
@@ -192,47 +189,6 @@ fun Application.configurePlanRoutes(
                 call.respondRedirect("/plan")
             }
 
-            get("/calendar") {
-                val session = call.principal<UserSession>()!!
-                val user = userService.findByEmail(session.email)
-                    ?: return@get call.respondRedirect("/login")
-
-                val userId = user.id
-                    ?: return@get call.respondRedirect("/login")
-
-                val today = LocalDate.now()
-                val startOfWeek = getStartOfWeek(today)
-                val planFromDatabase = planService.getPlan(userId)
-
-                val planByDay = planFromDatabase.associateBy { it.day }
-
-                val calendarItems = (0..6).map { index ->
-                    val date = startOfWeek.plusDays(index.toLong())
-                    val dayName = date.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.ENGLISH)
-                    val plannedSession = planByDay[dayName]?.session ?: ""
-                    val loggedForDate = loggedActivities.filter { it.date == date.toString() }
-
-                    mapOf(
-                        "day" to dayName,
-                        "date" to date.toString(),
-                        "planned" to plannedSession,
-                        "isToday" to (date == today),
-                        "logged" to loggedForDate.map {
-                            mapOf(
-                                "type" to it.type,
-                                "duration" to it.duration,
-                                "distance" to it.distance,
-                                "notes" to it.notes
-                            )
-                        }
-                    )
-                }
-
-                call.respondTemplate(
-                    "calendar",
-                    mapOf("calendarItems" to calendarItems)
-                )
-            }
         }
     }
 }

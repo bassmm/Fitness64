@@ -1,7 +1,6 @@
 package com.fitness64.weightlifting
 
 import com.fitness64.UserSession
-import com.fitness64.activities.ActivityService
 import com.fitness64.users.UserService
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.Parameters
@@ -26,7 +25,6 @@ private data class WeightliftingFormRow(
 
 fun Application.configureWeightliftingRoutes(
     weightliftingService: WeightliftingService,
-    activityService: ActivityService,
     userService: UserService
 ) {
     routing {
@@ -41,31 +39,7 @@ fun Application.configureWeightliftingRoutes(
             }
 
             get("/weightlifting/history") {
-                call.respondRedirect("/activities/history")
-            }
-
-            get("/activities/history") {
-                val session = call.principal<UserSession>()
-                    ?: return@get call.respond(HttpStatusCode.Unauthorized, "Not logged in")
-
-                val user = userService.findByEmail(session.email)
-                    ?: return@get call.respond(HttpStatusCode.NotFound, "User not found")
-
-                val userId = user.id
-                    ?: return@get call.respond(HttpStatusCode.InternalServerError, "User ID not found")
-
-                val weightliftingHistory = weightliftingService.getWeightliftingHistory(userId)
-                val cardioHistory = activityService.getCardioHistory(userId)
-
-                call.respond(
-                    PebbleContent(
-                        "activity-history",
-                        mapOf(
-                            "weightliftingHistory" to weightliftingHistory,
-                            "cardioHistory" to cardioHistory
-                        )
-                    )
-                )
+                call.respondRedirect("/activities")
             }
 
             post("/weightlifting/log") {
@@ -114,7 +88,7 @@ fun Application.configureWeightliftingRoutes(
                 }
 
                 weightliftingService.createWorkoutSession(workout, exercises)
-                call.respondRedirect("/activities/history")
+                call.respondRedirect("/activities")
             }
         }
     }

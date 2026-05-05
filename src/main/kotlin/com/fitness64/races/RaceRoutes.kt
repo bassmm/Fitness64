@@ -1,38 +1,18 @@
 package com.fitness64.races
 
-import com.fitness64.UserSession
-import com.fitness64.users.UserService
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
-import io.ktor.server.pebble.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.server.sessions.*
 
 fun Application.configureRaceRoutes(
-    raceService: RaceService,
-    userService: UserService
+    raceService: RaceService
 ) {
     routing {
 
         authenticate("auth-session") {
-            get("/races") {
-                val session = call.principal<UserSession>()!!
-                val user = userService.findByEmail(session.email)
-
-                if (user == null) {
-                    call.respondRedirect("/login")
-                    return@get
-                }
-
-                call.respondTemplate(
-                    "races",
-                    mapOf("races" to emptyList<Any>())
-                )
-            }
-
             // Log a new race
             post("/races") {
                 val race = call.receive<RaceRecord>()
