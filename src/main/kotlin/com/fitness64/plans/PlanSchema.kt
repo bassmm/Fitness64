@@ -183,7 +183,13 @@ class PlanService(database: Database) {
             .singleOrNull()
     }
 
-    suspend fun updatePlanSession(userId: Int, dayValue: String, newSession: String) = dbQuery {
+    suspend fun updatePlanSession(
+        userId: Int,
+        dayValue: String,
+        newSession: String,
+        newDuration: Int,
+        newIntensity: String
+    ) = dbQuery {
         val planId = TrainingPlans.selectAll()
             .where { TrainingPlans.userId eq userId }
             .map { it[TrainingPlans.id] }
@@ -197,8 +203,8 @@ class PlanService(database: Database) {
                 }
             ) {
                 it[sessionName] = newSession
-                it[durationMinutes] = 20
-                it[intensity] = "Low"
+                it[durationMinutes] = newDuration
+                it[intensity] = newIntensity
                 it[isRestDay] = newSession.lowercase().contains("rest")
             }
         }

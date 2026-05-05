@@ -7,11 +7,12 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
-fun Application.configureRaceRoutes(raceService: RaceService) {
+fun Application.configureRaceRoutes(
+    raceService: RaceService
+) {
     routing {
 
         authenticate("auth-session") {
-
             // Log a new race
             post("/races") {
                 val race = call.receive<RaceRecord>()

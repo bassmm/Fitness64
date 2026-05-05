@@ -10,8 +10,8 @@ page_heading %}Weekly Plan{% endblock %} {% block content %}
             Your planned sessions for this real calendar week.
         </p>
     </div>
-    <a class="btn btn-primary" href="/quick-log"
-        ><i class="bi bi-lightning-charge me-2"></i>Quick Log</a
+    <a class="btn btn-primary" href="/log"
+        ><i class="bi bi-plus-circle me-2"></i>Log Activity</a
     >
 </div>
 
@@ -24,7 +24,10 @@ page_heading %}Weekly Plan{% endblock %} {% block content %}
                 <p class="text-uppercase text-muted text-xs mb-2">
                     Your current plan
                 </p>
-                <h3 class="h5 mb-2 text-heading">{{ planType }}</h3>
+                <h3 class="h5 mb-2 text-heading text-capitalize">
+                    {{ planType == "custom" ? "Custom" : planType + " Focused"
+                    }}
+                </h3>
                 <p class="text-sm text-muted mb-0">
                     <i class="bi bi-activity me-2"></i>Fitness level: {{
                     fitnessLevel }}
@@ -90,8 +93,8 @@ page_heading %}Weekly Plan{% endblock %} {% block content %}
                 </div>
                 <a
                     class="btn btn-sm btn-neutral"
-                    href="/plan/replace?day={{ item.day }}"
-                    ><i class="bi bi-arrow-repeat me-2"></i>Replace Session</a
+                    href="/plan/update-session?day={{ item.day }}"
+                    ><i class="bi bi-arrow-repeat me-2"></i>Update Session</a
                 >
             </div>
         </div>
