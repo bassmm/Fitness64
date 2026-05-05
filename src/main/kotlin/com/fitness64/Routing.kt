@@ -620,22 +620,57 @@ fun Application.configureRouting(
                     )
                 }
 
-                call.respondTemplate(
-                    "progress",
-                    mapOf(
-                        "weeklyWorkouts" to "$totalWorkouts workout${pluralSuffix(totalWorkouts)} completed this week",
-                        "activeDays" to "$activeDays active day${pluralSuffix(activeDays)}",
-                        "runningRecords" to runningRecords,
-                        "cyclingRecords" to cyclingRecords,
-                        "consistency" to "$activeDays / 7 days active",
-                        "nextGoal" to if (totalWorkouts == 0) {
-                            "Log your first workout this week"
-                        } else {
-                            "Reach ${totalWorkouts + 1} workouts this week"
-                        },
-                        "achievements" to achievements
-                    )
+                // Weekly workouts per day for bar chart
+val workoutsByDay = (0..6).map { i ->
+    val date = startOfWeek.plusDays(i.toLong())
+    val dateStr = date.toString()
+    val dayName = date.dayOfWeek.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.ENGLISH)
+    val count = weeklyWorkouts.count { it.logDate == dateStr }
+    mapOf("day" to dayName, "count" to count)
+}
+
+// Activity type breakdown for pie chart
+val activityBreakdown = weeklyWorkouts
+    .groupingBy { workout ->
+        activityTypeNames[workout.activityTypeId] ?: workout.source ?: "Activity"
+    }
+    .eachCount()
+    .map { mapOf("type" to it.key, "count" to it.value) }
+
+// Distance over time for line chart (last 4 weeks)
+val distanceByWeek = (3 downTo 0).map { weeksAgo ->
+    val weekStart = startOfWeek.minusWeeks(weeksAgo.toLong())
+    val weekEnd = weekStart.plusDays(6)
+    val label = "Week of ${weekStart.dayOfMonth}/${weekStart.monthValue}"
+    val totalDistance = workouts
+        .filter { workout ->
+            val date = parseActivityDate(workout.logDate)
+            date != null && !date.isBefore(weekStart) && !date.isAfter(weekEnd)
+        }
+        .mapNotNull { it.distance }
+        .sum()
+    mapOf("week" to label, "distance" to Math.round(totalDistance * 10.0) / 10.0)
+}
+
+            call.respondTemplate(
+                "progress",
+                mapOf(
+                    "weeklyWorkouts" to "$totalWorkouts workout${pluralSuffix(totalWorkouts)} completed this week",
+                    "activeDays" to "$activeDays active day${pluralSuffix(activeDays)}",
+                    "runningRecords" to runningRecords,
+                    "cyclingRecords" to cyclingRecords,
+                    "consistency" to "$activeDays / 7 days active",
+                    "nextGoal" to if (totalWorkouts == 0) {
+                        "Log your first workout this week"
+                    } else {
+                        "Reach ${totalWorkouts + 1} workouts this week"
+                    },
+                    "achievements" to achievements,
+                    "workoutsByDay" to workoutsByDay,
+                    "activityBreakdown" to activityBreakdown,
+                    "distanceByWeek" to distanceByWeek
                 )
+            )
             }
 
             get("/pebble-index") {
