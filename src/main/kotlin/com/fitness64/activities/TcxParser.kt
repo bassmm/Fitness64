@@ -1,10 +1,25 @@
+/**
+ * TcxParser.kt
+ *
+ * Parses TCX (Training Center XML) files exported from fitness devices
+ * such as Garmin watches, Strava, and other GPS-enabled fitness trackers.
+ * Extracts lap and trackpoint data including GPS coordinates, heart rate,
+ * altitude, and distance for storage in the database.
+ */
 package com.fitness64.activities
 
 import org.w3c.dom.Element
-import org.w3c.dom.NodeList
 import javax.xml.parsers.DocumentBuilderFactory
 import java.io.InputStream
 
+/**
+ * Represents the complete parsed result of a TCX file.
+ *
+ * @property totalDuration Total workout duration in seconds across all laps.
+ * @property totalDistance Total distance in metres across all laps.
+ * @property totalCalories Total calories burned, or null if not recorded.
+ * @property laps List of individual laps parsed from the TCX file.
+ */
 data class ParsedTcxData(
     val totalDuration: Int,
     val totalDistance: Double,
@@ -12,6 +27,15 @@ data class ParsedTcxData(
     val laps: List<ParsedLap>
 )
 
+/**
+ * Represents a single lap within a TCX activity.
+ *
+ * @property startTime The ISO timestamp when the lap started.
+ * @property totalTimeSeconds Total duration of the lap in seconds.
+ * @property distance Total distance covered in this lap in metres.
+ * @property calories Calories burned during this lap, or null if not recorded.
+ * @property trackpoints List of GPS trackpoints recorded during this lap.
+ */
 data class ParsedLap(
     val startTime: String,
     val totalTimeSeconds: Int,
@@ -20,6 +44,16 @@ data class ParsedLap(
     val trackpoints: List<ParsedTrackpoint>
 )
 
+/**
+ * Represents a single GPS trackpoint recorded during a lap.
+ *
+ * @property time The ISO timestamp of this trackpoint.
+ * @property latitude GPS latitude in decimal degrees, or null if not recorded.
+ * @property longitude GPS longitude in decimal degrees, or null if not recorded.
+ * @property altitude Altitude in metres, or null if not recorded.
+ * @property distance Cumulative distance in metres at this point, or null if not recorded.
+ * @property heartRate Heart rate in BPM at this point, or null if not recorded.
+ */
 data class ParsedTrackpoint(
     val time: String,
     val latitude: Double?,
@@ -29,8 +63,19 @@ data class ParsedTrackpoint(
     val heartRate: Int?
 )
 
+/**
+ * Singleton object responsible for parsing TCX XML files into structured data.
+ * Uses Java's built-in XML DOM parser to read the TCX format.
+ */
 object TcxParser {
 
+    /**
+     * Parses a TCX file from the given input stream and extracts all
+     * lap and trackpoint data into a [ParsedTcxData] object.
+     *
+     * @param input The input stream of the TCX file to parse.
+     * @return A [ParsedTcxData] object containing all extracted workout data.
+     */
     fun parse(input: InputStream): ParsedTcxData {
         val factory = DocumentBuilderFactory.newInstance()
         val builder = factory.newDocumentBuilder()
@@ -100,6 +145,13 @@ object TcxParser {
         )
     }
 
+    /**
+     * Retrieves the text content of the first child element matching the given tag name.
+     *
+     * @param parent The parent XML element to search within.
+     * @param tagName The tag name of the child element to find.
+     * @return The trimmed text content of the element, or null if not found.
+     */
     private fun getElementText(parent: Element, tagName: String): String? {
         val elements = parent.getElementsByTagName(tagName)
         if (elements.length == 0) return null

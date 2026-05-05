@@ -1,3 +1,11 @@
+/**
+ * ActivityRoutes.kt
+ *
+ * Defines the API and UI routes for activity management.
+ * Handles the unified activity history feed (cardio, weightlifting, races),
+ * TCX file upload and parsing, and REST API endpoints for workout logs,
+ * laps, trackpoints, and activity types.
+ */
 package com.fitness64.activities
 
 import com.fitness64.UserSession
@@ -20,6 +28,16 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 
+/**
+ * Internal data class representing a single item in the unified activity feed.
+ *
+ * @property date The date of the activity (ISO format: yyyy-MM-dd).
+ * @property category The category of activity (e.g. Cardio, Weightlifting, Race).
+ * @property title The display title of the activity.
+ * @property summary A brief summary of the activity (e.g. distance or exercises).
+ * @property metric A key metric for the activity (e.g. duration, finish time).
+ * @property notes Any additional notes about the activity.
+ */
 private data class ActivityFeedItem(
     val date: String,
     val category: String,
@@ -29,6 +47,16 @@ private data class ActivityFeedItem(
     val notes: String
 )
 
+/**
+ * Registers all activity-related routes on the application.
+ * Combines cardio, weightlifting, and race history into a unified feed,
+ * handles TCX file uploads, and exposes REST API endpoints for workouts.
+ *
+ * @param activityService The service for cardio workout database operations.
+ * @param userService The service for user lookup and authentication.
+ * @param weightliftingService The service for weightlifting session database operations.
+ * @param raceService The service for race record database operations.
+ */
 fun Application.configureActivityRoutes(
     activityService: ActivityService,
     userService: UserService,
@@ -37,6 +65,12 @@ fun Application.configureActivityRoutes(
 ) {
     routing {
         authenticate("auth-session") {
+
+            /**
+             * GET /activities
+             * Displays the unified activity history feed combining cardio sessions,
+             * weightlifting sessions, and race results sorted by date descending.
+             */
             get("/activities") {
                 val session = call.principal<UserSession>()
                     ?: return@get call.respond(HttpStatusCode.Unauthorized, "Not logged in")
@@ -111,7 +145,10 @@ fun Application.configureActivityRoutes(
                 )
             }
 
-            // --- TCX Upload ---
+            /**
+             * GET /tcx/upload
+             * Displays the TCX file upload page.
+             */
             get("/tcx/upload") {
                 call.respond(
                     PebbleContent(
@@ -121,6 +158,13 @@ fun Application.configureActivityRoutes(
                 )
             }
 
+            /**
+             * POST /tcx/upload
+             * Handles TCX file upload from a fitness device or export service.
+             * Parses the file and saves all laps and trackpoints to the database.
+             * Responds with a success message showing the number of laps and trackpoints saved,
+             * or an error message if no file was provided or parsing failed.
+             */
             post("/tcx/upload") {
                 val session = call.principal<UserSession>()
                     ?: return@post call.respond(HttpStatusCode.Unauthorized, "Not logged in")
@@ -210,18 +254,33 @@ fun Application.configureActivityRoutes(
             }
         }
 
+        /**
+         * POST /activity-types
+         * Creates a new activity type via the REST API.
+         * Responds with 201 Created and the new activity type ID.
+         */
         post("/activity-types") {
             val activityType = call.receive<ActivityType>()
             val id = activityService.createActivityType(activityType)
             call.respond(HttpStatusCode.Created, id)
         }
 
+        /**
+         * POST /workouts
+         * Creates a new workout log entry via the REST API.
+         * Responds with 201 Created and the new workout log ID.
+         */
         post("/workouts") {
             val workout = call.receive<WorkoutLog>()
             val id = activityService.createWorkoutLog(workout)
             call.respond(HttpStatusCode.Created, id)
         }
 
+        /**
+         * GET /workouts/{id}
+         * Retrieves a single workout log by its ID via the REST API.
+         * Responds with 200 OK and the workout data, or 404 if not found.
+         */
         get("/workouts/{id}") {
             val id = call.parameters["id"]?.toInt()
                 ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid workout ID")
@@ -233,6 +292,11 @@ fun Application.configureActivityRoutes(
             }
         }
 
+        /**
+         * GET /users/{userId}/workouts
+         * Retrieves all workout logs for a specific user via the REST API.
+         * Responds with 200 OK and a list of workout logs.
+         */
         get("/users/{userId}/workouts") {
             val userId = call.parameters["userId"]?.toInt()
                 ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid user ID")
@@ -240,6 +304,11 @@ fun Application.configureActivityRoutes(
             call.respond(HttpStatusCode.OK, workouts)
         }
 
+        /**
+         * DELETE /workouts/{id}
+         * Deletes a workout log by its ID via the REST API.
+         * Responds with 200 OK on success.
+         */
         delete("/workouts/{id}") {
             val id = call.parameters["id"]?.toInt()
                 ?: return@delete call.respond(HttpStatusCode.BadRequest, "Invalid workout ID")
@@ -247,18 +316,33 @@ fun Application.configureActivityRoutes(
             call.respond(HttpStatusCode.OK, "Workout deleted")
         }
 
+        /**
+         * POST /laps
+         * Creates a new workout lap entry via the REST API.
+         * Responds with 201 Created and the new lap ID.
+         */
         post("/laps") {
             val lap = call.receive<WorkoutLap>()
             val id = activityService.createWorkoutLap(lap)
             call.respond(HttpStatusCode.Created, id)
         }
 
+        /**
+         * POST /trackpoints
+         * Creates a new GPS trackpoint entry via the REST API.
+         * Responds with 201 Created and the new trackpoint ID.
+         */
         post("/trackpoints") {
             val trackpoint = call.receive<Trackpoint>()
             val id = activityService.createTrackpoint(trackpoint)
             call.respond(HttpStatusCode.Created, id)
         }
 
+        /**
+         * GET /laps/{id}/trackpoints
+         * Retrieves all trackpoints for a specific lap via the REST API.
+         * Responds with 200 OK and a list of trackpoints.
+         */
         get("/laps/{id}/trackpoints") {
             val id = call.parameters["id"]?.toInt()
                 ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid lap ID")
