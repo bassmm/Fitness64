@@ -23,16 +23,47 @@ fun Application.module() {
             ?: activityService.createActivityType(ActivityType("Weightlifting"))
 
         if (activityService.getExerciseByName("Bench Press") == null) {
-            activityService.createExercise(Exercise(name = "Bench Press", activityTypeId = weightliftingTypeId, category = "Chest", measurementType = "reps"))
+            activityService.createExercise(
+                Exercise(
+                    name = "Bench Press",
+                    activityTypeId = weightliftingTypeId,
+                    category = "Chest",
+                    measurementType = "reps"
+                )
+            )
         }
+
         if (activityService.getExerciseByName("Squat") == null) {
-            activityService.createExercise(Exercise(name = "Squat", activityTypeId = weightliftingTypeId, category = "Legs", measurementType = "reps"))
+            activityService.createExercise(
+                Exercise(
+                    name = "Squat",
+                    activityTypeId = weightliftingTypeId,
+                    category = "Legs",
+                    measurementType = "reps"
+                )
+            )
         }
+
         if (activityService.getExerciseByName("Deadlift") == null) {
-            activityService.createExercise(Exercise(name = "Deadlift", activityTypeId = weightliftingTypeId, category = "Back", measurementType = "reps"))
+            activityService.createExercise(
+                Exercise(
+                    name = "Deadlift",
+                    activityTypeId = weightliftingTypeId,
+                    category = "Back",
+                    measurementType = "reps"
+                )
+            )
         }
+
         if (activityService.getExerciseByName("Shoulder Press") == null) {
-            activityService.createExercise(Exercise(name = "Shoulder Press", activityTypeId = weightliftingTypeId, category = "Shoulders", measurementType = "reps"))
+            activityService.createExercise(
+                Exercise(
+                    name = "Shoulder Press",
+                    activityTypeId = weightliftingTypeId,
+                    category = "Shoulders",
+                    measurementType = "reps"
+                )
+            )
         }
     }
 
@@ -40,7 +71,6 @@ fun Application.module() {
     configureSerialization()
     configureSecurity(userService)
 
-    // Routing
     configureRouting(userService, activityService, planService, raceService)
     configureUsersRoutes(userService)
     configureActivityRoutes(activityService, userService)
