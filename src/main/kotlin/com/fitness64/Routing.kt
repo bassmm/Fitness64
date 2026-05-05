@@ -7,6 +7,7 @@ import com.fitness64.plans.PlanService
 import com.fitness64.races.RaceRecord
 import com.fitness64.races.RaceService
 import com.fitness64.users.UserService
+import com.fitness64.weightlifting.WeightliftingService
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.http.content.*
@@ -25,14 +26,16 @@ fun Application.configureRouting(
     userService: UserService,
     activityService: ActivityService,
     planService: PlanService,
-    raceService: RaceService
+    raceService: RaceService,
+    weightliftingService: WeightliftingService
 ) {
     routing {
 
         staticResources("/assets", "assets")
 
+        // Public routes
         get("/") {
-            call.respondRedirect("/login")
+            call.respondRedirect("/home")
         }
 
         get("/login") {
@@ -332,7 +335,7 @@ fun Application.configureRouting(
                 }
 
                 when (activityType) {
-                    "Gym" -> call.respondRedirect("/weightlifting/log")
+                    "Weightlifting" -> call.respondRedirect("/weightlifting/log")
                     "Running", "Cycling", "Swimming" ->
                         call.respondRedirect("/log/details?type=$activityType&date=$activityDate")
                     else -> call.respondRedirect("/log")
@@ -382,7 +385,6 @@ fun Application.configureRouting(
 
                 if (
                     type.isBlank() ||
-                    activityDate.isBlank() ||
                     parsedDate == null ||
                     durationMinutes == null
                 ) {
@@ -400,37 +402,23 @@ fun Application.configureRouting(
                     return@post
                 }
 
-                try {
-                    val activityTypeId = activityService.getActivityTypeByName(type)
-                        ?: activityService.createActivityType(ActivityType(type))
+                val activityTypeId = activityService.getActivityTypeByName(type)
+                    ?: activityService.createActivityType(ActivityType(type))
 
-                    activityService.createWorkoutLog(
-                        WorkoutLog(
-                            userId = userId,
-                            activityTypeId = activityTypeId,
-                            logDate = parsedDate.toString(),
-                            duration = durationMinutes,
-                            distance = distanceKm,
-                            notes = notes.ifBlank { null },
-                            calories = null,
-                            source = type
-                        )
+                activityService.createWorkoutLog(
+                    WorkoutLog(
+                        userId = userId,
+                        activityTypeId = activityTypeId,
+                        logDate = parsedDate.toString(),
+                        duration = durationMinutes,
+                        distance = distanceKm,
+                        notes = notes.ifBlank { null },
+                        calories = null,
+                        source = type
                     )
+                )
 
-                    call.respondRedirect("/calendar")
-                } catch (e: Exception) {
-                    call.respondTemplate(
-                        "log-details",
-                        mapOf(
-                            "error" to "Could not save activity. Please try again.",
-                            "selectedType" to type,
-                            "activityDate" to activityDate,
-                            "distance" to distanceText,
-                            "duration" to durationText,
-                            "notes" to notes
-                        )
-                    )
-                }
+                call.respondRedirect("/calendar")
             }
 
             get("/quick-log") {
@@ -476,22 +464,34 @@ fun Application.configureRouting(
                 val endOfWeek = startOfWeek.plusDays(6)
 
                 val workouts = activityService.getWorkoutsForUser(userId)
-val activityTypeNames = loadActivityTypeNames(activityService, workouts)
-val workoutsByDate = workouts.groupBy { it.logDate }
+                val activityTypeNames = loadActivityTypeNames(activityService, workouts)
+                val workoutsByDate = workouts.groupBy { it.logDate }
+
+                val weightliftingSessions = weightliftingService.getWeightliftingHistory(userId)
+                val weightliftingByDate = weightliftingSessions.groupBy { it.logDate }
+
+                val races = raceService.getRacesForUser(userId)
+                val racesByDate = races.groupBy { it.eventDate }
 
                 val planFromDatabase = planService.getPlan(userId)
                 val planByDay = planFromDatabase.associateBy { it.day }
 
                 val earliestWorkoutDate = workouts
-                    .mapNotNull { workout ->
-                        runCatching {
-                            LocalDate.parse(workout.logDate)
-                        }.getOrNull()
-                    }
+                    .mapNotNull { runCatching { LocalDate.parse(it.logDate) }.getOrNull() }
+                    .minOrNull()
+
+                val earliestWeightliftingDate = weightliftingSessions
+                    .mapNotNull { runCatching { LocalDate.parse(it.logDate) }.getOrNull() }
+                    .minOrNull()
+
+                val earliestRaceDate = races
+                    .mapNotNull { runCatching { LocalDate.parse(it.eventDate) }.getOrNull() }
                     .minOrNull()
 
                 val earliestDate = listOfNotNull(
                     earliestWorkoutDate,
+                    earliestWeightliftingDate,
+                    earliestRaceDate,
                     startOfWeek
                 ).minOrNull() ?: startOfWeek
 
@@ -507,6 +507,8 @@ val workoutsByDate = workouts.groupBy { it.logDate }
                     val dateString = date.toString()
                     val dayName = date.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.ENGLISH)
                     val workoutsForDate = workoutsByDate[dateString] ?: emptyList()
+                    val weightliftingForDate = weightliftingByDate[dateString] ?: emptyList()
+                    val racesForDate = racesByDate[dateString] ?: emptyList()
 
                     val plannedSession = if (!date.isBefore(startOfWeek) && !date.isAfter(endOfWeek)) {
                         planByDay[dayName]?.session ?: ""
@@ -519,14 +521,45 @@ val workoutsByDate = workouts.groupBy { it.logDate }
                         "date" to dateString,
                         "planned" to plannedSession,
                         "isToday" to (date == today),
-                        "logged" to workoutsForDate.map {
-                            mapOf(
-                                "type" to (activityTypeNames[it.activityTypeId] ?: it.source ?: "Workout"),
-                                "duration" to "${it.duration} min",
-                                "distance" to (it.distance?.let { distance -> "${formatDistance(distance)} km" } ?: ""),
-                                "notes" to (it.notes ?: "")
-                            )
-                        }
+                        "logged" to (
+                            workoutsForDate.map {
+                                mapOf(
+                                    "type" to (activityTypeNames[it.activityTypeId] ?: it.source ?: "Workout"),
+                                    "duration" to "${it.duration} min",
+                                    "distance" to (it.distance?.let { distance -> "${formatDistance(distance)} km" } ?: ""),
+                                    "notes" to (it.notes ?: "")
+                                )
+                            } +
+                                weightliftingForDate.map {
+                                    mapOf(
+                                        "type" to "Weightlifting",
+                                        "duration" to "${it.duration} min",
+                                        "distance" to "${it.totalSets} total sets",
+                                        "notes" to (it.notes ?: "")
+                                    )
+                                } +
+                                racesForDate.map { race ->
+                                    val raceDetails = listOfNotNull(
+                                        race.location,
+                                        race.category
+                                    ).joinToString(" • ")
+
+                                    val raceNotes = buildString {
+                                        if (race.isPersonalBest) append("Personal best")
+                                        if (raceDetails.isNotBlank()) {
+                                            if (isNotEmpty()) append(" · ")
+                                            append(raceDetails)
+                                        }
+                                    }
+
+                                    mapOf(
+                                        "type" to "Race: ${race.eventName}",
+                                        "duration" to (race.finishTime ?: "Completed"),
+                                        "distance" to "",
+                                        "notes" to raceNotes
+                                    )
+                                }
+                        )
                     )
                 }.toList()
 
@@ -554,8 +587,8 @@ val workoutsByDate = workouts.groupBy { it.logDate }
                     val workoutDate = parseActivityDate(workout.logDate)
 
                     workoutDate != null &&
-                            !workoutDate.isBefore(startOfWeek) &&
-                            !workoutDate.isAfter(today)
+                        !workoutDate.isBefore(startOfWeek) &&
+                        !workoutDate.isAfter(today)
                 }
 
                 val totalWorkouts = weeklyWorkouts.size
@@ -690,7 +723,7 @@ val workoutsByDate = workouts.groupBy { it.logDate }
 
                 raceService.createRace(
                     RaceRecord(
-                        userId = user.id!!,
+                        userId = user.id,
                         eventName = eventName,
                         eventDate = eventDate,
                         location = location.ifBlank { null },

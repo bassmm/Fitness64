@@ -15,6 +15,14 @@ version = "0.0.1"
 
 application {
     mainClass = "io.ktor.server.netty.EngineMain"
+    applicationDefaultJvmArgs = listOf(
+        "-Dio.ktor.development=true",
+        "--enable-native-access=ALL-UNNAMED"
+    )
+}
+
+tasks.named<JavaExec>("run") {
+    jvmArgs("-Dio.ktor.development=true", "--enable-native-access=ALL-UNNAMED")
 }
 
 kotlin {

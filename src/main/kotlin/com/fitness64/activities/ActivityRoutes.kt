@@ -1,107 +1,43 @@
 package com.fitness64.activities
 
 import com.fitness64.UserSession
+import com.fitness64.races.RaceService
 import com.fitness64.users.UserService
-import io.ktor.http.*
-import io.ktor.http.content.*
-import io.ktor.server.application.*
-import io.ktor.server.auth.*
-import io.ktor.server.pebble.*
-import io.ktor.server.request.*
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
-import java.time.LocalDate
+import com.fitness64.weightlifting.WeightliftingService
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.content.PartData
+import io.ktor.http.content.forEachPart
+import io.ktor.server.application.Application
+import io.ktor.server.auth.authenticate
+import io.ktor.server.auth.principal
+import io.ktor.server.pebble.PebbleContent
+import io.ktor.server.request.receive
+import io.ktor.server.request.receiveMultipart
+import io.ktor.utils.io.jvm.javaio.toInputStream
+import io.ktor.server.response.respond
+import io.ktor.server.routing.delete
+import io.ktor.server.routing.get
+import io.ktor.server.routing.post
+import io.ktor.server.routing.routing
+
+private data class ActivityFeedItem(
+    val date: String,
+    val category: String,
+    val title: String,
+    val summary: String,
+    val metric: String,
+    val notes: String
+)
 
 fun Application.configureActivityRoutes(
     activityService: ActivityService,
-    userService: UserService
+    userService: UserService,
+    weightliftingService: WeightliftingService,
+    raceService: RaceService
 ) {
     routing {
-
         authenticate("auth-session") {
-
-            get("/weightlifting/log") {
-                val weightliftingTypeId = activityService.getActivityTypeByName("Weightlifting")
-                    ?: return@get call.respond(HttpStatusCode.BadRequest, "Weightlifting activity type not found")
-
-                val exercises = activityService.getExercisesByActivityType(weightliftingTypeId)
-
-                call.respond(
-                    PebbleContent(
-                        "weightlifting-log",
-                        mapOf(
-                            "today" to LocalDate.now().toString(),
-                            "exercises" to exercises
-                        )
-                    )
-                )
-            }
-
-            get("/weightlifting/exercises/new") {
-                call.respond(
-                    PebbleContent(
-                        "add-exercise",
-                        mapOf(
-                            "error" to "",
-                            "name" to "",
-                            "category" to "",
-                            "measurementType" to "reps"
-                        )
-                    )
-                )
-            }
-
-            post("/weightlifting/exercises/new") {
-                val params = call.receiveParameters()
-                val name = params["name"]?.trim().orEmpty()
-                val category = params["category"]?.trim().orEmpty()
-                val measurementType = params["measurementType"]?.trim().orEmpty()
-
-                if (name.isBlank()) {
-                    return@post call.respond(
-                        PebbleContent(
-                            "add-exercise",
-                            mapOf(
-                                "error" to "Exercise name is required.",
-                                "name" to name,
-                                "category" to category,
-                                "measurementType" to measurementType
-                            )
-                        )
-                    )
-                }
-
-                val weightliftingTypeId = activityService.getActivityTypeByName("Weightlifting")
-                    ?: return@post call.respond(HttpStatusCode.BadRequest, "Weightlifting activity type not found")
-
-                val existingExerciseId = activityService.getExerciseByName(name)
-                if (existingExerciseId != null) {
-                    return@post call.respond(
-                        PebbleContent(
-                            "add-exercise",
-                            mapOf(
-                                "error" to "This exercise already exists.",
-                                "name" to name,
-                                "category" to category,
-                                "measurementType" to measurementType
-                            )
-                        )
-                    )
-                }
-
-                activityService.createExercise(
-                    Exercise(
-                        name = name,
-                        activityTypeId = weightliftingTypeId,
-                        category = if (category.isBlank()) null else category,
-                        measurementType = if (measurementType.isBlank()) null else measurementType
-                    )
-                )
-
-                call.respondRedirect("/weightlifting/log")
-            }
-
-            get("/weightlifting/history") {
+            get("/activities") {
                 val session = call.principal<UserSession>()
                     ?: return@get call.respond(HttpStatusCode.Unauthorized, "Not logged in")
 
@@ -111,78 +47,71 @@ fun Application.configureActivityRoutes(
                 val userId = user.id
                     ?: return@get call.respond(HttpStatusCode.InternalServerError, "User ID not found")
 
-                val history = activityService.getWeightliftingHistory(userId)
+                val cardioHistory = activityService.getCardioHistory(userId)
+                val weightliftingHistory = weightliftingService.getWeightliftingHistory(userId)
+                val raceHistory = raceService.getRacesForUser(userId)
+
+                val cardioItems = cardioHistory.map { item ->
+                    ActivityFeedItem(
+                        date = item.logDate,
+                        category = "Cardio",
+                        title = item.activityType,
+                        summary = item.distance?.let { "$it km" } ?: "Distance not recorded",
+                        metric = "${item.duration} min",
+                        notes = item.notes ?: ""
+                    )
+                }
+
+                val weightliftingItems = weightliftingHistory.map { item ->
+                    val exerciseSummary = item.exercises
+                        .joinToString(", ") { exercise ->
+                            "${exercise.exerciseName} ${exercise.sets}x${exercise.reps}"
+                        }
+                        .ifBlank { "${item.totalSets} total sets" }
+
+                    ActivityFeedItem(
+                        date = item.logDate,
+                        category = "Weightlifting",
+                        title = "Weightlifting session",
+                        summary = exerciseSummary,
+                        metric = "${item.duration} min",
+                        notes = item.notes ?: ""
+                    )
+                }
+
+                val raceItems = raceHistory.map { race ->
+                    val metric = race.finishTime
+                        ?: race.overallRank?.let { "Overall #$it" }
+                        ?: "Completed"
+
+                    val summary = listOfNotNull(race.location, race.category).joinToString(" • ")
+                        .ifBlank { "Race logged" }
+
+                    val notePrefix = if (race.isPersonalBest) "Personal best. " else ""
+                    val noteBody = race.certificateUrl?.let { "Certificate: $it" } ?: ""
+
+                    ActivityFeedItem(
+                        date = race.eventDate,
+                        category = "Race",
+                        title = race.eventName,
+                        summary = summary,
+                        metric = metric,
+                        notes = "$notePrefix$noteBody".trim()
+                    )
+                }
+
+                val activities = (cardioItems + weightliftingItems + raceItems)
+                    .sortedByDescending { it.date }
 
                 call.respond(
                     PebbleContent(
-                        "weightlifting-history",
-                        mapOf("history" to history)
+                        "activity-history",
+                        mapOf("activities" to activities)
                     )
                 )
-            }
-
-            post("/weightlifting/log") {
-                val params = call.receiveParameters()
-
-                val exerciseId = params["exerciseId"]?.toIntOrNull()
-                val sets = params["sets"]?.toIntOrNull()
-                val reps = params["reps"]?.toIntOrNull()
-                val weight = params["weight"]?.toDoubleOrNull()
-                val duration = params["duration"]?.toIntOrNull()
-                val logDate = params["logDate"] ?: LocalDate.now().toString()
-                val notes = params["notes"]
-
-                if (exerciseId == null || sets == null || reps == null || weight == null || duration == null) {
-                    return@post call.respond(HttpStatusCode.BadRequest, "Missing or invalid form fields")
-                }
-
-                if (sets <= 0 || reps <= 0 || weight < 0 || duration <= 0) {
-                    return@post call.respond(
-                        HttpStatusCode.BadRequest,
-                        "Sets, reps, duration must be greater than 0, and weight cannot be negative"
-                    )
-                }
-
-                val session = call.principal<UserSession>()
-                    ?: return@post call.respond(HttpStatusCode.Unauthorized, "Not logged in")
-
-                val user = userService.findByEmail(session.email)
-                    ?: return@post call.respond(HttpStatusCode.NotFound, "User not found")
-
-                val userId = user.id
-                    ?: return@post call.respond(HttpStatusCode.InternalServerError, "User ID not found")
-
-                val weightliftingTypeId = activityService.getActivityTypeByName("Weightlifting")
-                    ?: return@post call.respond(HttpStatusCode.BadRequest, "Weightlifting activity type not found")
-
-                val workoutLogId = activityService.createWorkoutLog(
-                    WorkoutLog(
-                        userId = userId,
-                        activityTypeId = weightliftingTypeId,
-                        logDate = logDate,
-                        duration = duration,
-                        distance = null,
-                        notes = notes,
-                        calories = null,
-                        source = "gym"
-                    )
-                )
-
-                activityService.createWorkoutExercise(
-                    WorkoutExercise(
-                        workoutLogId = workoutLogId,
-                        exerciseId = exerciseId,
-                        sets = sets,
-                        reps = reps,
-                        weight = weight
-                    )
-                )
-
-                call.respondRedirect("/weightlifting/history")
             }
 
             // --- TCX Upload ---
-
             get("/tcx/upload") {
                 call.respond(
                     PebbleContent(
@@ -207,7 +136,7 @@ fun Application.configureActivityRoutes(
 
                 multipart.forEachPart { part ->
                     if (part is PartData.FileItem) {
-                        val inputStream = part.streamProvider()
+                        val inputStream = part.provider().toInputStream()
                         parsed = TcxParser.parse(inputStream)
                         part.dispose()
                     }
@@ -287,12 +216,6 @@ fun Application.configureActivityRoutes(
             call.respond(HttpStatusCode.Created, id)
         }
 
-        post("/exercises") {
-            val exercise = call.receive<Exercise>()
-            val id = activityService.createExercise(exercise)
-            call.respond(HttpStatusCode.Created, id)
-        }
-
         post("/workouts") {
             val workout = call.receive<WorkoutLog>()
             val id = activityService.createWorkoutLog(workout)
@@ -322,12 +245,6 @@ fun Application.configureActivityRoutes(
                 ?: return@delete call.respond(HttpStatusCode.BadRequest, "Invalid workout ID")
             activityService.deleteWorkoutLog(id)
             call.respond(HttpStatusCode.OK, "Workout deleted")
-        }
-
-        post("/workout-exercises") {
-            val workoutExercise = call.receive<WorkoutExercise>()
-            val id = activityService.createWorkoutExercise(workoutExercise)
-            call.respond(HttpStatusCode.Created, id)
         }
 
         post("/laps") {

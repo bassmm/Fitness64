@@ -44,6 +44,16 @@ data class WorkoutLog(
 )
 
 @Serializable
+data class CardioHistoryItem(
+    val logDate: String,
+    val activityType: String,
+    val duration: Int,
+    val distance: Double? = null,
+    val notes: String? = null,
+    val source: String? = null
+)
+
+@Serializable
 data class WorkoutExercise(
     val workoutLogId: Int,
     val exerciseId: Int,
@@ -268,6 +278,27 @@ class ActivityService(database: Database) {
                     distance = it[WorkoutLogs.distance],
                     notes = it[WorkoutLogs.notes],
                     calories = it[WorkoutLogs.calories],
+                    source = it[WorkoutLogs.workoutSource]
+                )
+            }
+    }
+
+    suspend fun getCardioHistory(userIdValue: Int): List<CardioHistoryItem> = dbQuery {
+        val cardioTypes = listOf("Running", "Cycling", "Swimming")
+
+        (WorkoutLogs innerJoin ActivityTypes)
+            .selectAll()
+            .where {
+                (WorkoutLogs.userId eq userIdValue) and (ActivityTypes.name inList cardioTypes)
+            }
+            .orderBy(WorkoutLogs.logDate to SortOrder.DESC)
+            .map {
+                CardioHistoryItem(
+                    logDate = it[WorkoutLogs.logDate],
+                    activityType = it[ActivityTypes.name],
+                    duration = it[WorkoutLogs.duration],
+                    distance = it[WorkoutLogs.distance],
+                    notes = it[WorkoutLogs.notes],
                     source = it[WorkoutLogs.workoutSource]
                 )
             }

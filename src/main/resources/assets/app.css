@@ -87,7 +87,11 @@
 html {
     min-height: 100%;
     background:
-        radial-gradient(circle at top left, rgba(185, 28, 28, 0.08), transparent 24%),
+        radial-gradient(
+            circle at top left,
+            rgba(185, 28, 28, 0.08),
+            transparent 24%
+        ),
         linear-gradient(180deg, #fbf8f5 0%, #f4efe9 100%);
 }
 
@@ -104,7 +108,11 @@ body {
         sans-serif;
     color: var(--ff-ink);
     background:
-        radial-gradient(circle at top left, rgba(185, 28, 28, 0.08), transparent 24%),
+        radial-gradient(
+            circle at top left,
+            rgba(185, 28, 28, 0.08),
+            transparent 24%
+        ),
         linear-gradient(180deg, #fbf8f5 0%, #f4efe9 100%);
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
@@ -285,11 +293,7 @@ textarea {
 
 .btn-primary {
     border-color: var(--ff-primary);
-    background: linear-gradient(
-        135deg,
-        var(--ff-primary),
-        var(--ff-primary-dark)
-    ) !important;
+    background: var(--ff-primary) !important;
     color: #ffffff !important;
     box-shadow: none;
 }
@@ -298,8 +302,6 @@ textarea {
 .btn-primary:focus {
     border-color: var(--ff-primary-dark);
     background: var(--ff-primary-dark) !important;
-    color: #ffffff !important;
-    filter: brightness(0.99);
 }
 
 .btn-primary:focus-visible {
@@ -313,8 +315,11 @@ textarea {
     overflow: hidden;
     border: 1px solid rgba(15, 23, 42, 0.08);
     color: var(--ff-ink);
-    background:
-        linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(250, 244, 240, 0.98));
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.98),
+        rgba(250, 244, 240, 0.98)
+    );
 }
 
 .hero-card h1,
@@ -340,7 +345,12 @@ textarea {
     height: 18rem;
     content: "";
     border-radius: 999px;
-    background: radial-gradient(circle, rgba(185, 28, 28, 0.14), rgba(185, 28, 28, 0.04) 56%, transparent 70%);
+    background: radial-gradient(
+        circle,
+        rgba(185, 28, 28, 0.14),
+        rgba(185, 28, 28, 0.04) 56%,
+        transparent 70%
+    );
     pointer-events: none;
 }
 
@@ -538,7 +548,11 @@ textarea.form-control {
     display: block;
     height: 100%;
     border-radius: inherit;
-    background: linear-gradient(90deg, var(--ff-primary), var(--ff-primary-dark));
+    background: linear-gradient(
+        90deg,
+        var(--ff-primary),
+        var(--ff-primary-dark)
+    );
 }
 
 /* Header/footer */
