@@ -1,69 +1,136 @@
 {% extends "base" %}
 
 {% block title %}Progress{% endblock %}
+{% block page_heading %}Progress{% endblock %}
 
 {% block content %}
-<h2>Progress Dashboard</h2>
-<p style="margin-top: -8px; color: #555;">Track your activity, performance, and consistency.</p>
-
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
-
-    <div class="card">
-        <h3>Weekly Summary</h3>
-        <p>{{ weeklyWorkouts }}</p>
-        <p>{{ activeDays }}</p>
-    </div>
-
-    <div class="card">
-        <h3>Running Records</h3>
-        <p style="color: #666; font-size: 13px;">
-            Times are estimated from your logged distance and duration.
-        </p>
-
-        <ul>
-            {% for record in runningRecords %}
-                <li>
-                    <strong>{{ record.label }}:</strong> {{ record.value }}
-                </li>
-            {% endfor %}
-        </ul>
-    </div>
-
-    <div class="card">
-        <h3>Cycling Records</h3>
-
-        <ul>
-            {% for record in cyclingRecords %}
-                <li>
-                    <strong>{{ record.label }}:</strong> {{ record.value }}
-                </li>
-            {% endfor %}
-        </ul>
-    </div>
-
-    <div class="card">
-        <h3>Consistency</h3>
-        <p>{{ consistency }}</p>
-    </div>
-
-    <div class="card">
-        <h3>Next Goal</h3>
-        <p>{{ nextGoal }}</p>
-    </div>
-
+<div class="mb-5">
+    <p class="page-kicker">Performance</p>
+    <h2 class="h3 mb-2">Progress Dashboard</h2>
+    <p class="page-summary mb-0">Track your activity, performance, and consistency.</p>
 </div>
 
-<div class="card" style="margin-top: 16px;">
-    <h3>Recent Achievements</h3>
+<div class="row g-4 mb-6">
+    <div class="col-md-6 col-xl-4">
+        <div class="card card-hover h-100">
+            <div class="card-body p-5">
+                <span class="stat-icon bg-primary-subtle text-primary mb-4">
+                    <i class="bi bi-calendar-check"></i>
+                </span>
+                <p class="text-muted text-sm mb-1">Weekly Summary</p>
+                <h3 class="h5 mb-2">{{ weeklyWorkouts }}</h3>
+                <p class="mb-0 text-muted">{{ activeDays }}</p>
+            </div>
+        </div>
+    </div>
 
-    <ul>
-        {% for achievement in achievements %}
-            <li>{{ achievement }}</li>
-        {% endfor %}
-    </ul>
+    <div class="col-md-6 col-xl-4">
+        <div class="card card-hover h-100">
+            <div class="card-body p-5">
+                <span class="stat-icon bg-warning-subtle text-warning mb-4">
+                    <i class="bi bi-fire"></i>
+                </span>
+                <p class="text-muted text-sm mb-1">Consistency</p>
+                <h3 class="h5 mb-0">{{ consistency }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-4">
+        <div class="card card-hover h-100">
+            <div class="card-body p-5">
+                <span class="stat-icon bg-success-subtle text-success mb-4">
+                    <i class="bi bi-bullseye"></i>
+                </span>
+                <p class="text-muted text-sm mb-1">Next Goal</p>
+                <h3 class="h5 mb-0">{{ nextGoal }}</h3>
+            </div>
+        </div>
+    </div>
 </div>
 
-<div style="margin-top: 20px;">
-    <a class="button" href="/home">Back to Home</a>
+<div class="row g-4 mb-6">
+    <div class="col-lg-6">
+        <div class="card shadow-soft h-100">
+            <div class="card-body p-5">
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <span class="stat-icon bg-info-subtle text-info">
+                        <i class="bi bi-speedometer2"></i>
+                    </span>
+                    <div>
+                        <p class="page-kicker mb-1">Running</p>
+                        <h2 class="h4 mb-0">Running Records</h2>
+                    </div>
+                </div>
+
+                <p class="text-muted text-sm">
+                    Times are estimated from your logged distance and duration.
+                </p>
+
+                <div class="list-group list-group-flush">
+                    {% for record in runningRecords %}
+                        <div class="list-group-item px-0 d-flex justify-content-between gap-3">
+                            <strong>{{ record.label }}</strong>
+                            <span class="text-muted text-end">{{ record.value }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card shadow-soft h-100">
+            <div class="card-body p-5">
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <span class="stat-icon bg-primary-subtle text-primary">
+                        <i class="bi bi-bicycle"></i>
+                    </span>
+                    <div>
+                        <p class="page-kicker mb-1">Cycling</p>
+                        <h2 class="h4 mb-0">Cycling Records</h2>
+                    </div>
+                </div>
+
+                <div class="list-group list-group-flush">
+                    {% for record in cyclingRecords %}
+                        <div class="list-group-item px-0 d-flex justify-content-between gap-3">
+                            <strong>{{ record.label }}</strong>
+                            <span class="text-muted text-end">{{ record.value }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-soft">
+    <div class="card-body p-5">
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <span class="stat-icon bg-primary text-white">
+                <i class="bi bi-award"></i>
+            </span>
+            <div>
+                <p class="page-kicker mb-1">Recent wins</p>
+                <h2 class="h4 mb-0">Achievements</h2>
+            </div>
+        </div>
+
+        <div class="list-group list-group-flush">
+            {% for achievement in achievements %}
+                <div class="list-group-item px-0 d-flex align-items-center gap-3">
+                    <i class="bi bi-check-circle-fill text-success"></i>
+                    <span>{{ achievement }}</span>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="mt-5">
+    <a class="btn btn-neutral" href="/home">
+        <i class="bi bi-arrow-left me-2"></i>Back to Home
+    </a>
 </div>
 {% endblock %}
