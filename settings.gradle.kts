@@ -1,4 +1,4 @@
-rootProject.name = "A-really-fire-fitness-app"
+rootProject.name = "Fitness64"
 
 dependencyResolutionManagement {
     repositories {

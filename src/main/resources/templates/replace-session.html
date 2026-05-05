@@ -1,42 +1,47 @@
 {% extends "base" %}
 
 {% block title %}Replace Session{% endblock %}
+{% block page_heading %}Replace Session{% endblock %}
 
 {% block content %}
-<h2>Replace Session</h2>
-<p style="margin-top: -8px; color: #555;">Update the training session for {{ day }}.</p>
-
-<div class="card">
-    <p><strong>Day:</strong> {{ day }}</p>
-    <p><strong>Current session:</strong> {{ currentSession }}</p>
-
-    {% if error %}
-        <p style="color: red; margin-bottom: 16px;">
-            {{ error }}
-        </p>
-    {% endif %}
-
-    <form method="post" action="/plan/replace">
-        <input type="hidden" name="day" value="{{ day }}">
-
-        <label for="newSession">Choose a replacement session</label>
-        <select id="newSession" name="newSession" required>
-            <option value="">Select a session</option>
-            <option value="Run 3km">Run 3km</option>
-            <option value="Run 5km">Run 5km</option>
-            <option value="Gym">Gym</option>
-            <option value="Cycling 10km">Cycling 10km</option>
-            <option value="Swimming">Swimming</option>
-            <option value="Long Run">Long Run</option>
-            <option value="Rest">Rest</option>
-            <option value="Home Workout">Home Workout</option>
-        </select>
-
-        <button type="submit">Save Replacement</button>
-    </form>
+<div class="mb-5">
+    <p class="page-kicker">Plan editor</p>
+    <h2 class="h3 mb-2">Update {{ day }}</h2>
+    <p class="page-summary mb-0">Swap the current plan for a session that fits your week.</p>
 </div>
 
-<div style="margin-top: 20px;">
-    <a class="button" href="/plan">Back to Weekly Plan</a>
+<div class="card shadow-soft">
+    <div class="card-body p-5">
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <span class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-arrow-repeat"></i></span>
+            <div><p class="text-muted text-sm mb-1">Current session</p><h3 class="h5 mb-0">{{ currentSession }}</h3></div>
+        </div>
+
+        {% if error %}
+            <div class="alert alert-danger d-flex align-items-center gap-2" role="alert"><i class="bi bi-exclamation-triangle-fill"></i><span>{{ error }}</span></div>
+        {% endif %}
+
+        <form method="post" action="/plan/replace" class="vstack gap-4">
+            <input type="hidden" name="day" value="{{ day }}">
+            <div>
+                <label class="form-label" for="newSession">Choose a replacement session</label>
+                <select class="form-select" id="newSession" name="newSession" required>
+                    <option value="">Select a session</option>
+                    <option value="Run 3km">Run 3km</option>
+                    <option value="Run 5km">Run 5km</option>
+                    <option value="Gym">Gym</option>
+                    <option value="Cycling 10km">Cycling 10km</option>
+                    <option value="Swimming">Swimming</option>
+                    <option value="Long Run">Long Run</option>
+                    <option value="Rest">Rest</option>
+                    <option value="Home Workout">Home Workout</option>
+                </select>
+            </div>
+            <div class="d-flex flex-wrap gap-3">
+                <button class="btn btn-primary" type="submit"><i class="bi bi-check2-circle me-2"></i>Save Replacement</button>
+                <a class="btn btn-neutral" href="/plan">Back to Weekly Plan</a>
+            </div>
+        </form>
+    </div>
 </div>
 {% endblock %}

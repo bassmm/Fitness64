@@ -1,80 +1,41 @@
 {% extends "base" %}
 
 {% block title %}Log Weightlifting Activity{% endblock %}
+{% block page_heading %}Log Weightlifting{% endblock %}
 
 {% block content %}
-<h2>Log Weightlifting Activity</h2>
+<div class="d-flex flex-column flex-lg-row align-items-lg-end justify-content-between gap-3 mb-5">
+    <div>
+        <p class="page-kicker">Strength session</p>
+        <h2 class="h3 mb-2">Log Weightlifting Activity</h2>
+        <p class="page-summary mb-0">Track sets, reps, load, duration, and notes for your lifting history.</p>
+    </div>
+    <a class="btn btn-neutral" href="/weightlifting/exercises/new"><i class="bi bi-plus-lg me-2"></i>Add Exercise</a>
+</div>
 
-<div class="card">
-    <form method="post" action="/weightlifting/log">
-        <label for="exerciseId">Exercise</label>
-        <select id="exerciseId" name="exerciseId" required>
-            <option value="">Select an exercise</option>
-            {% for exercise in exercises %}
-                <option value="{{ exercise.id }}">{{ exercise.name }}</option>
-            {% endfor %}
-        </select>
-
-        <div style="margin-top: 8px; margin-bottom: 8px;">
-            <a class="button" href="/weightlifting/exercises/new">+ Add New Exercise</a>
-        </div>
-
-        <label for="sets">Sets</label>
-        <input
-            id="sets"
-            name="sets"
-            type="number"
-            min="1"
-            required
-        >
-
-        <label for="reps">Reps</label>
-        <input
-            id="reps"
-            name="reps"
-            type="number"
-            min="1"
-            required
-        >
-
-        <label for="weight">Weight (kg)</label>
-        <input
-            id="weight"
-            name="weight"
-            type="number"
-            min="0"
-            step="0.1"
-            required
-        >
-
-        <label for="duration">Duration (minutes)</label>
-        <input
-            id="duration"
-            name="duration"
-            type="number"
-            min="1"
-            required
-        >
-
-        <label for="logDate">Date</label>
-        <input
-            id="logDate"
-            name="logDate"
-            type="date"
-            value="{{ today }}"
-            required
-        >
-
-        <label for="notes">Notes</label>
-        <textarea
-            id="notes"
-            name="notes"
-            rows="4"
-            style="padding: 8px; border-radius: 6px; border: 1px solid #ccc; font-size: 14px;"
-            placeholder="Optional notes about your workout"
-        ></textarea>
-
-        <button type="submit">Save Log</button>
-    </form>
+<div class="card shadow-soft">
+    <div class="card-body p-5">
+        <form method="post" action="/weightlifting/log" class="row g-4">
+            <div class="col-md-6">
+                <label class="form-label" for="exerciseId">Exercise</label>
+                <select class="form-select" id="exerciseId" name="exerciseId" required>
+                    <option value="">Select an exercise</option>
+                    {% for exercise in exercises %}
+                        <option value="{{ exercise.id }}">{{ exercise.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3"><label class="form-label" for="sets">Sets</label><input class="form-control" id="sets" name="sets" type="number" min="1" required></div>
+            <div class="col-md-3"><label class="form-label" for="reps">Reps</label><input class="form-control" id="reps" name="reps" type="number" min="1" required></div>
+            <div class="col-md-4"><label class="form-label" for="weight">Weight (kg)</label><input class="form-control" id="weight" name="weight" type="number" min="0" step="0.1" required></div>
+            <div class="col-md-4"><label class="form-label" for="duration">Duration (minutes)</label><input class="form-control" id="duration" name="duration" type="number" min="1" required></div>
+            <div class="col-md-4"><label class="form-label" for="logDate">Date</label><input class="form-control" id="logDate" name="logDate" type="date" value="{{ today }}" required></div>
+            <div class="col-12"><label class="form-label" for="notes">Notes</label><textarea class="form-control" id="notes" name="notes" rows="4" placeholder="Optional notes about your workout"></textarea></div>
+            <div class="col-12 d-flex flex-wrap gap-3">
+                <button class="btn btn-primary" type="submit"><i class="bi bi-check2-circle me-2"></i>Save Log</button>
+                <a class="btn btn-neutral" href="/weightlifting/history">View History</a>
+            </div>
+        </form>
+    </div>
 </div>
 {% endblock %}

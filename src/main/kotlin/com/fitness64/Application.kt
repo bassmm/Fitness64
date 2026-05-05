@@ -1,6 +1,8 @@
 package com.fitness64
 
 import com.fitness64.activities.*
+import com.fitness64.plans.*
+import com.fitness64.races.*
 import com.fitness64.users.*
 import io.ktor.server.application.*
 import kotlinx.coroutines.runBlocking
@@ -10,12 +12,12 @@ fun main(args: Array<String>) {
 }
 
 fun Application.module() {
-    // Service Init
     val database = configureDatabases()
     val userService = UserService(database)
     val activityService = ActivityService(database)
+    val raceService = RaceService(database)
+    val planService = PlanService(database)
 
-    // Seed default activity type and exercises for weightlifting
     runBlocking {
         val weightliftingTypeId = activityService.getActivityTypeByName("Weightlifting")
             ?: activityService.createActivityType(ActivityType("Weightlifting"))
@@ -65,13 +67,13 @@ fun Application.module() {
         }
     }
 
-    // Setup
     configureTemplating()
     configureSerialization()
     configureSecurity(userService)
 
-    // Routing
-    configureRouting(userService, activityService)
+    configureRouting(userService, activityService, planService, raceService)
     configureUsersRoutes(userService)
     configureActivityRoutes(activityService, userService)
+    configureRaceRoutes(raceService)
+    configurePlanRoutes(planService, userService)
 }
