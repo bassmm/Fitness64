@@ -3,6 +3,9 @@ package com.fitness64
 import com.fitness64.activities.ActivityService
 import com.fitness64.activities.ActivityType
 import com.fitness64.activities.WorkoutLog
+import com.fitness64.plans.PlanService
+import com.fitness64.races.RaceRecord
+import com.fitness64.races.RaceService
 import com.fitness64.users.UserService
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -13,13 +16,22 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 import java.time.LocalDate
-fun Application.configureRouting(userService: UserService, activityService: ActivityService) {
+import java.time.format.TextStyle
+import java.util.*
+
+fun Application.configureRouting(
+    userService: UserService,
+    activityService: ActivityService,
+    planService: PlanService,
+    raceService: RaceService
+) {
     routing {
 
         staticResources("/assets", "assets")
 
+        // Public routes
         get("/") {
-            call.respondRedirect("/home")
+            call.respondRedirect("/login")
         }
 
         get("/login") {
@@ -44,10 +56,75 @@ fun Application.configureRouting(userService: UserService, activityService: Acti
         }
 
         authenticate("auth-session") {
+            get("/profile/edit") {
+                val session = call.principal<UserSession>()!!
+                val user = userService.findByEmail(session.email)
+                    ?: return@get call.respondRedirect("/login")
 
-            get("/logout") {
-                call.sessions.clear<UserSession>()
-                call.respondRedirect("/login")
+                call.respondTemplate(
+                    "edit-profile",
+                    mapOf(
+                        "user" to user,
+                        "error" to ""
+                    )
+                )
+            }
+
+            post("/profile/edit") {
+                val session = call.principal<UserSession>()!!
+                val currentUser = userService.findByEmail(session.email)
+                    ?: return@post call.respondRedirect("/login")
+
+                val currentUserId = currentUser.id
+                    ?: return@post call.respondRedirect("/login")
+
+                val params = call.receiveParameters()
+
+                val name = params["name"]?.trim().orEmpty()
+                val email = params["email"]?.trim().orEmpty()
+                val fitnessLevel = params["fitnessLevel"]?.trim()?.ifBlank { null }
+                val goal = params["goal"]?.trim()?.ifBlank { null }
+                val trainingDaysPerWeek = params["trainingDaysPerWeek"]?.trim()?.toIntOrNull()
+                val preferredActivities = params["preferredActivities"]?.trim()?.ifBlank { null }
+                val community = params["community"]?.trim()?.ifBlank { null }
+
+                if (name.isBlank() || email.isBlank()) {
+                    call.respondTemplate(
+                        "edit-profile",
+                        mapOf(
+                            "user" to currentUser,
+                            "error" to "Name and email cannot be empty."
+                        )
+                    )
+                    return@post
+                }
+
+                val existingUser = userService.findByEmail(email)
+
+                if (existingUser != null && existingUser.id != currentUserId) {
+                    call.respondTemplate(
+                        "edit-profile",
+                        mapOf(
+                            "user" to currentUser,
+                            "error" to "This email is already in use."
+                        )
+                    )
+                    return@post
+                }
+
+                userService.updateProfile(
+                    userId = currentUserId,
+                    name = name,
+                    email = email,
+                    fitnessLevel = fitnessLevel,
+                    goal = goal,
+                    trainingDaysPerWeek = trainingDaysPerWeek,
+                    preferredActivities = preferredActivities,
+                    community = community
+                )
+
+                call.sessions.set(UserSession(email = email))
+                call.respondRedirect("/profile")
             }
 
             get("/log") {
@@ -78,10 +155,9 @@ fun Application.configureRouting(userService: UserService, activityService: Acti
                 }
 
                 when (activityType) {
-                    "Weightlifting" -> call.respondRedirect("/weightlifting/log")
+                    "Gym", "Weightlifting" -> call.respondRedirect("/weightlifting/log")
                     "Running", "Cycling", "Swimming" ->
                         call.respondRedirect("/log/details?type=$activityType&date=$activityDate")
-
                     else -> call.respondRedirect("/log")
                 }
             }
@@ -109,82 +185,195 @@ fun Application.configureRouting(userService: UserService, activityService: Acti
             }
 
             post("/log/details") {
+                val session = call.principal<UserSession>()!!
+                val user = userService.findByEmail(session.email)
+                    ?: return@post call.respondRedirect("/login")
+
+                val userId = user.id
+                    ?: return@post call.respondRedirect("/login")
+
                 val params = call.receiveParameters()
                 val type = params["type"]?.trim().orEmpty()
                 val activityDate = params["activityDate"]?.trim().orEmpty()
-                val distance = params["distance"]?.trim().orEmpty()
-                val duration = params["duration"]?.trim().orEmpty()
+                val distanceText = params["distance"]?.trim().orEmpty()
+                val durationText = params["duration"]?.trim().orEmpty()
                 val notes = params["notes"]?.trim().orEmpty()
 
-                val durationMinutes = duration.toIntOrNull()
-                if (type.isBlank() || activityDate.isBlank() || durationMinutes == null || durationMinutes <= 0) {
+                val duration = durationText.toIntOrNull()
+                val distance = if (distanceText.isBlank()) null else distanceText.toDoubleOrNull()
+
+                if (type.isBlank() || activityDate.isBlank() || duration == null) {
                     call.respondTemplate(
                         "log-details",
                         mapOf(
-                            "error" to "Please complete the required fields with valid values.",
+                            "error" to "Please complete the required fields with a valid duration.",
                             "selectedType" to type,
                             "activityDate" to activityDate,
-                            "distance" to distance,
-                            "duration" to duration,
+                            "distance" to distanceText,
+                            "duration" to durationText,
                             "notes" to notes
                         )
                     )
                     return@post
                 }
 
-                val distanceKm = if (distance.isBlank()) null else distance.toDoubleOrNull()
-                if (distance.isNotBlank() && (distanceKm == null || distanceKm < 0.0)) {
+                if (duration <= 0) {
+                    call.respondTemplate(
+                        "log-details",
+                        mapOf(
+                            "error" to "Duration must be greater than 0.",
+                            "selectedType" to type,
+                            "activityDate" to activityDate,
+                            "distance" to distanceText,
+                            "duration" to durationText,
+                            "notes" to notes
+                        )
+                    )
+                    return@post
+                }
+
+                if (distanceText.isNotBlank() && (distance == null || distance < 0.0)) {
                     call.respondTemplate(
                         "log-details",
                         mapOf(
                             "error" to "Distance must be a valid non-negative number.",
                             "selectedType" to type,
                             "activityDate" to activityDate,
-                            "distance" to distance,
-                            "duration" to duration,
+                            "distance" to distanceText,
+                            "duration" to durationText,
                             "notes" to notes
                         )
                     )
                     return@post
                 }
 
-                loggedActivities.add(
-                    LoggedActivity(
-                        date = activityDate,
-                        type = type,
+                val activityTypeId = activityService.getActivityTypeByName(type)
+                    ?: activityService.createActivityType(ActivityType(type))
+
+                activityService.createWorkoutLog(
+                    WorkoutLog(
+                        userId = userId,
+                        activityTypeId = activityTypeId,
+                        logDate = activityDate,
                         duration = duration,
                         distance = distance,
-                        notes = notes
+                        notes = notes.ifBlank { null },
+                        calories = null,
+                        source = type
                     )
                 )
-
-                val session = call.principal<UserSession>()
-                val user = session?.let { userService.findByEmail(it.email) }
-                val userId = user?.id
-
-                if (userId != null) {
-                    val activityTypeId = activityService.getActivityTypeByName(type)
-                        ?: activityService.createActivityType(ActivityType(type))
-
-                    activityService.createWorkoutLog(
-                        WorkoutLog(
-                            userId = userId,
-                            activityTypeId = activityTypeId,
-                            logDate = activityDate,
-                            duration = durationMinutes,
-                            distance = distanceKm,
-                            notes = notes.ifBlank { null },
-                            calories = null,
-                            source = "manual"
-                        )
-                    )
-                }
 
                 call.respondRedirect("/calendar")
             }
 
             get("/quick-log") {
-                call.respondRedirect("/log")
+                call.respondTemplate(
+                    "quick-log",
+                    mapOf("error" to "")
+                )
+            }
+
+            post("/quick-log") {
+                val params = call.receiveParameters()
+                val type = params["type"]?.trim().orEmpty()
+
+                if (type.isBlank()) {
+                    call.respondTemplate(
+                        "quick-log",
+                        mapOf("error" to "Please select an activity type.")
+                    )
+                    return@post
+                }
+
+                val todayDate = LocalDate.now().toString()
+
+                when (type.lowercase()) {
+                    "gym" -> call.respondRedirect("/weightlifting/log")
+                    "running" -> call.respondRedirect("/log/details?type=Running&date=$todayDate")
+                    "cycling" -> call.respondRedirect("/log/details?type=Cycling&date=$todayDate")
+                    "swimming" -> call.respondRedirect("/log/details?type=Swimming&date=$todayDate")
+                    else -> call.respondRedirect("/log")
+                }
+            }
+
+            get("/calendar") {
+                val session = call.principal<UserSession>()!!
+                val user = userService.findByEmail(session.email)
+                    ?: return@get call.respondRedirect("/login")
+
+                val userId = user.id
+                    ?: return@get call.respondRedirect("/login")
+
+                val today = LocalDate.now()
+                val startOfWeek = getStartOfWeek(today)
+                val endOfWeek = startOfWeek.plusDays(6)
+
+                // Get all logged activities from database
+                val workouts = activityService.getWorkoutsForUser(userId)
+                val workoutsByDate = workouts.groupBy { it.logDate }
+
+                // Get current weekly plan from database
+                val planFromDatabase = planService.getPlan(userId)
+                val planByDay = planFromDatabase.associateBy { it.day }
+
+                // Find earliest workout date
+                val earliestWorkoutDate = workouts
+                    .mapNotNull { workout ->
+                        try {
+                            LocalDate.parse(workout.logDate)
+                        } catch (e: Exception) {
+                            null
+                        }
+                    }
+                    .minOrNull()
+
+                // Calendar should include:
+                // 1. Current full weekly plan: Monday to Sunday
+                // 2. Historical workout logs if they exist
+                val earliestDate = listOfNotNull(
+                    earliestWorkoutDate,
+                    startOfWeek
+                ).minOrNull() ?: startOfWeek
+
+                val latestDate = endOfWeek
+
+                val calendarItems = generateSequence(latestDate) { date ->
+                    if (date.isAfter(earliestDate)) {
+                        date.minusDays(1)
+                    } else {
+                        null
+                    }
+                }.map { date ->
+                    val dateString = date.toString()
+                    val dayName = date.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.ENGLISH)
+                    val workoutsForDate = workoutsByDate[dateString] ?: emptyList()
+
+                    val plannedSession = if (!date.isBefore(startOfWeek) && !date.isAfter(endOfWeek)) {
+                        planByDay[dayName]?.session ?: ""
+                    } else {
+                        ""
+                    }
+
+                    mapOf(
+                        "day" to dayName,
+                        "date" to dateString,
+                        "planned" to plannedSession,
+                        "isToday" to (date == today),
+                        "logged" to workoutsForDate.map {
+                            mapOf(
+                                "type" to (it.source ?: "Workout"),
+                                "duration" to "${it.duration} min",
+                                "distance" to (it.distance?.let { distance -> "${distance} km" } ?: ""),
+                                "notes" to (it.notes ?: "")
+                            )
+                        }
+                    )
+                }.toList()
+
+                call.respondTemplate(
+                    "calendar",
+                    mapOf("calendarItems" to calendarItems)
+                )
             }
 
             get("/progress") {
@@ -214,6 +403,25 @@ fun Application.configureRouting(userService: UserService, activityService: Acti
                     mapOf(
                         "user" to mapOf("name" to "John")
                     )
+                )
+            }
+
+            // --- Race routes ---
+
+            get("/races") {
+                val session = call.principal<UserSession>()!!
+                val user = userService.findByEmail(session.email)
+
+                if (user == null) {
+                    call.respondRedirect("/login")
+                    return@get
+                }
+
+                val races = user.id?.let { raceService.getRacesForUser(it) } ?: emptyList<Any>()
+
+                call.respondTemplate(
+                    "races",
+                    mapOf("races" to races)
                 )
             }
 
@@ -266,28 +474,35 @@ fun Application.configureRouting(userService: UserService, activityService: Acti
                     return@post
                 }
 
+                val session = call.principal<UserSession>()!!
+                val user = userService.findByEmail(session.email)
+
+                if (user == null || user.id == null) {
+                    call.respondRedirect("/login")
+                    return@post
+                }
+
+                raceService.createRace(
+                    RaceRecord(
+                        userId = user.id!!,
+                        eventName = eventName,
+                        eventDate = eventDate,
+                        location = location.ifBlank { null },
+                        category = category.ifBlank { null },
+                        finishTime = finishTime.ifBlank { null },
+                        overallRank = overallRank,
+                        categoryRank = categoryRank,
+                        isPersonalBest = isPersonalBest,
+                        certificateUrl = certificateUrl.ifBlank { null }
+                    )
+                )
+
                 call.respondRedirect("/races")
             }
         }
     }
 }
 
-data class LoggedActivity(
-    val date: String,
-    val type: String,
-    val duration: String,
-    val distance: String,
-    val notes: String
-)
-
-val loggedActivities = mutableListOf<LoggedActivity>()
-
 fun getStartOfWeek(date: LocalDate): LocalDate {
     return date.minusDays(date.dayOfWeek.value.toLong() - 1)
 }
-
-
-
-
-
-

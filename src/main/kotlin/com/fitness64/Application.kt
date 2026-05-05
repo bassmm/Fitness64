@@ -24,7 +24,7 @@ fun Application.module() {
     configureSecurity(userService)
 
     // Routing
-    configureRouting(userService, activityService)
+    configureRouting(userService, activityService, planService, raceService)
     configureUsersRoutes(userService, planService)
     configureActivityRoutes(activityService, userService)
     configureWeightliftingRoutes(weightliftingService, activityService, userService)
