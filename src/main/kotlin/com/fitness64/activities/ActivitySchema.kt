@@ -184,15 +184,15 @@ data class WeightliftingHistoryItem(
 /**
  * A summary of the most recent workout for display on the dashboard.
  *
- * @property logDate The date of the workout.
  * @property activityType The type of activity performed.
+ * @property logDate The date of the workout.
  * @property duration Duration in minutes.
  * @property distance Optional distance in km.
  */
 @Serializable
 data class LatestWorkoutSummary(
-    val logDate: String,
     val activityType: String,
+    val logDate: String,
     val duration: Int,
     val distance: Double? = null
 )
@@ -326,6 +326,30 @@ class ActivityService(database: Database) {
             .where { ActivityTypes.name eq typeName }
             .map { it[ActivityTypes.id] }
             .singleOrNull()
+    }
+
+    /**
+     * Finds an activity type name by its ID.
+     *
+     * @param activityTypeIdValue The ID of the activity type to look up.
+     * @return The name of the matching activity type, or null if not found.
+     */
+    suspend fun getActivityTypeName(activityTypeIdValue: Int): String? = dbQuery {
+        ActivityTypes.selectAll()
+            .where { ActivityTypes.id eq activityTypeIdValue }
+            .map { it[ActivityTypes.name] }
+            .singleOrNull()
+    }
+
+    /**
+     * Retrieves an existing activity type ID by name, or creates it if it doesn't exist.
+     *
+     * @param typeName The name of the activity type to find or create.
+     * @return The ID of the existing or newly created activity type.
+     */
+    suspend fun getOrCreateActivityType(typeName: String): Int {
+        val existingActivityTypeId = getActivityTypeByName(typeName)
+        return existingActivityTypeId ?: createActivityType(ActivityType(typeName))
     }
 
     /**
@@ -480,15 +504,11 @@ class ActivityService(database: Database) {
         userIdValue: Int,
         startDate: String,
         endDate: String
-    ): Int = dbQuery {
-        WorkoutLogs.selectAll()
-            .where {
-                (WorkoutLogs.userId eq userIdValue) and
-                    (WorkoutLogs.logDate greaterEq startDate) and
-                    (WorkoutLogs.logDate lessEq endDate)
+    ): Int {
+        return getWorkoutsForUser(userIdValue)
+            .count { workout ->
+                workout.logDate >= startDate && workout.logDate <= endDate
             }
-            .map { it[WorkoutLogs.id] }
-            .size
     }
 
     /**
@@ -497,19 +517,24 @@ class ActivityService(database: Database) {
      * @param userIdValue The ID of the user.
      * @return A [LatestWorkoutSummary] for the most recent workout, or null if none exist.
      */
-    suspend fun getLatestWorkoutSummaryForUser(userIdValue: Int): LatestWorkoutSummary? = dbQuery {
-        (WorkoutLogs innerJoin ActivityTypes)
-            .selectAll()
-            .where { WorkoutLogs.userId eq userIdValue }
-            .map {
-                LatestWorkoutSummary(
-                    logDate = it[WorkoutLogs.logDate],
-                    activityType = it[ActivityTypes.name],
-                    duration = it[WorkoutLogs.duration],
-                    distance = it[WorkoutLogs.distance]
-                )
-            }
+    suspend fun getLatestWorkoutSummaryForUser(userIdValue: Int): LatestWorkoutSummary? {
+        val latestWorkout = getWorkoutsForUser(userIdValue)
             .maxByOrNull { it.logDate }
+
+        if (latestWorkout == null) {
+            return null
+        }
+
+        val activityTypeName = getActivityTypeName(latestWorkout.activityTypeId)
+            ?: latestWorkout.source
+            ?: "Workout"
+
+        return LatestWorkoutSummary(
+            activityType = activityTypeName,
+            logDate = latestWorkout.logDate,
+            duration = latestWorkout.duration,
+            distance = latestWorkout.distance
+        )
     }
 
     /**

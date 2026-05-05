@@ -1,3 +1,11 @@
+/**
+ * UsersRoutes.kt
+ *
+ * Defines the API routes for user account management.
+ * Provides endpoints for user registration, profile retrieval,
+ * and full CRUD operations on user accounts.
+ * The /me route is protected and requires an authenticated session.
+ */
 package com.fitness64.users
 
 import com.fitness64.UserSession
@@ -9,10 +17,22 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 
+/**
+ * Registers all user-related API routes on the application.
+ *
+ * @param userService The service used to perform user database operations.
+ */
 fun Application.configureUsersRoutes(
     userService: UserService
 ) {
     routing {
+
+        /**
+         * POST /signup
+         * Registers a new user account and creates a session.
+         * Responds with 409 Conflict if the email is already registered,
+         * or 201 Created with the new user ID on success.
+         */
         post("/signup") {
             val user = call.receive<User>()
             if (userService.findByEmail(user.email) != null) {
@@ -25,6 +45,12 @@ fun Application.configureUsersRoutes(
         }
 
         authenticate("auth-session") {
+
+            /**
+             * GET /me
+             * Retrieves the currently authenticated user's profile.
+             * Responds with 200 OK and the user data, or 404 if not found.
+             */
             get("/me") {
                 val userSession = call.principal<UserSession>()
                 if (userSession != null) {
@@ -40,12 +66,22 @@ fun Application.configureUsersRoutes(
             }
         }
 
+        /**
+         * POST /users
+         * Creates a new user via the REST API.
+         * Responds with 201 Created and the new user ID.
+         */
         post("/users") {
             val user = call.receive<User>()
             val id = userService.create(user)
             call.respond(HttpStatusCode.Created, id)
         }
 
+        /**
+         * GET /users/{id}
+         * Retrieves a user by their ID via the REST API.
+         * Responds with 200 OK and the user data, or 404 if not found.
+         */
         get("/users/{id}") {
             val id = call.parameters["id"]?.toInt() ?: throw IllegalArgumentException("Invalid ID")
             val user = userService.read(id)
@@ -56,6 +92,11 @@ fun Application.configureUsersRoutes(
             }
         }
 
+        /**
+         * PUT /users/{id}
+         * Updates an existing user record via the REST API.
+         * Responds with 200 OK on success.
+         */
         put("/users/{id}") {
             val id = call.parameters["id"]?.toInt() ?: throw IllegalArgumentException("Invalid ID")
             val user = call.receive<User>()
@@ -63,6 +104,11 @@ fun Application.configureUsersRoutes(
             call.respond(HttpStatusCode.OK)
         }
 
+        /**
+         * DELETE /users/{id}
+         * Deletes a user account by their ID via the REST API.
+         * Responds with 200 OK on success.
+         */
         delete("/users/{id}") {
             val id = call.parameters["id"]?.toInt() ?: throw IllegalArgumentException("Invalid ID")
             userService.delete(id)
@@ -70,4 +116,3 @@ fun Application.configureUsersRoutes(
         }
     }
 }
-

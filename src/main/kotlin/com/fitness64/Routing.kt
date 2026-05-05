@@ -20,6 +20,7 @@ import org.mindrot.jbcrypt.BCrypt
 import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.*
+import kotlin.math.roundToInt
 
 fun Application.configureRouting(
     userService: UserService,
@@ -337,7 +338,6 @@ fun Application.configureRouting(
                     "Weightlifting" -> call.respondRedirect("/weightlifting/log")
                     "Running", "Cycling", "Swimming" ->
                         call.respondRedirect("/log/details?type=$activityType&date=$activityDate")
-
                     else -> call.respondRedirect("/log")
                 }
             }
@@ -379,29 +379,19 @@ fun Application.configureRouting(
                 val durationText = params["duration"]?.trim().orEmpty()
                 val notes = params["notes"]?.trim().orEmpty()
 
-                val duration = durationText.toIntOrNull()
-                val distance = distanceText.toDoubleOrNull()
+                val parsedDate = parseActivityDate(activityDate)
+                val durationMinutes = parseDurationMinutes(durationText)
+                val distanceKm = parseDistanceKm(distanceText)
 
-                if (type.isBlank() || activityDate.isBlank() || duration == null) {
+                if (
+                    type.isBlank() ||
+                    parsedDate == null ||
+                    durationMinutes == null
+                ) {
                     call.respondTemplate(
                         "log-details",
                         mapOf(
-                            "error" to "Please complete the required fields with a valid duration.",
-                            "selectedType" to type,
-                            "activityDate" to activityDate,
-                            "distance" to distanceText,
-                            "duration" to durationText,
-                            "notes" to notes
-                        )
-                    )
-                    return@post
-                }
-
-                if (duration <= 0) {
-                    call.respondTemplate(
-                        "log-details",
-                        mapOf(
-                            "error" to "Duration must be greater than 0.",
+                            "error" to "Please enter a valid activity type, date, and duration.",
                             "selectedType" to type,
                             "activityDate" to activityDate,
                             "distance" to distanceText,
@@ -419,9 +409,9 @@ fun Application.configureRouting(
                     WorkoutLog(
                         userId = userId,
                         activityTypeId = activityTypeId,
-                        logDate = activityDate,
-                        duration = duration,
-                        distance = distance,
+                        logDate = parsedDate.toString(),
+                        duration = durationMinutes,
+                        distance = distanceKm,
                         notes = notes.ifBlank { null },
                         calories = null,
                         source = type
@@ -473,52 +463,31 @@ fun Application.configureRouting(
                 val startOfWeek = getStartOfWeek(today)
                 val endOfWeek = startOfWeek.plusDays(6)
 
-                // Get all logged activities from database
                 val workouts = activityService.getWorkoutsForUser(userId)
+                val activityTypeNames = loadActivityTypeNames(activityService, workouts)
                 val workoutsByDate = workouts.groupBy { it.logDate }
+
                 val weightliftingSessions = weightliftingService.getWeightliftingHistory(userId)
                 val weightliftingByDate = weightliftingSessions.groupBy { it.logDate }
+
                 val races = raceService.getRacesForUser(userId)
                 val racesByDate = races.groupBy { it.eventDate }
 
-                // Get current weekly plan from database
                 val planFromDatabase = planService.getPlan(userId)
                 val planByDay = planFromDatabase.associateBy { it.day }
 
-                // Find earliest workout date
                 val earliestWorkoutDate = workouts
-                    .mapNotNull { workout ->
-                        try {
-                            LocalDate.parse(workout.logDate)
-                        } catch (e: Exception) {
-                            null
-                        }
-                    }
+                    .mapNotNull { runCatching { LocalDate.parse(it.logDate) }.getOrNull() }
                     .minOrNull()
 
                 val earliestWeightliftingDate = weightliftingSessions
-                    .mapNotNull { workout ->
-                        try {
-                            LocalDate.parse(workout.logDate)
-                        } catch (e: Exception) {
-                            null
-                        }
-                    }
+                    .mapNotNull { runCatching { LocalDate.parse(it.logDate) }.getOrNull() }
                     .minOrNull()
 
                 val earliestRaceDate = races
-                    .mapNotNull { race ->
-                        try {
-                            LocalDate.parse(race.eventDate)
-                        } catch (e: Exception) {
-                            null
-                        }
-                    }
+                    .mapNotNull { runCatching { LocalDate.parse(it.eventDate) }.getOrNull() }
                     .minOrNull()
 
-                // Calendar should include:
-                // 1. Current full weekly plan: Monday to Sunday
-                // 2. Historical workout logs if they exist
                 val earliestDate = listOfNotNull(
                     earliestWorkoutDate,
                     earliestWeightliftingDate,
@@ -553,43 +522,44 @@ fun Application.configureRouting(
                         "planned" to plannedSession,
                         "isToday" to (date == today),
                         "logged" to (
-                                workoutsForDate.map {
+                            workoutsForDate.map {
+                                mapOf(
+                                    "type" to (activityTypeNames[it.activityTypeId] ?: it.source ?: "Workout"),
+                                    "duration" to "${it.duration} min",
+                                    "distance" to (it.distance?.let { distance -> "${formatDistance(distance)} km" } ?: ""),
+                                    "notes" to (it.notes ?: "")
+                                )
+                            } +
+                                weightliftingForDate.map {
                                     mapOf(
-                                        "type" to (it.source ?: "Workout"),
+                                        "type" to "Weightlifting",
                                         "duration" to "${it.duration} min",
-                                        "distance" to (it.distance?.let { distance -> "$distance km" } ?: ""),
+                                        "distance" to "${it.totalSets} total sets",
                                         "notes" to (it.notes ?: "")
                                     )
                                 } +
-                                        weightliftingForDate.map {
-                                            mapOf(
-                                                "type" to "Weightlifting",
-                                                "duration" to "${it.duration} min",
-                                                "distance" to "${it.totalSets} total sets",
-                                                "notes" to (it.notes ?: "")
-                                            )
-                                        } +
-                                        racesForDate.map { race ->
-                                            val raceDetails = listOfNotNull(
-                                                race.location,
-                                                race.category
-                                            ).joinToString(" • ")
-                                            val raceNotes = buildString {
-                                                if (race.isPersonalBest) append("Personal best")
-                                                if (raceDetails.isNotBlank()) {
-                                                    if (isNotEmpty()) append(" · ")
-                                                    append(raceDetails)
-                                                }
-                                            }
+                                racesForDate.map { race ->
+                                    val raceDetails = listOfNotNull(
+                                        race.location,
+                                        race.category
+                                    ).joinToString(" • ")
 
-                                            mapOf(
-                                                "type" to "Race: ${race.eventName}",
-                                                "duration" to (race.finishTime ?: "Completed"),
-                                                "distance" to "",
-                                                "notes" to raceNotes
-                                            )
+                                    val raceNotes = buildString {
+                                        if (race.isPersonalBest) append("Personal best")
+                                        if (raceDetails.isNotBlank()) {
+                                            if (isNotEmpty()) append(" · ")
+                                            append(raceDetails)
                                         }
-                                )
+                                    }
+
+                                    mapOf(
+                                        "type" to "Race: ${race.eventName}",
+                                        "duration" to (race.finishTime ?: "Completed"),
+                                        "distance" to "",
+                                        "notes" to raceNotes
+                                    )
+                                }
+                        )
                     )
                 }.toList()
 
@@ -600,21 +570,69 @@ fun Application.configureRouting(
             }
 
             get("/progress") {
-                val achievements = listOf(
-                    "Completed 5 workouts this week",
-                    "New 5km personal best",
-                    "Logged activity for 3 consecutive days"
-                )
+                val session = call.principal<UserSession>()!!
+                val user = userService.findByEmail(session.email)
+                    ?: return@get call.respondRedirect("/login")
+
+                val userId = user.id
+                    ?: return@get call.respondRedirect("/login")
+
+                val workouts = activityService.getWorkoutsForUser(userId)
+                val activityTypeNames = loadActivityTypeNames(activityService, workouts)
+
+                val today = LocalDate.now()
+                val startOfWeek = getStartOfWeek(today)
+
+                val weeklyWorkouts = workouts.filter { workout ->
+                    val workoutDate = parseActivityDate(workout.logDate)
+
+                    workoutDate != null &&
+                        !workoutDate.isBefore(startOfWeek) &&
+                        !workoutDate.isAfter(today)
+                }
+
+                val totalWorkouts = weeklyWorkouts.size
+
+                val activeDays = weeklyWorkouts
+                    .map { it.logDate }
+                    .distinct()
+                    .size
+
+                val mostLoggedActivity = weeklyWorkouts
+                    .groupingBy { workout ->
+                        activityTypeNames[workout.activityTypeId] ?: workout.source ?: "Activity"
+                    }
+                    .eachCount()
+                    .maxByOrNull { it.value }
+                    ?.let { "${it.key} (${it.value})" }
+                    ?: "No activities logged yet"
+
+                val runningRecords = buildRunningRecords(workouts, activityTypeNames)
+                val cyclingRecords = buildCyclingRecords(workouts, activityTypeNames)
+
+                val achievements = if (weeklyWorkouts.isEmpty()) {
+                    listOf("No workouts logged this week yet")
+                } else {
+                    listOf(
+                        "Logged $totalWorkouts workout${pluralSuffix(totalWorkouts)} this week",
+                        "Active on $activeDays day${pluralSuffix(activeDays)} this week",
+                        "Most logged activity: $mostLoggedActivity"
+                    )
+                }
 
                 call.respondTemplate(
                     "progress",
                     mapOf(
-                        "weeklyWorkouts" to "5 workouts completed",
-                        "activeDays" to "4 active days",
-                        "pbRun" to "5km: 25 min",
-                        "pbCycle" to "10km: 32 min",
-                        "consistency" to "3-week streak",
-                        "nextGoal" to "Complete 6 workouts next week",
+                        "weeklyWorkouts" to "$totalWorkouts workout${pluralSuffix(totalWorkouts)} completed this week",
+                        "activeDays" to "$activeDays active day${pluralSuffix(activeDays)}",
+                        "runningRecords" to runningRecords,
+                        "cyclingRecords" to cyclingRecords,
+                        "consistency" to "$activeDays / 7 days active",
+                        "nextGoal" to if (totalWorkouts == 0) {
+                            "Log your first workout this week"
+                        } else {
+                            "Reach ${totalWorkouts + 1} workouts this week"
+                        },
                         "achievements" to achievements
                     )
                 )
@@ -628,8 +646,6 @@ fun Application.configureRouting(
                     )
                 )
             }
-
-            // --- Race routes ---
 
             get("/races") {
                 val session = call.principal<UserSession>()!!
@@ -726,8 +742,313 @@ fun Application.configureRouting(
     }
 }
 
+const val KM_PER_MILE = 1.60934
+const val HALF_MARATHON_KM = 21.0975
+const val MARATHON_KM = 42.195
+
+data class ProgressRecord(
+    val label: String,
+    val value: String
+)
+
+data class DistanceBenchmark(
+    val label: String,
+    val distanceKm: Double
+)
+
 fun getStartOfWeek(date: LocalDate): LocalDate {
     return date.minusDays(date.dayOfWeek.value.toLong() - 1)
+}
+
+fun parseActivityDate(value: String): LocalDate? {
+    return runCatching {
+        LocalDate.parse(value)
+    }.getOrNull()
+}
+
+fun parseDistanceKm(value: String): Double? {
+    if (value.isBlank()) {
+        return null
+    }
+
+    val number = Regex("""\d+(\.\d+)?""")
+        .find(value)
+        ?.value
+        ?.toDoubleOrNull()
+        ?: return null
+
+    val lowerValue = value.lowercase()
+
+    return if (
+        lowerValue.contains("mile") ||
+        Regex("""\bmi\b""").containsMatchIn(lowerValue)
+    ) {
+        number * KM_PER_MILE
+    } else {
+        number
+    }
+}
+
+fun parseDurationMinutes(value: String): Int? {
+    val trimmed = value.trim().lowercase()
+
+    if (trimmed.isBlank()) {
+        return null
+    }
+
+    if (trimmed.contains(":")) {
+        val parts = trimmed.split(":")
+
+        if (parts.size != 3 || parts.any { part -> part.toIntOrNull() == null }) {
+            return null
+        }
+
+        val hours = parts[0].toInt()
+        val minutes = parts[1].toInt()
+        val seconds = parts[2].toInt()
+
+        if (minutes !in 0..59 || seconds !in 0..59) {
+            return null
+        }
+
+        val totalMinutes = hours * 60 + minutes + if (seconds >= 30) 1 else 0
+        return totalMinutes.takeIf { it > 0 }
+    }
+
+    val hours = Regex("""(\d+)\s*(h|hr|hrs|hour|hours)\b""")
+        .find(trimmed)
+        ?.groupValues
+        ?.get(1)
+        ?.toIntOrNull()
+        ?: 0
+
+    val minutes = Regex("""(\d+)\s*(m|min|mins|minute|minutes)\b""")
+        .find(trimmed)
+        ?.groupValues
+        ?.get(1)
+        ?.toIntOrNull()
+        ?: 0
+
+    if (hours > 0 || minutes > 0) {
+        val totalMinutes = hours * 60 + minutes
+        return totalMinutes.takeIf { it > 0 }
+    }
+
+    val plainNumber = Regex("""\d+""")
+        .find(trimmed)
+        ?.value
+        ?.toIntOrNull()
+
+    return plainNumber?.takeIf { it > 0 }
+}
+
+fun pluralSuffix(count: Int): String {
+    return if (count == 1) "" else "s"
+}
+
+suspend fun loadActivityTypeNames(
+    activityService: ActivityService,
+    workouts: List<WorkoutLog>
+): Map<Int, String> {
+    val names = mutableMapOf<Int, String>()
+
+    for (activityTypeId in workouts.map { it.activityTypeId }.distinct()) {
+        names[activityTypeId] = activityService.getActivityTypeName(activityTypeId) ?: "Activity"
+    }
+
+    return names
+}
+
+fun buildRunningRecords(
+    workouts: List<WorkoutLog>,
+    activityTypeNames: Map<Int, String>
+): List<ProgressRecord> {
+    val runs = workoutsForActivityType(workouts, activityTypeNames, "Running")
+
+    val benchmarkRecords = listOf(
+        DistanceBenchmark("Fastest 1 km", 1.0),
+        DistanceBenchmark("Fastest 1 mile", KM_PER_MILE),
+        DistanceBenchmark("Fastest 5 km", 5.0),
+        DistanceBenchmark("Fastest 10 km", 10.0),
+        DistanceBenchmark("Fastest half marathon", HALF_MARATHON_KM),
+        DistanceBenchmark("Fastest marathon", MARATHON_KM)
+    ).map { benchmark ->
+        fastestBenchmarkRecord(runs, benchmark)
+    }
+
+    return benchmarkRecords + listOf(
+        longestDistanceRecord(
+            workouts = runs,
+            label = "Longest run",
+            emptyMessage = "No running distance logged yet"
+        ),
+        bestPaceRecord(runs)
+    )
+}
+
+fun buildCyclingRecords(
+    workouts: List<WorkoutLog>,
+    activityTypeNames: Map<Int, String>
+): List<ProgressRecord> {
+    val rides = workoutsForActivityType(workouts, activityTypeNames, "Cycling")
+
+    return listOf(
+        longestDistanceRecord(
+            workouts = rides,
+            label = "Longest ride",
+            emptyMessage = "No cycling distance logged yet"
+        ),
+        fastestAverageSpeedRecord(rides)
+    )
+}
+
+fun workoutsForActivityType(
+    workouts: List<WorkoutLog>,
+    activityTypeNames: Map<Int, String>,
+    activityTypeName: String
+): List<WorkoutLog> {
+    return workouts.filter { workout ->
+        val distance = workout.distance
+
+        activityTypeNames[workout.activityTypeId].equals(activityTypeName, ignoreCase = true) &&
+                distance != null &&
+                distance > 0.0 &&
+                workout.duration > 0
+    }
+}
+
+fun fastestBenchmarkRecord(
+    runs: List<WorkoutLog>,
+    benchmark: DistanceBenchmark
+): ProgressRecord {
+    val best = runs
+        .mapNotNull { run ->
+            val estimatedMinutes = estimatedMinutesForDistance(run, benchmark.distanceKm)
+            if (estimatedMinutes == null) {
+                null
+            } else {
+                run to estimatedMinutes
+            }
+        }
+        .minByOrNull { it.second }
+
+    val value = if (best == null) {
+        "No eligible run yet"
+    } else {
+        val run = best.first
+        val estimatedMinutes = best.second
+
+        "${formatClockDuration(estimatedMinutes)} from ${formatDistance(run.distance!!)} km run"
+    }
+
+    return ProgressRecord(
+        label = benchmark.label,
+        value = value
+    )
+}
+
+fun estimatedMinutesForDistance(
+    workout: WorkoutLog,
+    targetDistanceKm: Double
+): Double? {
+    val workoutDistance = workout.distance ?: return null
+
+    if (workoutDistance < targetDistanceKm) {
+        return null
+    }
+
+    val minutesPerKm = workout.duration / workoutDistance
+    return minutesPerKm * targetDistanceKm
+}
+
+fun longestDistanceRecord(
+    workouts: List<WorkoutLog>,
+    label: String,
+    emptyMessage: String
+): ProgressRecord {
+    val best = workouts.maxByOrNull { it.distance ?: 0.0 }
+
+    val value = if (best == null || best.distance == null) {
+        emptyMessage
+    } else {
+        "${formatDistance(best.distance)} km in ${formatClockDuration(best.duration.toDouble())}"
+    }
+
+    return ProgressRecord(label, value)
+}
+
+fun bestPaceRecord(runs: List<WorkoutLog>): ProgressRecord {
+    val best = runs.minByOrNull { run ->
+        run.duration / (run.distance ?: 1.0)
+    }
+
+    val value = if (best == null || best.distance == null) {
+        "No running pace available yet"
+    } else {
+        val minutesPerKm = best.duration / best.distance
+        "${formatClockDuration(minutesPerKm)} / km from ${formatDistance(best.distance)} km run"
+    }
+
+    return ProgressRecord("Best pace", value)
+}
+
+fun fastestAverageSpeedRecord(rides: List<WorkoutLog>): ProgressRecord {
+    val best = rides.maxByOrNull { ride ->
+        val distance = ride.distance ?: 0.0
+        val hours = ride.duration / 60.0
+
+        if (hours <= 0.0) {
+            0.0
+        } else {
+            distance / hours
+        }
+    }
+
+    val value = if (best == null || best.distance == null) {
+        "No cycling speed available yet"
+    } else {
+        val speedKmh = best.distance / (best.duration / 60.0)
+
+        "${formatSpeed(speedKmh)} from ${formatDistance(best.distance)} km ride"
+    }
+
+    return ProgressRecord("Fastest average speed", value)
+}
+
+fun formatDistance(distance: Double): String {
+    return if (distance % 1.0 == 0.0) {
+        distance.toInt().toString()
+    } else {
+        "%.2f"
+            .format(Locale.UK, distance)
+            .trimEnd('0')
+            .trimEnd('.')
+    }
+}
+
+fun formatClockDuration(minutes: Double): String {
+    val totalSeconds = (minutes * 60).roundToInt()
+
+    val hours = totalSeconds / 3600
+    val remainingSecondsAfterHours = totalSeconds % 3600
+    val mins = remainingSecondsAfterHours / 60
+    val seconds = remainingSecondsAfterHours % 60
+
+    return if (hours > 0) {
+        "%d:%02d:%02d".format(hours, mins, seconds)
+    } else {
+        "%d:%02d".format(mins, seconds)
+    }
+}
+
+fun formatSpeed(speedKmh: Double): String {
+    val formattedSpeed = if (speedKmh % 1.0 == 0.0) {
+        speedKmh.toInt().toString()
+    } else {
+        "%.1f".format(Locale.UK, speedKmh)
+    }
+
+    return "$formattedSpeed km/h"
 }
 
 fun splitPreferredActivities(preferredActivities: String?): List<String> {

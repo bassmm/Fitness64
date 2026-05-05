@@ -1,3 +1,11 @@
+/**
+ * PlanRoutes.kt
+ *
+ * Defines the UI routes for training plan management.
+ * Handles the onboarding flow for new users selecting a plan,
+ * displaying the weekly plan, and updating individual sessions.
+ * All routes are protected and require an authenticated session.
+ */
 package com.fitness64.plans
 
 import com.fitness64.UserSession
@@ -11,6 +19,12 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import java.time.LocalDate
 
+/**
+ * Registers all training plan related routes on the application.
+ *
+ * @param planService The service used for training plan database operations.
+ * @param userService The service used for user lookup and authentication.
+ */
 fun Application.configurePlanRoutes(
     planService: PlanService,
     userService: UserService
@@ -18,6 +32,11 @@ fun Application.configurePlanRoutes(
     routing {
         authenticate("auth-session") {
 
+            /**
+             * GET /onboarding
+             * Displays the onboarding page for new users to select a training plan.
+             * Recommends a plan based on the user's fitness level.
+             */
             get("/onboarding") {
                 val session = call.principal<UserSession>()!!
                 val user = userService.findByEmail(session.email)
@@ -41,6 +60,12 @@ fun Application.configurePlanRoutes(
                 )
             }
 
+            /**
+             * POST /onboarding
+             * Processes the onboarding form submission.
+             * Generates a new training plan for the user based on their selected plan type.
+             * Redirects to /plan on success, or re-renders the form with an error if no plan was selected.
+             */
             post("/onboarding") {
                 val session = call.principal<UserSession>()!!
                 val user = userService.findByEmail(session.email)
@@ -76,6 +101,11 @@ fun Application.configurePlanRoutes(
                 call.respondRedirect("/plan")
             }
 
+            /**
+             * GET /plan
+             * Displays the user's current weekly training plan.
+             * Maps each session to its corresponding calendar date for the current week.
+             */
             get("/plan") {
                 val session = call.principal<UserSession>()!!
                 val user = userService.findByEmail(session.email)
@@ -110,10 +140,20 @@ fun Application.configurePlanRoutes(
                 )
             }
 
+            /**
+             * POST /plan/generate
+             * Redirects to the onboarding page to allow the user to select a new plan type.
+             */
             post("/plan/generate") {
                 call.respondRedirect("/onboarding")
             }
 
+            /**
+             * GET /plan/update-session
+             * Displays the form for updating a specific day's planned session.
+             * Pre-fills the form with the current session details for that day.
+             * Redirects to /plan if the day parameter is missing or invalid.
+             */
             get("/plan/update-session") {
                 val session = call.principal<UserSession>()!!
                 val user = userService.findByEmail(session.email)
@@ -149,6 +189,12 @@ fun Application.configurePlanRoutes(
                 )
             }
 
+            /**
+             * POST /plan/update-session
+             * Processes the session update form submission.
+             * Validates the new session name and updates the plan in the database.
+             * Redirects to /plan on success, or re-renders the form with an error if validation fails.
+             */
             post("/plan/update-session") {
                 val session = call.principal<UserSession>()!!
                 val user = userService.findByEmail(session.email)
@@ -188,7 +234,6 @@ fun Application.configurePlanRoutes(
                 planService.updatePlanSession(userId, day, newSession, newDuration, newIntensity)
                 call.respondRedirect("/plan")
             }
-
         }
     }
 }

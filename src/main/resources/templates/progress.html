@@ -11,30 +11,126 @@
 </div>
 
 <div class="row g-4 mb-6">
-    <div class="col-md-6 col-xl-3"><div class="card card-hover h-100"><div class="card-body p-5"><span class="stat-icon bg-primary-subtle text-primary mb-4"><i class="bi bi-calendar-check"></i></span><p class="text-muted text-sm mb-1">Weekly Summary</p><h3 class="h5 mb-2">{{ weeklyWorkouts }}</h3><p class="mb-0 text-muted">{{ activeDays }}</p></div></div></div>
-    <div class="col-md-6 col-xl-3"><div class="card card-hover h-100"><div class="card-body p-5"><span class="stat-icon bg-info-subtle text-info mb-4"><i class="bi bi-speedometer2"></i></span><p class="text-muted text-sm mb-1">Personal Bests</p><h3 class="h6 mb-2">Run: {{ pbRun }}</h3><p class="mb-0 text-muted">Cycle: {{ pbCycle }}</p></div></div></div>
-    <div class="col-md-6 col-xl-3"><div class="card card-hover h-100"><div class="card-body p-5"><span class="stat-icon bg-warning-subtle text-warning mb-4"><i class="bi bi-fire"></i></span><p class="text-muted text-sm mb-1">Consistency</p><h3 class="h5 mb-0">{{ consistency }}</h3></div></div></div>
-    <div class="col-md-6 col-xl-3"><div class="card card-hover h-100"><div class="card-body p-5"><span class="stat-icon bg-success-subtle text-success mb-4"><i class="bi bi-bullseye"></i></span><p class="text-muted text-sm mb-1">Next Goal</p><h3 class="h5 mb-0">{{ nextGoal }}</h3></div></div></div>
+    <div class="col-md-6 col-xl-4">
+        <div class="card card-hover h-100">
+            <div class="card-body p-5">
+                <span class="stat-icon bg-primary-subtle text-primary mb-4">
+                    <i class="bi bi-calendar-check"></i>
+                </span>
+                <p class="text-muted text-sm mb-1">Weekly Summary</p>
+                <h3 class="h5 mb-2">{{ weeklyWorkouts }}</h3>
+                <p class="mb-0 text-muted">{{ activeDays }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-4">
+        <div class="card card-hover h-100">
+            <div class="card-body p-5">
+                <span class="stat-icon bg-warning-subtle text-warning mb-4">
+                    <i class="bi bi-fire"></i>
+                </span>
+                <p class="text-muted text-sm mb-1">Consistency</p>
+                <h3 class="h5 mb-0">{{ consistency }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-4">
+        <div class="card card-hover h-100">
+            <div class="card-body p-5">
+                <span class="stat-icon bg-success-subtle text-success mb-4">
+                    <i class="bi bi-bullseye"></i>
+                </span>
+                <p class="text-muted text-sm mb-1">Next Goal</p>
+                <h3 class="h5 mb-0">{{ nextGoal }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-6">
+    <div class="col-lg-6">
+        <div class="card shadow-soft h-100">
+            <div class="card-body p-5">
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <span class="stat-icon bg-info-subtle text-info">
+                        <i class="bi bi-speedometer2"></i>
+                    </span>
+                    <div>
+                        <p class="page-kicker mb-1">Running</p>
+                        <h2 class="h4 mb-0">Running Records</h2>
+                    </div>
+                </div>
+
+                <p class="text-muted text-sm">
+                    Times are estimated from your logged distance and duration.
+                </p>
+
+                <div class="list-group list-group-flush">
+                    {% for record in runningRecords %}
+                        <div class="list-group-item px-0 d-flex justify-content-between gap-3">
+                            <strong>{{ record.label }}</strong>
+                            <span class="text-muted text-end">{{ record.value }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card shadow-soft h-100">
+            <div class="card-body p-5">
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <span class="stat-icon bg-primary-subtle text-primary">
+                        <i class="bi bi-bicycle"></i>
+                    </span>
+                    <div>
+                        <p class="page-kicker mb-1">Cycling</p>
+                        <h2 class="h4 mb-0">Cycling Records</h2>
+                    </div>
+                </div>
+
+                <div class="list-group list-group-flush">
+                    {% for record in cyclingRecords %}
+                        <div class="list-group-item px-0 d-flex justify-content-between gap-3">
+                            <strong>{{ record.label }}</strong>
+                            <span class="text-muted text-end">{{ record.value }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="card shadow-soft">
     <div class="card-body p-5">
         <div class="d-flex align-items-center gap-3 mb-4">
-            <span class="stat-icon bg-primary text-white"><i class="bi bi-award"></i></span>
+            <span class="stat-icon bg-primary text-white">
+                <i class="bi bi-award"></i>
+            </span>
             <div>
                 <p class="page-kicker mb-1">Recent wins</p>
                 <h2 class="h4 mb-0">Achievements</h2>
             </div>
         </div>
+
         <div class="list-group list-group-flush">
             {% for achievement in achievements %}
-                <div class="list-group-item px-0 d-flex align-items-center gap-3"><i class="bi bi-check-circle-fill text-success"></i><span>{{ achievement }}</span></div>
+                <div class="list-group-item px-0 d-flex align-items-center gap-3">
+                    <i class="bi bi-check-circle-fill text-success"></i>
+                    <span>{{ achievement }}</span>
+                </div>
             {% endfor %}
         </div>
     </div>
 </div>
 
 <div class="mt-5">
-    <a class="btn btn-neutral" href="/home"><i class="bi bi-arrow-left me-2"></i>Back to Home</a>
+    <a class="btn btn-neutral" href="/home">
+        <i class="bi bi-arrow-left me-2"></i>Back to Home
+    </a>
 </div>
 {% endblock %}
