@@ -338,6 +338,7 @@ fun Application.configureRouting(
                     "Weightlifting" -> call.respondRedirect("/weightlifting/log")
                     "Running", "Cycling", "Swimming" ->
                         call.respondRedirect("/log/details?type=$activityType&date=$activityDate")
+
                     else -> call.respondRedirect("/log")
                 }
             }
@@ -516,50 +517,60 @@ fun Application.configureRouting(
                         ""
                     }
 
+                    val loggedItems = (
+                        workoutsForDate.map {
+                            mapOf(
+                                "type" to (activityTypeNames[it.activityTypeId] ?: it.source ?: "Workout"),
+                                "duration" to "${it.duration} min",
+                                "distance" to (it.distance?.let { distance -> "${formatDistance(distance)} km" } ?: ""),
+                                "notes" to (it.notes ?: "")
+                            )
+                        } +
+                            weightliftingForDate.map {
+                                mapOf(
+                                    "type" to "Weightlifting",
+                                    "duration" to "${it.duration} min",
+                                    "distance" to "${it.totalSets} total sets",
+                                    "notes" to (it.notes ?: "")
+                                )
+                            } +
+                            racesForDate.map { race ->
+                                val raceDetails = listOfNotNull(
+                                    race.location,
+                                    race.category
+                                ).joinToString(" • ")
+
+                                val raceNotes = buildString {
+                                    if (race.isPersonalBest) append("Personal best")
+                                    if (raceDetails.isNotBlank()) {
+                                        if (isNotEmpty()) append(" · ")
+                                        append(raceDetails)
+                                    }
+                                }
+
+                                mapOf(
+                                    "type" to "Race: ${race.eventName}",
+                                    "duration" to (race.finishTime ?: "Completed"),
+                                    "distance" to "",
+                                    "notes" to raceNotes
+                                )
+                            }
+                    )
+
+                    val loggedActivityTypes = loggedItems.map { it["type"].orEmpty() }
+
                     mapOf(
                         "day" to dayName,
                         "date" to dateString,
                         "planned" to plannedSession,
+                        "planStatus" to getPlanFollowStatus(
+                            plannedSession = plannedSession,
+                            loggedActivityTypes = loggedActivityTypes,
+                            date = date,
+                            today = today
+                        ),
                         "isToday" to (date == today),
-                        "logged" to (
-                            workoutsForDate.map {
-                                mapOf(
-                                    "type" to (activityTypeNames[it.activityTypeId] ?: it.source ?: "Workout"),
-                                    "duration" to "${it.duration} min",
-                                    "distance" to (it.distance?.let { distance -> "${formatDistance(distance)} km" } ?: ""),
-                                    "notes" to (it.notes ?: "")
-                                )
-                            } +
-                                weightliftingForDate.map {
-                                    mapOf(
-                                        "type" to "Weightlifting",
-                                        "duration" to "${it.duration} min",
-                                        "distance" to "${it.totalSets} total sets",
-                                        "notes" to (it.notes ?: "")
-                                    )
-                                } +
-                                racesForDate.map { race ->
-                                    val raceDetails = listOfNotNull(
-                                        race.location,
-                                        race.category
-                                    ).joinToString(" • ")
-
-                                    val raceNotes = buildString {
-                                        if (race.isPersonalBest) append("Personal best")
-                                        if (raceDetails.isNotBlank()) {
-                                            if (isNotEmpty()) append(" · ")
-                                            append(raceDetails)
-                                        }
-                                    }
-
-                                    mapOf(
-                                        "type" to "Race: ${race.eventName}",
-                                        "duration" to (race.finishTime ?: "Completed"),
-                                        "distance" to "",
-                                        "notes" to raceNotes
-                                    )
-                                }
-                        )
+                        "logged" to loggedItems
                     )
                 }.toList()
 
@@ -587,8 +598,8 @@ fun Application.configureRouting(
                     val workoutDate = parseActivityDate(workout.logDate)
 
                     workoutDate != null &&
-                        !workoutDate.isBefore(startOfWeek) &&
-                        !workoutDate.isAfter(today)
+                            !workoutDate.isBefore(startOfWeek) &&
+                            !workoutDate.isAfter(today)
                 }
 
                 val totalWorkouts = weeklyWorkouts.size
@@ -610,6 +621,58 @@ fun Application.configureRouting(
                 val runningRecords = buildRunningRecords(workouts, activityTypeNames)
                 val cyclingRecords = buildCyclingRecords(workouts, activityTypeNames)
 
+                val weightliftingSessions = weightliftingService.getWeightliftingHistory(userId)
+                val races = raceService.getRacesForUser(userId)
+                val planFromDatabase = planService.getPlan(userId)
+                val planByDay = planFromDatabase.associateBy { it.day }
+
+                val planStatuses = (0..6).map { index ->
+                    val date = startOfWeek.plusDays(index.toLong())
+                    val dateString = date.toString()
+                    val dayName = date.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.ENGLISH)
+                    val plannedSession = planByDay[dayName]?.session ?: ""
+
+                    val loggedActivityTypes = mutableListOf<String>()
+
+                    loggedActivityTypes.addAll(
+                        workouts
+                            .filter { it.logDate == dateString }
+                            .map { activityTypeNames[it.activityTypeId] ?: it.source ?: "Workout" }
+                    )
+
+                    if (weightliftingSessions.any { it.logDate == dateString }) {
+                        loggedActivityTypes.add("Weightlifting")
+                    }
+
+                    if (races.any { it.eventDate == dateString }) {
+                        loggedActivityTypes.add("Race")
+                    }
+
+                    val status = getPlanFollowStatus(
+                        plannedSession = plannedSession,
+                        loggedActivityTypes = loggedActivityTypes,
+                        date = date,
+                        today = today
+                    )
+
+                    PlanFollowStatus(
+                        day = dayName,
+                        date = dateString,
+                        planned = plannedSession.ifBlank { "No workout planned" },
+                        status = status,
+                        plannedWorkout = isPlannedWorkout(plannedSession),
+                        completedPlannedWorkout = status == "Completed"
+                    )
+                }
+
+                val plannedWorkoutStatuses = planStatuses.filter { it.plannedWorkout }
+                val completedPlannedWorkouts = plannedWorkoutStatuses.count { it.completedPlannedWorkout }
+
+                val planAdherence = formatPlanAdherence(
+                    completed = completedPlannedWorkouts,
+                    planned = plannedWorkoutStatuses.size
+                )
+
                 val achievements = if (weeklyWorkouts.isEmpty()) {
                     listOf("No workouts logged this week yet")
                 } else {
@@ -628,6 +691,8 @@ fun Application.configureRouting(
                         "runningRecords" to runningRecords,
                         "cyclingRecords" to cyclingRecords,
                         "consistency" to "$activeDays / 7 days active",
+                        "planAdherence" to planAdherence,
+                        "planStatuses" to planStatuses,
                         "nextGoal" to if (totalWorkouts == 0) {
                             "Log your first workout this week"
                         } else {
@@ -755,6 +820,7 @@ data class DistanceBenchmark(
     val label: String,
     val distanceKm: Double
 )
+
 data class PlanFollowStatus(
     val day: String,
     val date: String,
@@ -763,6 +829,7 @@ data class PlanFollowStatus(
     val plannedWorkout: Boolean,
     val completedPlannedWorkout: Boolean
 )
+
 fun getStartOfWeek(date: LocalDate): LocalDate {
     return date.minusDays(date.dayOfWeek.value.toLong() - 1)
 }
@@ -1056,6 +1123,93 @@ fun formatSpeed(speedKmh: Double): String {
     }
 
     return "$formattedSpeed km/h"
+}
+
+fun getPlanFollowStatus(
+    plannedSession: String,
+    loggedActivityTypes: List<String>,
+    date: LocalDate,
+    today: LocalDate
+): String {
+    if (date.isAfter(today)) {
+        return "Upcoming"
+    }
+
+    val hasPlannedWorkout = isPlannedWorkout(plannedSession)
+    val hasLoggedActivity = loggedActivityTypes.isNotEmpty()
+
+    if (!hasPlannedWorkout && !hasLoggedActivity) {
+        return "Rest day"
+    }
+
+    if (!hasPlannedWorkout && hasLoggedActivity) {
+        return "Extra activity"
+    }
+
+    if (hasPlannedWorkout && !hasLoggedActivity) {
+        return "Missed"
+    }
+
+    return if (loggedActivityTypes.any { activityMatchesPlan(plannedSession, it) }) {
+        "Completed"
+    } else {
+        "Different activity"
+    }
+}
+
+fun isPlannedWorkout(plannedSession: String): Boolean {
+    val normalisedPlan = plannedSession.lowercase()
+
+    if (normalisedPlan.isBlank()) {
+        return false
+    }
+
+    return !(
+        normalisedPlan.contains("rest") ||
+                normalisedPlan.contains("recovery")
+    )
+}
+
+fun activityMatchesPlan(
+    plannedSession: String,
+    loggedActivityType: String
+): Boolean {
+    val plan = plannedSession.lowercase()
+    val logged = loggedActivityType.lowercase()
+
+    return when {
+        logged.contains("running") || logged.contains("race") ->
+            plan.contains("run") || plan.contains("cardio") || plan.contains("race")
+
+        logged.contains("cycling") ->
+            plan.contains("cycl") || plan.contains("bike") || plan.contains("cardio")
+
+        logged.contains("swimming") ->
+            plan.contains("swim")
+
+        logged.contains("weightlifting") ->
+            plan.contains("weight") ||
+                    plan.contains("strength") ||
+                    plan.contains("gym") ||
+                    plan.contains("upper") ||
+                    plan.contains("lower") ||
+                    plan.contains("full body")
+
+        else -> plan.contains(logged)
+    }
+}
+
+fun formatPlanAdherence(
+    completed: Int,
+    planned: Int
+): String {
+    if (planned == 0) {
+        return "No planned workouts this week"
+    }
+
+    val percentage = ((completed.toDouble() / planned.toDouble()) * 100).roundToInt()
+
+    return "$completed / $planned planned workouts completed ($percentage%)"
 }
 
 fun splitPreferredActivities(preferredActivities: String?): List<String> {
