@@ -4,6 +4,7 @@ import com.fitness64.core.isHtmxRequest
 import com.fitness64.core.requireAuthenticatedUser
 import com.fitness64.core.respondHx
 import com.fitness64.schema.ActivityService
+import com.fitness64.schema.Trackpoint
 import com.fitness64.schema.UserService
 import com.fitness64.schema.WeightliftingLoggedExercise
 import com.fitness64.schema.WeightliftingService
@@ -20,6 +21,10 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import io.ktor.http.HttpStatusCode
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
+import java.time.temporal.ChronoUnit
 
 private data class ActivityFeedItem(
     val id: String,
@@ -30,6 +35,26 @@ private data class ActivityFeedItem(
     val summary: String,
     val metric: String,
     val notes: String
+)
+
+private data class LapDetail(
+    val lapNumber: Int,
+    val color: String,
+    val points: List<PointCoord>
+)
+
+private data class PointCoord(
+    val lat: Double,
+    val lng: Double
+)
+
+private data class HeartRatePoint(
+    val label: String,
+    val bpm: Int
+)
+
+private val LAP_COLORS = listOf(
+    "#3388ff", "#ff6600", "#33cc33", "#cc33cc", "#ffcc00", "#00cccc"
 )
 
 private data class ActivityDetail(
@@ -44,7 +69,9 @@ private data class ActivityDetail(
     val categoryRank: Int? = null, val isPersonalBest: Boolean = false,
     val certificateUrl: String? = null,
     val activityTypeId: Int? = null,
-    val availableActivityTypes: List<String> = emptyList()
+    val availableActivityTypes: List<String> = emptyList(),
+    val laps: List<LapDetail>? = null,
+    val heartRateData: List<HeartRatePoint>? = null
 )
 
 private suspend fun resolveActivity(type: String, resourceId: Int, userId: Int,
@@ -57,13 +84,19 @@ private suspend fun resolveActivity(type: String, resourceId: Int, userId: Int,
         val activityType = activityService.getActivityTypeName(workout.activityTypeId) ?: workout.source ?: "Unknown"
         val cardioTypes = listOf("Running", "Cycling", "Swimming")
         val displayName = workout.name?.takeIf { it.isNotBlank() } ?: "$activityType Session"
+
+        val laps = buildLapDetails(workout.id!!, activityService)
+        val heartRateData = buildHeartRateData(workout.id, activityService)
+
         ActivityDetail(
             id = "cardio-${workout.id}", type = "cardio", category = activityType.takeIf { it in cardioTypes } ?: "Cardio",
             title = displayName, date = workout.logDate, duration = workout.duration,
             distance = workout.distance, calories = workout.calories,
             notes = workout.notes, source = workout.source,
             activityTypeId = workout.activityTypeId,
-            availableActivityTypes = cardioTypes
+            availableActivityTypes = cardioTypes,
+            laps = laps,
+            heartRateData = heartRateData
         )
     }
     "weightlifting" -> {
@@ -102,9 +135,78 @@ private fun activityDetailMap(activity: ActivityDetail): Map<String, Any> = mapO
         "categoryRank" to activity.categoryRank, "isPersonalBest" to activity.isPersonalBest,
         "certificateUrl" to activity.certificateUrl,
         "activityTypeId" to activity.activityTypeId,
-        "availableActivityTypes" to activity.availableActivityTypes
+        "availableActivityTypes" to activity.availableActivityTypes,
+        "laps" to (activity.laps?.map { lap ->
+            mapOf<String, Any?>(
+                "lapNumber" to lap.lapNumber,
+                "color" to lap.color,
+                "points" to lap.points.map { pt -> listOf(pt.lat, pt.lng) }
+            )
+        }),
+        "heartRateData" to (activity.heartRateData?.map { hr ->
+            mapOf<String, Any?>("label" to hr.label, "bpm" to hr.bpm)
+        })
     )
 )
+
+private suspend fun buildLapDetails(workoutLogId: Int, activityService: ActivityService): List<LapDetail>? {
+    val laps = activityService.getLapsForWorkoutLog(workoutLogId)
+    if (laps.isEmpty()) return null
+
+    val result = mutableListOf<LapDetail>()
+    for ((index, lap) in laps.withIndex()) {
+        val trackpoints = activityService.getTrackpointsForLap(lap.id)
+            .filter { it.latitude != null && it.longitude != null }
+            .map { PointCoord(it.latitude!!, it.longitude!!) }
+
+        if (trackpoints.isNotEmpty()) {
+            val color = LAP_COLORS[index % LAP_COLORS.size]
+            result.add(LapDetail(lapNumber = index + 1, color = color, points = trackpoints))
+        }
+    }
+
+    return result.ifEmpty { null }
+}
+
+private fun parseIsoTime(timeStr: String): LocalTime? {
+    return try {
+        if (timeStr.contains('T')) {
+            LocalTime.parse(timeStr.substringAfter('T').take(8))
+        } else {
+            LocalTime.parse(timeStr.take(8))
+        }
+    } catch (e: DateTimeParseException) {
+        null
+    }
+}
+
+private fun formatElapsed(seconds: Long): String {
+    val minutes = seconds / 60
+    val secs = seconds % 60
+    return "${minutes}:${secs.toString().padStart(2, '0')}"
+}
+
+private suspend fun buildHeartRateData(workoutLogId: Int, activityService: ActivityService): List<HeartRatePoint>? {
+    val laps = activityService.getLapsForWorkoutLog(workoutLogId)
+    if (laps.isEmpty()) return null
+
+    val allTrackpoints = mutableListOf<Trackpoint>()
+    for (lap in laps) {
+        allTrackpoints.addAll(activityService.getTrackpointsForLap(lap.id))
+    }
+
+    val hrPoints = allTrackpoints.filter { it.heartRate != null && it.heartRate!! > 0 }
+    if (hrPoints.isEmpty()) return null
+
+    val baseTime = parseIsoTime(hrPoints.first().time)
+    if (baseTime == null) return null
+
+    return hrPoints.map { tp ->
+        val tpTime = parseIsoTime(tp.time)
+        val elapsedSeconds = if (tpTime != null) ChronoUnit.SECONDS.between(baseTime, tpTime) else 0L
+        HeartRatePoint(label = formatElapsed(elapsedSeconds), bpm = tp.heartRate!!)
+    }
+}
 
 fun Application.configureActivityRoutes(
     activityService: ActivityService,
