@@ -18,12 +18,7 @@ fun Application.configureRacesPagesRoutes(
     routing {
         authenticate("auth-session") {
             get("/races") {
-                val (_, userId) = call.requireAuthenticatedUser(userService) ?: return@get
-
-                val races = raceService.getRacesForUser(userId)
-                    .sortedByDescending { it.eventDate }
-
-                call.respondTemplate("races", mapOf("races" to races))
+                call.respondRedirect("/activities?filter=races")
             }
 
             get("/races/log") {
@@ -86,7 +81,7 @@ fun Application.configureRacesPagesRoutes(
                     )
                 )
 
-                call.respondRedirect("/races")
+                call.respondRedirect("/activities?filter=races")
             }
         }
     }
