@@ -1,3 +1,10 @@
+/**
+ * RaceRoutes.kt
+ *
+ * Defines the API routes for race record management.
+ * Provides endpoints for creating, retrieving, and deleting race records.
+ * All routes are protected and require an authenticated session.
+ */
 package com.fitness64.races
 
 import io.ktor.http.*
@@ -7,20 +14,33 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
-fun Application.configureRaceRoutes(
-    raceService: RaceService
-) {
+/**
+ * Registers all race-related API routes on the application.
+ * All routes are wrapped in an authenticated session block.
+ *
+ * @param raceService The service used to perform race database operations.
+ */
+fun Application.configureRaceRoutes(raceService: RaceService) {
     routing {
 
         authenticate("auth-session") {
-            // Log a new race
+
+            /**
+             * POST /races
+             * Creates a new race record from the request body.
+             * Responds with 201 Created and the new race ID on success.
+             */
             post("/races") {
                 val race = call.receive<RaceRecord>()
                 val id = raceService.createRace(race)
                 call.respond(HttpStatusCode.Created, id)
             }
 
-            // Get a specific race by ID
+            /**
+             * GET /races/{id}
+             * Retrieves a single race record by its ID.
+             * Responds with 200 OK and the race data, or 404 if not found.
+             */
             get("/races/{id}") {
                 val id = call.parameters["id"]?.toInt()
                     ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid race ID")
@@ -32,7 +52,11 @@ fun Application.configureRaceRoutes(
                 }
             }
 
-            // Get all races for a user
+            /**
+             * GET /users/{userId}/races
+             * Retrieves all race records for a specific user.
+             * Responds with 200 OK and a list of race records.
+             */
             get("/users/{userId}/races") {
                 val userId = call.parameters["userId"]?.toInt()
                     ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid user ID")
@@ -40,7 +64,11 @@ fun Application.configureRaceRoutes(
                 call.respond(HttpStatusCode.OK, races)
             }
 
-            // Delete a race
+            /**
+             * DELETE /races/{id}
+             * Deletes a race record by its ID.
+             * Responds with 200 OK on success.
+             */
             delete("/races/{id}") {
                 val id = call.parameters["id"]?.toInt()
                     ?: return@delete call.respond(HttpStatusCode.BadRequest, "Invalid race ID")

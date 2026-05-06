@@ -1,3 +1,10 @@
+/**
+ * WeightliftingSchema.kt
+ *
+ * Defines the database schema and service layer for weightlifting sessions.
+ * Manages workout logs and their associated exercises, supporting
+ * multi-exercise sessions with sets, reps, and optional weight tracking.
+ */
 package com.fitness64.weightlifting
 
 import kotlinx.coroutines.Dispatchers
@@ -13,6 +20,14 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 
+/**
+ * Represents a weightlifting workout session log entry.
+ *
+ * @property userId The ID of the user who logged this session.
+ * @property logDate The date of the session (ISO format: yyyy-MM-dd).
+ * @property duration Duration of the session in minutes.
+ * @property notes Optional notes about the session.
+ */
 @Serializable
 data class WeightliftingWorkoutLog(
     val userId: Int,
@@ -21,6 +36,14 @@ data class WeightliftingWorkoutLog(
     val notes: String? = null
 )
 
+/**
+ * Represents a single exercise logged within a weightlifting session.
+ *
+ * @property exerciseName The name of the exercise performed.
+ * @property sets Number of sets completed.
+ * @property reps Number of repetitions per set.
+ * @property weight Optional weight used in kg.
+ */
 @Serializable
 data class WeightliftingLoggedExercise(
     val exerciseName: String,
@@ -29,6 +52,15 @@ data class WeightliftingLoggedExercise(
     val weight: Double? = null
 )
 
+/**
+ * Represents a single exercise entry within a weightlifting history item.
+ * Used for display in the activity history feed.
+ *
+ * @property exerciseName The name of the exercise.
+ * @property sets Number of sets completed.
+ * @property reps Number of repetitions per set.
+ * @property weight Optional weight used in kg.
+ */
 @Serializable
 data class WeightliftingWorkoutEntry(
     val exerciseName: String,
@@ -37,6 +69,16 @@ data class WeightliftingWorkoutEntry(
     val weight: Double? = null
 )
 
+/**
+ * Represents a complete weightlifting session for display in activity history.
+ * Groups all exercises performed in a single session.
+ *
+ * @property logDate The date of the session (ISO format: yyyy-MM-dd).
+ * @property duration Duration of the session in minutes.
+ * @property notes Optional session notes.
+ * @property totalSets Total number of sets across all exercises in this session.
+ * @property exercises List of exercises performed in this session.
+ */
 @Serializable
 data class WeightliftingHistoryItem(
     val logDate: String,
@@ -46,8 +88,17 @@ data class WeightliftingHistoryItem(
     val exercises: List<WeightliftingWorkoutEntry>
 )
 
+/**
+ * Service class responsible for all database operations related to weightlifting sessions.
+ * Handles creation and retrieval of workout logs and their associated exercises.
+ *
+ * @param database The database connection to use for all operations.
+ */
 class WeightliftingService(database: Database) {
 
+    /**
+     * Database table for weightlifting workout session logs.
+     */
     object WeightliftingWorkoutLogs : Table("weightlifting_workout_logs") {
         val id = integer("weightlifting_workout_log_id").autoIncrement()
         val userId = integer("user_id")
@@ -58,6 +109,10 @@ class WeightliftingService(database: Database) {
         override val primaryKey = PrimaryKey(id)
     }
 
+    /**
+     * Database table for individual exercises within a weightlifting session.
+     * Each row represents one exercise performed during a session.
+     */
     object WeightliftingSessionExercises : Table("weightlifting_session_exercises") {
         val id = integer("weightlifting_session_exercise_id").autoIncrement()
         val workoutLogId = integer("weightlifting_workout_log_id").references(WeightliftingWorkoutLogs.id)
@@ -78,6 +133,14 @@ class WeightliftingService(database: Database) {
         }
     }
 
+    /**
+     * Creates a new weightlifting session with all its exercises in a single transaction.
+     * Inserts the session log first, then inserts each exercise linked to that session.
+     *
+     * @param workout The session metadata to save (date, duration, notes).
+     * @param exercises The list of exercises performed during the session.
+     * @return The auto-generated ID of the newly created workout session log.
+     */
     suspend fun createWorkoutSession(
         workout: WeightliftingWorkoutLog,
         exercises: List<WeightliftingLoggedExercise>
@@ -102,6 +165,13 @@ class WeightliftingService(database: Database) {
         insertedWorkoutLogId
     }
 
+    /**
+     * Retrieves the complete weightlifting history for a specific user.
+     * Groups exercises by session and calculates total sets per session.
+     *
+     * @param userIdValue The ID of the user whose history to retrieve.
+     * @return A list of [WeightliftingHistoryItem] objects sorted by date descending.
+     */
     suspend fun getWeightliftingHistory(userIdValue: Int): List<WeightliftingHistoryItem> = dbQuery {
         val rows = (WeightliftingWorkoutLogs innerJoin WeightliftingSessionExercises)
             .selectAll()
@@ -135,9 +205,12 @@ class WeightliftingService(database: Database) {
         }.sortedByDescending { it.logDate }
     }
 
+    /**
+     * Executes a database query on the IO dispatcher using a suspended transaction.
+     *
+     * @param block The database operation to execute.
+     * @return The result of the database operation.
+     */
     private suspend fun <T> dbQuery(block: suspend () -> T): T =
         withContext(Dispatchers.IO) { suspendTransaction { block() } }
 }
-
-
-
