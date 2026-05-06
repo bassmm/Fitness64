@@ -683,7 +683,6 @@ fun Application.configureRouting(
                     )
                 }
 
-                // Weekly workouts per day for bar chart
                 val workoutsByDay = (0..6).map { i ->
                     val date = startOfWeek.plusDays(i.toLong())
                     val dateStr = date.toString()
@@ -696,7 +695,6 @@ fun Application.configureRouting(
                     )
                 }
 
-                // Activity type breakdown for pie chart
                 val activityBreakdown = weeklyWorkouts
                     .groupingBy { workout ->
                         activityTypeNames[workout.activityTypeId] ?: workout.source ?: "Activity"
@@ -709,7 +707,6 @@ fun Application.configureRouting(
                         )
                     }
 
-                // Distance over time for line chart, last 4 weeks
                 val distanceByWeek = (3 downTo 0).map { weeksAgo ->
                     val weekStart = startOfWeek.minusWeeks(weeksAgo.toLong())
                     val weekEnd = weekStart.plusDays(6)
@@ -728,7 +725,7 @@ fun Application.configureRouting(
 
                     mapOf(
                         "week" to label,
-                        "distance" to Math.round(totalDistance * 10.0) / 10.0
+                        "distance" to ((totalDistance * 10.0).roundToInt() / 10.0)
                     )
                 }
 
@@ -753,8 +750,6 @@ fun Application.configureRouting(
                         "distanceByWeek" to distanceByWeek
                     )
                 )
-                )
-            )
             }
 
             get("/pebble-index") {
