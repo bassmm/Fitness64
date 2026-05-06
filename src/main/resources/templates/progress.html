@@ -50,6 +50,61 @@
 </div>
 
 <div class="row g-4 mb-6">
+    <div class="col-lg-8">
+        <div class="card shadow-soft h-100">
+            <div class="card-body p-5">
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <span class="stat-icon bg-primary-subtle text-primary">
+                        <i class="bi bi-bar-chart-line"></i>
+                    </span>
+                    <div>
+                        <p class="page-kicker mb-1">This week</p>
+                        <h2 class="h4 mb-0">Workouts per Day</h2>
+                    </div>
+                </div>
+                <canvas id="weeklyChart" height="120"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow-soft h-100">
+            <div class="card-body p-5">
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <span class="stat-icon bg-warning-subtle text-warning">
+                        <i class="bi bi-pie-chart"></i>
+                    </span>
+                    <div>
+                        <p class="page-kicker mb-1">Breakdown</p>
+                        <h2 class="h4 mb-0">Activity Types</h2>
+                    </div>
+                </div>
+                {% if activityBreakdown is not empty %}
+                    <canvas id="pieChart" height="180"></canvas>
+                {% else %}
+                    <p class="text-muted">No activities logged this week yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-soft mb-6">
+    <div class="card-body p-5">
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <span class="stat-icon bg-info-subtle text-info">
+                <i class="bi bi-graph-up"></i>
+            </span>
+            <div>
+                <p class="page-kicker mb-1">Trend</p>
+                <h2 class="h4 mb-0">Distance Over Last 4 Weeks (km)</h2>
+            </div>
+        </div>
+        <canvas id="distanceChart" height="80"></canvas>
+    </div>
+</div>
+
+<div class="row g-4 mb-6">
     <div class="col-lg-6">
         <div class="card shadow-soft h-100">
             <div class="card-body p-5">
@@ -62,11 +117,9 @@
                         <h2 class="h4 mb-0">Running Records</h2>
                     </div>
                 </div>
-
                 <p class="text-muted text-sm">
                     Times are estimated from your logged distance and duration.
                 </p>
-
                 <div class="list-group list-group-flush">
                     {% for record in runningRecords %}
                         <div class="list-group-item px-0 d-flex justify-content-between gap-3">
@@ -91,7 +144,6 @@
                         <h2 class="h4 mb-0">Cycling Records</h2>
                     </div>
                 </div>
-
                 <div class="list-group list-group-flush">
                     {% for record in cyclingRecords %}
                         <div class="list-group-item px-0 d-flex justify-content-between gap-3">
@@ -116,7 +168,6 @@
                 <h2 class="h4 mb-0">Achievements</h2>
             </div>
         </div>
-
         <div class="list-group list-group-flush">
             {% for achievement in achievements %}
                 <div class="list-group-item px-0 d-flex align-items-center gap-3">
@@ -133,4 +184,105 @@
         <i class="bi bi-arrow-left me-2"></i>Back to Home
     </a>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const primaryColor = 'rgba(185, 28, 28, 0.8)';
+    const primaryBorder = 'rgba(185, 28, 28, 1)';
+    const colors = [
+        'rgba(185, 28, 28, 0.8)',
+        'rgba(100, 116, 139, 0.8)',
+        'rgba(15, 23, 42, 0.8)',
+        'rgba(234, 179, 8, 0.8)',
+        'rgba(34, 197, 94, 0.8)'
+    ];
+
+    const workoutsByDay = [
+        {% for item in workoutsByDay %}
+            { day: "{{ item.day }}", count: {{ item.count }} }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    new Chart(document.getElementById('weeklyChart'), {
+        type: 'bar',
+        data: {
+            labels: workoutsByDay.map(d => d.day),
+            datasets: [{
+                label: 'Workouts',
+                data: workoutsByDay.map(d => d.count),
+                backgroundColor: primaryColor,
+                borderColor: primaryBorder,
+                borderWidth: 1,
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, ticks: { stepSize: 1 } }
+            }
+        }
+    });
+
+    {% if activityBreakdown is not empty %}
+    const breakdown = [
+        {% for item in activityBreakdown %}
+            { type: "{{ item.type }}", count: {{ item.count }} }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    new Chart(document.getElementById('pieChart'), {
+        type: 'doughnut',
+        data: {
+            labels: breakdown.map(d => d.type),
+            datasets: [{
+                data: breakdown.map(d => d.count),
+                backgroundColor: colors.slice(0, breakdown.length),
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+    {% endif %}
+
+    const distanceByWeek = [
+        {% for item in distanceByWeek %}
+            { week: "{{ item.week }}", distance: {{ item.distance }} }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    new Chart(document.getElementById('distanceChart'), {
+        type: 'line',
+        data: {
+            labels: distanceByWeek.map(d => d.week),
+            datasets: [{
+                label: 'Distance (km)',
+                data: distanceByWeek.map(d => d.distance),
+                borderColor: primaryBorder,
+                backgroundColor: 'rgba(185, 28, 28, 0.1)',
+                borderWidth: 2,
+                pointBackgroundColor: primaryBorder,
+                pointRadius: 5,
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+</script>
 {% endblock %}

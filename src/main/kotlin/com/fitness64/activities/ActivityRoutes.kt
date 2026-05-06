@@ -70,6 +70,7 @@ fun Application.configureActivityRoutes(
              * GET /activities
              * Displays the unified activity history feed combining cardio sessions,
              * weightlifting sessions, and race results sorted by date descending.
+             * Also passes weightlifting volume data for the chart.
              */
             get("/activities") {
                 val session = call.principal<UserSession>()
@@ -134,13 +135,26 @@ fun Application.configureActivityRoutes(
                     )
                 }
 
+                // Weightlifting volume over time for chart
+                val volumeBySession = weightliftingHistory
+                    .sortedBy { it.logDate }
+                    .map { item ->
+                        mapOf(
+                            "date" to item.logDate,
+                            "totalSets" to item.totalSets
+                        )
+                    }
+
                 val activities = (cardioItems + weightliftingItems + raceItems)
                     .sortedByDescending { it.date }
 
                 call.respond(
                     PebbleContent(
                         "activity-history",
-                        mapOf("activities" to activities)
+                        mapOf(
+                            "activities" to activities,
+                            "volumeBySession" to volumeBySession
+                        )
                     )
                 )
             }
