@@ -11,6 +11,26 @@
             Review cardio sessions, weightlifting workouts, and race results in one place.
         </p>
     </div>
+
+    <div class="d-flex flex-column align-items-lg-end gap-2">
+        <div class="btn-group" role="group" aria-label="Activity filters">
+            <a class="btn btn-sm {% if selectedFilter == "all" %}btn-primary{% else %}btn-outline-primary{% endif %}"
+               href="/activities?filter=all">
+                All{% if allCount is not empty %} <span class="badge text-bg-light ms-1">{{ allCount }}</span>{% endif %}
+            </a>
+            <a class="btn btn-sm {% if selectedFilter == "workouts" %}btn-primary{% else %}btn-outline-primary{% endif %}"
+               href="/activities?filter=workouts">
+                Workouts{% if workoutCount is not empty %} <span class="badge text-bg-light ms-1">{{ workoutCount }}</span>{% endif %}
+            </a>
+            <a class="btn btn-sm {% if selectedFilter == "races" %}btn-primary{% else %}btn-outline-primary{% endif %}"
+               href="/activities?filter=races">
+                Races{% if raceCount is not empty %} <span class="badge text-bg-light ms-1">{{ raceCount }}</span>{% endif %}
+            </a>
+        </div>
+        <a class="btn btn-outline-secondary btn-sm" href="/races/log">
+            <i class="bi bi-trophy"></i> Log race
+        </a>
+    </div>
 </div>
 
 {% if volumeBySession is not empty %}
@@ -32,10 +52,28 @@
 
 <div class="card shadow-soft">
     <div class="card-header border-0 pb-0 pt-4 px-5">
-        <h3 class="h5 mb-1">All Activities</h3>
-        <p class="text-sm text-muted mb-0">
-            Cardio, weightlifting, and races in a single feed.
-        </p>
+        <div class="d-flex flex-column flex-lg-row align-items-lg-start justify-content-between gap-3">
+            <div>
+                <h3 class="h5 mb-1">
+                    {% if selectedFilter == "races" %}
+                        Race Results
+                    {% elseif selectedFilter == "workouts" %}
+                        Workout Activities
+                    {% else %}
+                        All Activities
+                    {% endif %}
+                </h3>
+                <p class="text-sm text-muted mb-0">
+                    {% if selectedFilter == "races" %}
+                        Race results with finish times, rankings, categories, and certificates.
+                    {% elseif selectedFilter == "workouts" %}
+                        Cardio and weightlifting sessions without race results.
+                    {% else %}
+                        Cardio, weightlifting, and races in a single feed.
+                    {% endif %}
+                </p>
+            </div>
+        </div>
     </div>
     <div class="card-body p-0">
         {% if activities is not empty %}
@@ -55,12 +93,61 @@
                     {% for item in activities %}
                     <tr style="cursor: pointer;" onclick="window.location.href='/activities/{{ item.id }}'">
                         <td class="ps-5 fw-semibold">{{ item.date }}</td>
-                        <td>{{ item.category }}</td>
+                        <td>
+                            {{ item.category }}
+                            {% if item.type == "race" and item.personalBest %}
+                                <div class="mt-1">
+                                    <span class="badge text-bg-warning">Personal best</span>
+                                </div>
+                            {% endif %}
+                        </td>
                         <td>{{ item.title }}</td>
-                        <td>{{ item.summary }}</td>
-                        <td>{{ item.metric }}</td>
+                        <td>
+                            {{ item.summary }}
+
+                            {% if item.type == "race" %}
+                                <div class="text-sm text-muted mt-2">
+                                    {% if item.location %}
+                                        <div>Location: {{ item.location }}</div>
+                                    {% endif %}
+
+                                    {% if item.raceCategory %}
+                                        <div>Race category: {{ item.raceCategory }}</div>
+                                    {% endif %}
+
+                                    {% if item.overallRank %}
+                                        <div>Overall rank: #{{ item.overallRank }}</div>
+                                    {% endif %}
+
+                                    {% if item.categoryRank %}
+                                        <div>Category rank: #{{ item.categoryRank }}</div>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {{ item.metric }}
+                            {% if item.type == "race" and item.finishTime %}
+                                <div class="text-sm text-muted mt-1">Finish time: {{ item.finishTime }}</div>
+                            {% endif %}
+                        </td>
                         <td class="pe-5">
-                            {% if item.notes %}{{ item.notes }}{% else %}<span class="text-muted">—</span>{% endif %}
+                            {% if item.notes %}
+                                {{ item.notes }}
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+
+                            {% if item.type == "race" and item.certificateUrl %}
+                                <div class="mt-2">
+                                    <a href="{{ item.certificateUrl }}"
+                                       onclick="event.stopPropagation();"
+                                       target="_blank"
+                                       rel="noopener noreferrer">
+                                        View certificate
+                                    </a>
+                                </div>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}
@@ -73,8 +160,20 @@
                 <i class="bi bi-bar-chart"></i>
             </span>
             <h3 class="h5">No activities yet</h3>
-            <p class="text-muted">Log your first workout or race to start your activity feed.</p>
-            <a class="btn btn-primary" href="/log">Log activity</a>
+            <p class="text-muted">
+                {% if selectedFilter == "races" %}
+                    No races have been logged yet.
+                {% elseif selectedFilter == "workouts" %}
+                    No workouts have been logged yet.
+                {% else %}
+                    Log your first workout or race to start your activity feed.
+                {% endif %}
+            </p>
+            {% if selectedFilter == "races" %}
+                <a class="btn btn-primary" href="/races/log">Log race</a>
+            {% else %}
+                <a class="btn btn-primary" href="/log">Log activity</a>
+            {% endif %}
         </div>
         {% endif %}
     </div>
