@@ -11,7 +11,7 @@
 </div>
 
 <div class="row g-4 mb-6">
-    <div class="col-md-6 col-xl-4">
+    <div class="col-md-6 col-xl-3">
         <div class="card card-hover h-100">
             <div class="card-body p-5">
                 <span class="stat-icon bg-primary-subtle text-primary mb-4">
@@ -24,7 +24,7 @@
         </div>
     </div>
 
-    <div class="col-md-6 col-xl-4">
+    <div class="col-md-6 col-xl-3">
         <div class="card card-hover h-100">
             <div class="card-body p-5">
                 <span class="stat-icon bg-warning-subtle text-warning mb-4">
@@ -36,7 +36,19 @@
         </div>
     </div>
 
-    <div class="col-md-6 col-xl-4">
+    <div class="col-md-6 col-xl-3">
+        <div class="card card-hover h-100">
+            <div class="card-body p-5">
+                <span class="stat-icon bg-info-subtle text-info mb-4">
+                    <i class="bi bi-clipboard-check"></i>
+                </span>
+                <p class="text-muted text-sm mb-1">Plan Adherence</p>
+                <h3 class="h5 mb-0">{{ planAdherence }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
         <div class="card card-hover h-100">
             <div class="card-body p-5">
                 <span class="stat-icon bg-success-subtle text-success mb-4">
@@ -101,6 +113,32 @@
                     {% endfor %}
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-soft mb-6">
+    <div class="card-body p-5">
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <span class="stat-icon bg-success-subtle text-success">
+                <i class="bi bi-list-check"></i>
+            </span>
+            <div>
+                <p class="page-kicker mb-1">Weekly plan</p>
+                <h2 class="h4 mb-0">Plan Follow-up</h2>
+            </div>
+        </div>
+
+        <div class="list-group list-group-flush">
+            {% for item in planStatuses %}
+                <div class="list-group-item px-0 d-flex justify-content-between gap-3">
+                    <div>
+                        <strong>{{ item.day }}</strong>
+                        <p class="mb-0 text-muted text-sm">{{ item.planned }}</p>
+                    </div>
+                    <span class="text-muted text-end">{{ item.status }}</span>
+                </div>
+            {% endfor %}
         </div>
     </div>
 </div>
