@@ -1,6 +1,5 @@
 package com.fitness64.routes
 
-import com.fitness64.core.AuthenticatedUser
 import com.fitness64.core.UserSession
 import com.fitness64.core.requireAuthenticatedUser
 import com.fitness64.core.respondHx
@@ -14,7 +13,6 @@ import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.pebble.*
 import io.ktor.server.request.*
-import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 import java.time.LocalDate
@@ -38,6 +36,9 @@ fun Application.configureDashboardRoutes(
 
                 val todayTraining = planService.getPlanSessionByDay(userId, todayDayName)?.session
                     ?: "No training planned"
+
+                // New: get the full weekly plan so Home can show a summary/quick view
+                val weeklyPlanSummary = planService.getPlan(userId)
 
                 val startOfWeek = getStartOfWeek(today)
                 val startDate = startOfWeek.toString()
@@ -71,28 +72,35 @@ fun Application.configureDashboardRoutes(
                     else -> "Latest ${latestCardio.name ?: "${latestCardio.activityType} Session"} logged"
                 }
 
-                call.respondTemplate("home", mapOf(
-                    "user" to user.name,
-                    "today" to todayTraining,
-                    "todayDate" to today.toString(),
-                    "streak" to consistency,
-                    "nextGoal" to nextGoal,
-                    "achievement" to latestAchievement
-                ))
+                call.respondTemplate(
+                    "home",
+                    mapOf(
+                        "user" to user.name,
+                        "today" to todayTraining,
+                        "todayDate" to today.toString(),
+                        "streak" to consistency,
+                        "nextGoal" to nextGoal,
+                        "achievement" to latestAchievement,
+                        "weeklyPlanSummary" to weeklyPlanSummary
+                    )
+                )
             }
 
             get("/profile") {
                 val auth = call.requireAuthenticatedUser(userService) ?: return@get
                 val user = auth.user
 
-                call.respondTemplate("profile", mapOf<String, Any>(
-                    "name" to user.name,
-                    "email" to user.email,
-                    "fitnessLevel" to (user.fitnessLevel ?: "Not set"),
-                    "goals" to (user.goal ?: "No goals set"),
-                    "activities" to splitPreferredActivities(user.preferredActivities),
-                    "community" to (user.community ?: "No community set")
-                ))
+                call.respondTemplate(
+                    "profile",
+                    mapOf<String, Any>(
+                        "name" to user.name,
+                        "email" to user.email,
+                        "fitnessLevel" to (user.fitnessLevel ?: "Not set"),
+                        "goals" to (user.goal ?: "No goals set"),
+                        "activities" to splitPreferredActivities(user.preferredActivities),
+                        "community" to (user.community ?: "No community set")
+                    )
+                )
             }
 
             get("/profile/view") {
@@ -102,13 +110,15 @@ fun Application.configureDashboardRoutes(
                 call.respondHx(
                     templateName = "_partials/_profile-view",
                     model = mapOf<String, Any>(
-                        "name" to user.name, "email" to user.email,
+                        "name" to user.name,
+                        "email" to user.email,
                         "fitnessLevel" to (user.fitnessLevel ?: "Not set"),
                         "goals" to (user.goal ?: "No goals set"),
                         "activities" to splitPreferredActivities(user.preferredActivities),
                         "community" to (user.community ?: "No community set")
                     ),
-                    target = "#profile-edit-area", swap = "innerHTML"
+                    target = "#profile-edit-area",
+                    swap = "innerHTML"
                 )
             }
 
@@ -119,7 +129,8 @@ fun Application.configureDashboardRoutes(
                 call.respondHx(
                     templateName = "_partials/_profile-edit-form",
                     model = mapOf<String, Any>(
-                        "name" to user.name, "email" to user.email,
+                        "name" to user.name,
+                        "email" to user.email,
                         "fitnessLevel" to (user.fitnessLevel ?: ""),
                         "goal" to (user.goal ?: ""),
                         "trainingDaysPerWeek" to (user.trainingDaysPerWeek ?: ""),
@@ -127,7 +138,8 @@ fun Application.configureDashboardRoutes(
                         "community" to (user.community ?: ""),
                         "error" to ""
                     ),
-                    target = "#profile-edit-area", swap = "innerHTML"
+                    target = "#profile-edit-area",
+                    swap = "innerHTML"
                 )
             }
 
@@ -148,7 +160,8 @@ fun Application.configureDashboardRoutes(
                     call.respondHx(
                         templateName = "_partials/_profile-edit-form",
                         model = mapOf<String, Any>(
-                            "name" to name, "email" to email,
+                            "name" to name,
+                            "email" to email,
                             "fitnessLevel" to (fitnessLevel ?: ""),
                             "goal" to (goal ?: ""),
                             "trainingDaysPerWeek" to (trainingDaysPerWeek ?: ""),
@@ -156,7 +169,8 @@ fun Application.configureDashboardRoutes(
                             "community" to (community ?: ""),
                             "error" to "Name and email are required."
                         ),
-                        target = "#profile-edit-area", swap = "innerHTML"
+                        target = "#profile-edit-area",
+                        swap = "innerHTML"
                     )
                     return@post
                 }
@@ -165,7 +179,8 @@ fun Application.configureDashboardRoutes(
                     call.respondHx(
                         templateName = "_partials/_profile-edit-form",
                         model = mapOf<String, Any>(
-                            "name" to name, "email" to email,
+                            "name" to name,
+                            "email" to email,
                             "fitnessLevel" to (fitnessLevel ?: ""),
                             "goal" to (goal ?: ""),
                             "trainingDaysPerWeek" to (trainingDaysPerWeek ?: ""),
@@ -173,25 +188,37 @@ fun Application.configureDashboardRoutes(
                             "community" to (community ?: ""),
                             "error" to "Email already in use."
                         ),
-                        target = "#profile-edit-area", swap = "innerHTML"
+                        target = "#profile-edit-area",
+                        swap = "innerHTML"
                     )
                     return@post
                 }
 
-                userService.updateProfile(userId, name, email, fitnessLevel.takeIf { !it.isNullOrBlank() }, goal.takeIf { !it.isNullOrBlank() }, trainingDaysPerWeek, preferredActivities.takeIf { !it.isNullOrBlank() }, community.takeIf { !it.isNullOrBlank() })
+                userService.updateProfile(
+                    userId,
+                    name,
+                    email,
+                    fitnessLevel.takeIf { !it.isNullOrBlank() },
+                    goal.takeIf { !it.isNullOrBlank() },
+                    trainingDaysPerWeek,
+                    preferredActivities.takeIf { !it.isNullOrBlank() },
+                    community.takeIf { !it.isNullOrBlank() }
+                )
 
                 call.sessions.set(UserSession(email = email))
 
                 call.respondHx(
                     templateName = "_partials/_profile-view",
                     model = mapOf<String, Any>(
-                        "name" to name, "email" to email,
+                        "name" to name,
+                        "email" to email,
                         "fitnessLevel" to (fitnessLevel ?: "Not set"),
                         "goals" to (goal ?: "No goals set"),
                         "activities" to splitPreferredActivities(preferredActivities),
                         "community" to (community ?: "No community set")
                     ),
-                    target = "#profile-edit-area", swap = "innerHTML"
+                    target = "#profile-edit-area",
+                    swap = "innerHTML"
                 )
             }
         }
