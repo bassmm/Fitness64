@@ -22,10 +22,12 @@ fun Application.configureRacesPagesRoutes(
             }
 
             get("/races/log") {
+                val eventDate = call.request.queryParameters["date"] ?: ""
+
                 call.respondTemplate("race-log", mapOf(
                     "error" to "",
                     "eventName" to "",
-                    "eventDate" to "",
+                    "eventDate" to eventDate,
                     "location" to "",
                     "category" to "",
                     "finishTime" to "",
