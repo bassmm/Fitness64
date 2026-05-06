@@ -1,0 +1,30 @@
+{% extends "base" %}
+
+{% block title %}{{ activity.title }}{% endblock %}
+{% block page_heading %}{{ activity.title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-lg-row align-items-lg-end justify-content-between gap-3 mb-5">
+    <div>
+        <p class="page-kicker mb-1">{{ activity.category }}</p>
+        <h2 class="h3 mb-1">{{ activity.title }}</h2>
+        <p class="text-muted mb-0">{{ activity.date }}</p>
+    </div>
+    <button class="btn btn-primary"
+        hx-get="/activities/{{ activity.id }}/edit"
+        hx-target="#activity-edit-area"
+        hx-swap="innerHTML">
+        <i class="bi bi-pencil-square me-2"></i>Edit Activity
+    </button>
+</div>
+
+<div id="activity-edit-area">
+    {% include "_partials/_activity-detail-view" %}
+</div>
+
+<div class="mt-5">
+    <a class="btn btn-neutral" href="/activities">
+        <i class="bi bi-arrow-left me-2"></i>Back to Activities
+    </a>
+</div>
+{% endblock %}

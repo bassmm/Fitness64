@@ -1,0 +1,53 @@
+{% if error is not empty %}
+<div class="alert alert-danger mb-3" role="alert">
+    <i class="bi bi-exclamation-triangle me-2"></i>{{ error }}
+</div>
+{% endif %}
+
+<form hx-post="/profile/save" hx-target="#profile-edit-area" hx-swap="innerHTML">
+    <div class="row g-4">
+        <div class="col-md-6">
+            <label for="name" class="form-label">Name</label>
+            <input type="text" id="name" name="name" class="form-control" value="{{ name }}" required>
+        </div>
+        <div class="col-md-6">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" id="email" name="email" class="form-control" value="{{ email }}" required>
+        </div>
+        <div class="col-md-6">
+            <label for="fitnessLevel" class="form-label">Fitness level</label>
+            <select id="fitnessLevel" name="fitnessLevel" class="form-select">
+                <option value="">Select fitness level</option>
+                <option value="Beginner" {% if fitnessLevel == "Beginner" %}selected{% endif %}>Beginner</option>
+                <option value="Intermediate" {% if fitnessLevel == "Intermediate" %}selected{% endif %}>Intermediate</option>
+                <option value="Advanced" {% if fitnessLevel == "Advanced" %}selected{% endif %}>Advanced</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label for="trainingDaysPerWeek" class="form-label">Training days per week</label>
+            <input type="number" id="trainingDaysPerWeek" name="trainingDaysPerWeek" class="form-control" min="1" max="7" value="{{ trainingDaysPerWeek | default('') }}">
+        </div>
+        <div class="col-12">
+            <label for="goal" class="form-label">Goal</label>
+            <input type="text" id="goal" name="goal" class="form-control" value="{{ goal | default('') }}" placeholder="e.g. Complete 6 workouts this week">
+        </div>
+        <div class="col-12">
+            <label for="preferredActivities" class="form-label">Preferred activities</label>
+            <input type="text" id="preferredActivities" name="preferredActivities" class="form-control" value="{{ preferredActivities | default('') }}" placeholder="e.g. Running, Cycling, Gym">
+            <div class="form-text">Separate activities with commas.</div>
+        </div>
+        <div class="col-12">
+            <label for="community" class="form-label">Community</label>
+            <input type="text" id="community" name="community" class="form-control" value="{{ community | default('') }}" placeholder="e.g. Leeds Runners">
+        </div>
+    </div>
+
+    <div class="d-flex gap-3 mt-4">
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check2-circle me-2"></i>Save Changes
+        </button>
+        <button type="button" class="btn btn-neutral" hx-get="/profile/view" hx-target="#profile-edit-area" hx-swap="innerHTML">
+            Cancel
+        </button>
+    </div>
+</form>

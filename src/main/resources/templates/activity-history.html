@@ -36,7 +36,7 @@ page_heading %}Activity History{% endblock %} {% block content %}
                 </thead>
                 <tbody>
                     {% for item in activities %}
-                    <tr>
+                    <tr style="cursor: pointer;" onclick="window.location.href='/activities/{{ item.id }}'">
                         <td class="ps-5 fw-semibold">{{ item.date }}</td>
                         <td>{{ item.category }}</td>
                         <td>{{ item.title }}</td>

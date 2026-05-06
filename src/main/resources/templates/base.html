@@ -22,10 +22,17 @@
         />
         <link rel="stylesheet" href="/assets/app.css" />
 
+        <script
+            src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js"
+            integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V"
+            crossorigin="anonymous"
+        ></script>
+        <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/ext/json-enc.min.js"></script>
+
         {% block head %}{% endblock %}
     </head>
 
-    <body class="bg-body-secondary">
+    <body class="bg-body-secondary" hx-boost="true">
         <div class="app-shell min-vh-100">
             <aside class="app-sidebar border-end bg-body shadow-soft">
                 <div
@@ -178,7 +185,7 @@
                     </div>
                 </header>
 
-                <main class="container-fluid px-4 px-lg-6 py-6">
+                <main id="main-content" class="container-fluid px-4 px-lg-6 py-6">
                     {% block content %}{% endblock %}
                 </main>
 
@@ -213,6 +220,12 @@
                     </div>
                 </footer>
             </div>
+        </div>
+
+        <div id="toast-container" class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
+            {% if toast_message %}
+                {% include "_partials/_toast.html" %}
+            {% endif %}
         </div>
 
         <div

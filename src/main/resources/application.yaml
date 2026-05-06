@@ -1,7 +1,7 @@
 ktor:
   application:
     modules:
-      - com.fitness64.ApplicationKt.module
+      - com.fitness64.core.ApplicationKt.module
   deployment:
     development: true
     port: 8080
