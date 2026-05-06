@@ -29,7 +29,15 @@ private data class ActivityFeedItem(
     val title: String,
     val summary: String,
     val metric: String,
-    val notes: String
+    val notes: String,
+    val location: String = "",
+    val raceCategory: String = "",
+    val finishTime: String = "",
+    val overallRank: Int? = null,
+    val categoryRank: Int? = null,
+    val isPersonalBest: Boolean = false,
+    val personalBest: Boolean = false,
+    val certificateUrl: String = ""
 )
 
 private data class ActivityDetail(
@@ -116,6 +124,10 @@ fun Application.configureActivityRoutes(
         authenticate("auth-session") {
             get("/activities") {
                 val (_, userId) = call.requireAuthenticatedUser(userService) ?: return@get
+                val selectedFilter = call.request.queryParameters["filter"]
+                    ?.lowercase()
+                    ?.takeIf { it in setOf("all", "workouts", "races") }
+                    ?: "all"
 
                 val cardioHistory = activityService.getCardioHistory(userId)
                 val weightliftingHistory = weightliftingService.getWeightliftingHistory(userId)
@@ -152,21 +164,63 @@ fun Application.configureActivityRoutes(
                     val metric = race.finishTime
                         ?: race.overallRank?.let { "Overall #$it" }
                         ?: "Completed"
-                    val summary = listOfNotNull(race.location, race.category).joinToString(" • ").ifBlank { "Race logged" }
+                    val summary = listOfNotNull(race.location, race.category)
+                        .joinToString(" • ")
+                        .ifBlank { "Race logged" }
                     val notePrefix = if (race.isPersonalBest) "Personal best. " else ""
                     val noteBody = race.certificateUrl?.let { "Certificate: $it" } ?: ""
 
                     ActivityFeedItem(
-                        id = "race-${race.id}", type = "race", date = race.eventDate,
-                        category = "Race", title = race.eventName, summary = summary,
-                        metric = metric, notes = "$notePrefix$noteBody".trim()
+                        id = "race-${race.id}",
+                        type = "race",
+                        date = race.eventDate,
+                        category = "Race",
+                        title = race.eventName,
+                        summary = summary,
+                        metric = metric,
+                        notes = "$notePrefix$noteBody".trim(),
+                        location = race.location ?: "",
+                        raceCategory = race.category ?: "",
+                        finishTime = race.finishTime ?: "",
+                        overallRank = race.overallRank,
+                        categoryRank = race.categoryRank,
+                        isPersonalBest = race.isPersonalBest,
+                        personalBest = race.isPersonalBest,
+                        certificateUrl = race.certificateUrl ?: ""
                     )
                 }
 
-                val activities = (cardioItems + weightliftingItems + raceItems)
+                val allActivities = (cardioItems + weightliftingItems + raceItems)
                     .sortedByDescending { it.date }
 
-                call.respond(PebbleContent("activity-history", mapOf("activities" to activities)))
+                val filteredActivities = when (selectedFilter) {
+                    "workouts" -> allActivities.filter { it.type != "race" }
+                    "races" -> allActivities.filter { it.type == "race" }
+                    else -> allActivities
+                }
+
+                val volumeBySession = weightliftingHistory
+                    .sortedBy { it.logDate }
+                    .map { item ->
+                        mapOf(
+                            "date" to item.logDate,
+                            "totalSets" to item.totalSets
+                        )
+                    }
+
+                call.respond(
+                    PebbleContent(
+                        "activity-history",
+                        mapOf(
+                            "activities" to filteredActivities,
+                            "selectedFilter" to selectedFilter,
+                            "allCount" to allActivities.size,
+                            "workoutCount" to allActivities.count { it.type != "race" },
+                            "raceCount" to raceItems.size,
+                            "volumeBySession" to volumeBySession
+                        )
+                    )
+                )
             }
 
             get("/activities/{id}") {
@@ -361,3 +415,4 @@ private fun parseWeightliftingRows(params: Parameters): List<WeightliftingLogged
     }
     return parsedRows
 }
+
