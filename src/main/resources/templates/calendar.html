@@ -50,7 +50,7 @@
                                 </div>
                             </div>
 
-                            <p class="mb-0">
+                            <p class="mb-1">
                                 <span class="fw-semibold">Planned:</span>
                                 {% if item.planned %}
                                     {{ item.planned }}
@@ -58,6 +58,12 @@
                                     No plan set
                                 {% endif %}
                             </p>
+
+                            {% if item.planStatus %}
+                                <p class="mb-0 text-muted text-sm">
+                                    <span class="fw-semibold">Status:</span> {{ item.planStatus }}
+                                </p>
+                            {% endif %}
                         </div>
 
                         <a class="btn btn-sm btn-neutral" href="/log?date={{ item.date }}">
