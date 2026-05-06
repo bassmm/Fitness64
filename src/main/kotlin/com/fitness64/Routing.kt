@@ -755,7 +755,14 @@ data class DistanceBenchmark(
     val label: String,
     val distanceKm: Double
 )
-
+data class PlanFollowStatus(
+    val day: String,
+    val date: String,
+    val planned: String,
+    val status: String,
+    val plannedWorkout: Boolean,
+    val completedPlannedWorkout: Boolean
+)
 fun getStartOfWeek(date: LocalDate): LocalDate {
     return date.minusDays(date.dayOfWeek.value.toLong() - 1)
 }
