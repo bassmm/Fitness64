@@ -1,3 +1,10 @@
+/**
+ * PlanSchema.kt
+ *
+ * Defines the database schema and service layer for training plans.
+ * Manages weekly training plan generation, retrieval, and session updates.
+ * Supports multiple plan types including cardio, weightlifting, custom, and beginner.
+ */
 package com.fitness64.plans
 
 import kotlinx.coroutines.Dispatchers
@@ -15,6 +22,15 @@ import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import java.time.LocalDate
 import java.time.LocalDateTime
 
+/**
+ * Represents a single planned session within a weekly training plan.
+ *
+ * @property day The day of the week (e.g. Monday, Tuesday).
+ * @property session The name or description of the planned session.
+ * @property durationMinutes The planned duration in minutes.
+ * @property intensity The intensity level (e.g. Low, Moderate, High, Rest).
+ * @property isRestDay Whether this day is a designated rest day.
+ */
 @Serializable
 data class PlanSessionView(
     val day: String,
@@ -24,8 +40,19 @@ data class PlanSessionView(
     val isRestDay: Boolean
 )
 
+/**
+ * Service class responsible for all database operations related to training plans.
+ * Handles plan generation for different fitness goals, retrieval of plan sessions,
+ * and updates to individual session days.
+ *
+ * @param database The database connection to use for all operations.
+ */
 class PlanService(database: Database) {
 
+    /**
+     * Database table for training plans.
+     * Each user can have one active plan at a time.
+     */
     object TrainingPlans : Table("training_plans") {
         val id = integer("plan_id").autoIncrement()
         val userId = integer("user_id")
@@ -36,6 +63,10 @@ class PlanService(database: Database) {
         override val primaryKey = PrimaryKey(id)
     }
 
+    /**
+     * Database table for individual sessions within a training plan.
+     * Each row represents one day's planned session.
+     */
     object PlanSessions : Table("plan_sessions") {
         val id = integer("session_id").autoIncrement()
         val planId = integer("plan_id").references(TrainingPlans.id)
@@ -55,6 +86,15 @@ class PlanService(database: Database) {
         }
     }
 
+    /**
+     * Generates a new weekly training plan for a user based on their chosen plan type.
+     * Replaces any existing plan for the user before creating the new one.
+     * Supported plan types: cardio, weightlifting, custom, and beginner (default).
+     *
+     * @param userId The ID of the user to generate the plan for.
+     * @param planType The type of plan to generate (e.g. "cardio", "weightlifting", "custom").
+     * @return The auto-generated ID of the newly created training plan.
+     */
     suspend fun generatePlanForType(userId: Int, planType: String): Int = dbQuery {
         val existingPlanIds = TrainingPlans.selectAll()
             .where { TrainingPlans.userId eq userId }
@@ -134,6 +174,12 @@ class PlanService(database: Database) {
         planId
     }
 
+    /**
+     * Retrieves all plan sessions for a specific user ordered by display order.
+     *
+     * @param userId The ID of the user whose plan to retrieve.
+     * @return A list of [PlanSessionView] objects representing the full weekly plan.
+     */
     suspend fun getPlan(userId: Int): List<PlanSessionView> = dbQuery {
         (TrainingPlans innerJoin PlanSessions)
             .selectAll()
@@ -150,6 +196,12 @@ class PlanService(database: Database) {
             }
     }
 
+    /**
+     * Checks whether a training plan exists for a specific user.
+     *
+     * @param userId The ID of the user to check.
+     * @return True if the user has an existing plan, false otherwise.
+     */
     suspend fun hasPlan(userId: Int): Boolean = dbQuery {
         TrainingPlans.selectAll()
             .where { TrainingPlans.userId eq userId }
@@ -157,6 +209,12 @@ class PlanService(database: Database) {
             .isNotEmpty()
     }
 
+    /**
+     * Retrieves the plan type for a specific user's current training plan.
+     *
+     * @param userId The ID of the user whose plan type to retrieve.
+     * @return The plan type string (e.g. "cardio", "weightlifting"), or null if no plan exists.
+     */
     suspend fun getPlanType(userId: Int): String? = dbQuery {
         TrainingPlans.selectAll()
             .where { TrainingPlans.userId eq userId }
@@ -164,6 +222,14 @@ class PlanService(database: Database) {
             .singleOrNull()
     }
 
+    /**
+     * Retrieves the planned session for a specific day of the week for a user.
+     * Used on the dashboard to show today's planned training.
+     *
+     * @param userId The ID of the user.
+     * @param dayValue The day name to look up (e.g. "Monday", "Tuesday").
+     * @return The matching [PlanSessionView], or null if no session is planned for that day.
+     */
     suspend fun getPlanSessionByDay(userId: Int, dayValue: String): PlanSessionView? = dbQuery {
         (TrainingPlans innerJoin PlanSessions)
             .selectAll()
@@ -183,6 +249,15 @@ class PlanService(database: Database) {
             .singleOrNull()
     }
 
+    /**
+     * Updates a specific day's session within a user's training plan.
+     *
+     * @param userId The ID of the user whose plan to update.
+     * @param dayValue The day of the week to update (e.g. "Monday").
+     * @param newSession The new session name or description.
+     * @param newDuration The new planned duration in minutes.
+     * @param newIntensity The new intensity level.
+     */
     suspend fun updatePlanSession(
         userId: Int,
         dayValue: String,
@@ -210,6 +285,12 @@ class PlanService(database: Database) {
         }
     }
 
+    /**
+     * Executes a database query on the IO dispatcher using a suspended transaction.
+     *
+     * @param block The database operation to execute.
+     * @return The result of the database operation.
+     */
     private suspend fun <T> dbQuery(block: suspend () -> T): T =
         withContext(Dispatchers.IO) { suspendTransaction { block() } }
 }

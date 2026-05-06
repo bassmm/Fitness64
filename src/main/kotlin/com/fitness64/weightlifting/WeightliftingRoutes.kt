@@ -1,3 +1,11 @@
+/**
+ * WeightliftingRoutes.kt
+ *
+ * Defines the UI routes for weightlifting session logging.
+ * Handles displaying the weightlifting log form and processing
+ * multi-exercise session submissions with validation.
+ * All routes are protected and require an authenticated session.
+ */
 package com.fitness64.weightlifting
 
 import com.fitness64.UserSession
@@ -16,6 +24,14 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import java.time.LocalDate
 
+/**
+ * Internal data class representing a single parsed exercise row from the weightlifting log form.
+ *
+ * @property exerciseName The name of the exercise entered by the user.
+ * @property sets Number of sets completed.
+ * @property reps Number of repetitions per set.
+ * @property weight Optional weight used in kg.
+ */
 private data class WeightliftingFormRow(
     val exerciseName: String,
     val sets: Int,
@@ -23,12 +39,25 @@ private data class WeightliftingFormRow(
     val weight: Double?
 )
 
+/**
+ * Registers all weightlifting-related UI routes on the application.
+ * Handles the log form display and session submission with full validation.
+ *
+ * @param weightliftingService The service used for weightlifting database operations.
+ * @param userService The service used for user lookup and authentication.
+ */
 fun Application.configureWeightliftingRoutes(
     weightliftingService: WeightliftingService,
     userService: UserService
 ) {
     routing {
         authenticate("auth-session") {
+
+            /**
+             * GET /weightlifting/log
+             * Displays the weightlifting session logging form.
+             * Passes today's date to pre-fill the date field.
+             */
             get("/weightlifting/log") {
                 call.respond(
                     PebbleContent(
@@ -38,10 +67,21 @@ fun Application.configureWeightliftingRoutes(
                 )
             }
 
+            /**
+             * GET /weightlifting/history
+             * Redirects to the unified activity history page.
+             */
             get("/weightlifting/history") {
                 call.respondRedirect("/activities")
             }
 
+            /**
+             * POST /weightlifting/log
+             * Processes a weightlifting session form submission.
+             * Validates duration and all exercise rows before saving.
+             * Redirects to /activities on success.
+             * Responds with 400 Bad Request if validation fails.
+             */
             post("/weightlifting/log") {
                 val params = call.receiveParameters()
                 val duration = params["duration"]?.toIntOrNull()
@@ -94,6 +134,15 @@ fun Application.configureWeightliftingRoutes(
     }
 }
 
+/**
+ * Parses the weightlifting form submission into a list of validated exercise rows.
+ * Skips completely empty rows but returns null if any non-empty row has invalid data.
+ *
+ * @param params The form parameters received from the HTTP request.
+ * @return A list of [WeightliftingFormRow] objects if all rows are valid,
+ *         an empty list if no rows were submitted,
+ *         or null if any row contains invalid or missing required data.
+ */
 private fun parseWeightliftingRows(params: Parameters): List<WeightliftingFormRow>? {
     val exerciseNames = params.getAll("exerciseName").orEmpty()
     val sets = params.getAll("sets").orEmpty()

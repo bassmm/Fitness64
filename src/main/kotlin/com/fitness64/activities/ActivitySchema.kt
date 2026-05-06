@@ -1,3 +1,10 @@
+/**
+ * ActivitySchema.kt
+ *
+ * Defines the database schema and service layer for all activity-related data.
+ * Covers cardio workouts (running, cycling, swimming), weightlifting exercises,
+ * workout laps, and GPS trackpoints. Also manages activity types and exercises.
+ */
 package com.fitness64.activities
 
 import kotlinx.coroutines.Dispatchers
@@ -12,11 +19,24 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 
+/**
+ * Represents a category of physical activity (e.g. Running, Weightlifting, Swimming).
+ *
+ * @property name The name of the activity type.
+ */
 @Serializable
 data class ActivityType(
     val name: String
 )
 
+/**
+ * Represents a specific exercise within an activity type.
+ *
+ * @property name The name of the exercise (e.g. Bench Press).
+ * @property activityTypeId The ID of the associated activity type.
+ * @property category Optional muscle group or exercise category (e.g. Chest, Legs).
+ * @property measurementType How the exercise is measured (e.g. reps, time).
+ */
 @Serializable
 data class Exercise(
     val name: String,
@@ -25,12 +45,30 @@ data class Exercise(
     val measurementType: String? = null
 )
 
+/**
+ * A simplified exercise representation used for dropdown options in the UI.
+ *
+ * @property id The exercise ID.
+ * @property name The exercise name.
+ */
 @Serializable
 data class ExerciseOption(
     val id: Int,
     val name: String
 )
 
+/**
+ * Represents a logged workout session for any activity type.
+ *
+ * @property userId The ID of the user who logged this workout.
+ * @property activityTypeId The ID of the activity type performed.
+ * @property logDate The date of the workout (ISO format: yyyy-MM-dd).
+ * @property duration Duration of the workout in minutes.
+ * @property distance Optional distance covered in km.
+ * @property notes Optional notes about the session.
+ * @property calories Optional calories burned.
+ * @property source The source of the log entry (e.g. manual, tcx_import).
+ */
 @Serializable
 data class WorkoutLog(
     val userId: Int,
@@ -43,6 +81,16 @@ data class WorkoutLog(
     val source: String? = null
 )
 
+/**
+ * Represents a single cardio activity entry for display in activity history.
+ *
+ * @property logDate The date of the activity.
+ * @property activityType The type of cardio activity (e.g. Running, Cycling).
+ * @property duration Duration in minutes.
+ * @property distance Optional distance in km.
+ * @property notes Optional session notes.
+ * @property source The source of the log entry.
+ */
 @Serializable
 data class CardioHistoryItem(
     val logDate: String,
@@ -53,6 +101,15 @@ data class CardioHistoryItem(
     val source: String? = null
 )
 
+/**
+ * Represents a specific exercise performed within a workout session.
+ *
+ * @property workoutLogId The ID of the parent workout log.
+ * @property exerciseId The ID of the exercise performed.
+ * @property sets Number of sets completed.
+ * @property reps Number of repetitions per set.
+ * @property weight Weight used in kg.
+ */
 @Serializable
 data class WorkoutExercise(
     val workoutLogId: Int,
@@ -62,6 +119,15 @@ data class WorkoutExercise(
     val weight: Double
 )
 
+/**
+ * Represents a single lap within a cardio workout, used for TCX imports.
+ *
+ * @property workoutLogId The ID of the parent workout log.
+ * @property startTime The ISO timestamp when the lap started.
+ * @property totalTimeSeconds Total duration of the lap in seconds.
+ * @property distance Distance covered in this lap in metres.
+ * @property calories Optional calories burned during this lap.
+ */
 @Serializable
 data class WorkoutLap(
     val workoutLogId: Int,
@@ -71,6 +137,17 @@ data class WorkoutLap(
     val calories: Int? = null
 )
 
+/**
+ * Represents a GPS trackpoint recorded during a workout lap.
+ *
+ * @property lapId The ID of the parent lap.
+ * @property time The ISO timestamp of this trackpoint.
+ * @property latitude GPS latitude in decimal degrees, or null if not recorded.
+ * @property longitude GPS longitude in decimal degrees, or null if not recorded.
+ * @property altitude Altitude in metres, or null if not recorded.
+ * @property distance Cumulative distance in metres at this point, or null if not recorded.
+ * @property heartRate Heart rate in BPM, or null if not recorded.
+ */
 @Serializable
 data class Trackpoint(
     val lapId: Int,
@@ -82,6 +159,17 @@ data class Trackpoint(
     val heartRate: Int? = null
 )
 
+/**
+ * Represents a historical weightlifting entry for display in activity history.
+ *
+ * @property logDate The date of the session.
+ * @property exerciseName The name of the exercise performed.
+ * @property sets Number of sets completed.
+ * @property reps Number of repetitions per set.
+ * @property weight Weight used in kg.
+ * @property duration Duration of the session in minutes.
+ * @property notes Optional session notes.
+ */
 @Serializable
 data class WeightliftingHistoryItem(
     val logDate: String,
@@ -93,6 +181,14 @@ data class WeightliftingHistoryItem(
     val notes: String? = null
 )
 
+/**
+ * A summary of the most recent workout for display on the dashboard.
+ *
+ * @property activityType The type of activity performed.
+ * @property logDate The date of the workout.
+ * @property duration Duration in minutes.
+ * @property distance Optional distance in km.
+ */
 @Serializable
 data class LatestWorkoutSummary(
     val activityType: String,
@@ -101,8 +197,18 @@ data class LatestWorkoutSummary(
     val distance: Double? = null
 )
 
+/**
+ * Service class responsible for all database operations related to activities.
+ * Manages activity types, exercises, workout logs, laps, trackpoints,
+ * and provides query methods for history and statistics.
+ *
+ * @param database The database connection to use for all operations.
+ */
 class ActivityService(database: Database) {
 
+    /**
+     * Database table for activity types (e.g. Running, Weightlifting, Swimming).
+     */
     object ActivityTypes : Table("activity_types") {
         val id = integer("activity_type_id").autoIncrement()
         val name = varchar("name", 50).uniqueIndex()
@@ -110,6 +216,9 @@ class ActivityService(database: Database) {
         override val primaryKey = PrimaryKey(id)
     }
 
+    /**
+     * Database table for exercises associated with activity types.
+     */
     object Exercises : Table("exercises") {
         val id = integer("exercise_id").autoIncrement()
         val name = varchar("name", 255)
@@ -120,6 +229,9 @@ class ActivityService(database: Database) {
         override val primaryKey = PrimaryKey(id)
     }
 
+    /**
+     * Database table for individual workout log entries.
+     */
     object WorkoutLogs : Table("workout_logs") {
         val id = integer("workout_log_id").autoIncrement()
         val userId = integer("user_id")
@@ -134,6 +246,9 @@ class ActivityService(database: Database) {
         override val primaryKey = PrimaryKey(id)
     }
 
+    /**
+     * Database table linking workout logs to specific exercises with sets, reps and weight.
+     */
     object WorkoutExercises : Table("workout_exercises") {
         val id = integer("workout_exercise_id").autoIncrement()
         val workoutLogId = integer("workout_log_id").references(WorkoutLogs.id)
@@ -145,6 +260,9 @@ class ActivityService(database: Database) {
         override val primaryKey = PrimaryKey(id)
     }
 
+    /**
+     * Database table for individual laps within a workout (used for TCX imports).
+     */
     object WorkoutLaps : Table("workout_laps") {
         val id = integer("lap_id").autoIncrement()
         val workoutLogId = integer("workout_log_id").references(WorkoutLogs.id)
@@ -156,6 +274,9 @@ class ActivityService(database: Database) {
         override val primaryKey = PrimaryKey(id)
     }
 
+    /**
+     * Database table for GPS trackpoints recorded during workout laps.
+     */
     object Trackpoints : Table("trackpoints") {
         val id = integer("trackpoint_id").autoIncrement()
         val lapId = integer("lap_id").references(WorkoutLaps.id)
@@ -182,12 +303,24 @@ class ActivityService(database: Database) {
         }
     }
 
+    /**
+     * Creates a new activity type in the database.
+     *
+     * @param activityType The activity type to create.
+     * @return The auto-generated ID of the new activity type.
+     */
     suspend fun createActivityType(activityType: ActivityType): Int = dbQuery {
         ActivityTypes.insert {
             it[name] = activityType.name
         }[ActivityTypes.id]
     }
 
+    /**
+     * Finds an activity type by name and returns its ID.
+     *
+     * @param typeName The name of the activity type to look up.
+     * @return The ID of the matching activity type, or null if not found.
+     */
     suspend fun getActivityTypeByName(typeName: String): Int? = dbQuery {
         ActivityTypes.selectAll()
             .where { ActivityTypes.name eq typeName }
@@ -195,6 +328,12 @@ class ActivityService(database: Database) {
             .singleOrNull()
     }
 
+    /**
+     * Finds an activity type name by its ID.
+     *
+     * @param activityTypeIdValue The ID of the activity type to look up.
+     * @return The name of the matching activity type, or null if not found.
+     */
     suspend fun getActivityTypeName(activityTypeIdValue: Int): String? = dbQuery {
         ActivityTypes.selectAll()
             .where { ActivityTypes.id eq activityTypeIdValue }
@@ -202,11 +341,23 @@ class ActivityService(database: Database) {
             .singleOrNull()
     }
 
+    /**
+     * Retrieves an existing activity type ID by name, or creates it if it doesn't exist.
+     *
+     * @param typeName The name of the activity type to find or create.
+     * @return The ID of the existing or newly created activity type.
+     */
     suspend fun getOrCreateActivityType(typeName: String): Int {
         val existingActivityTypeId = getActivityTypeByName(typeName)
         return existingActivityTypeId ?: createActivityType(ActivityType(typeName))
     }
 
+    /**
+     * Creates a new exercise in the database.
+     *
+     * @param exercise The exercise to create.
+     * @return The auto-generated ID of the new exercise.
+     */
     suspend fun createExercise(exercise: Exercise): Int = dbQuery {
         Exercises.insert {
             it[name] = exercise.name
@@ -216,6 +367,12 @@ class ActivityService(database: Database) {
         }[Exercises.id]
     }
 
+    /**
+     * Finds an exercise by name and returns its ID.
+     *
+     * @param exerciseName The name of the exercise to look up.
+     * @return The ID of the matching exercise, or null if not found.
+     */
     suspend fun getExerciseByName(exerciseName: String): Int? = dbQuery {
         Exercises.selectAll()
             .where { Exercises.name eq exerciseName }
@@ -223,6 +380,12 @@ class ActivityService(database: Database) {
             .singleOrNull()
     }
 
+    /**
+     * Retrieves all exercises belonging to a specific activity type.
+     *
+     * @param activityTypeIdValue The ID of the activity type to filter by.
+     * @return A sorted list of [ExerciseOption] objects for the given activity type.
+     */
     suspend fun getExercisesByActivityType(activityTypeIdValue: Int): List<ExerciseOption> = dbQuery {
         Exercises.selectAll()
             .where { Exercises.activityTypeId eq activityTypeIdValue }
@@ -235,6 +398,12 @@ class ActivityService(database: Database) {
             .sortedBy { it.name }
     }
 
+    /**
+     * Creates a new workout log entry in the database.
+     *
+     * @param workout The workout log data to save.
+     * @return The auto-generated ID of the new workout log.
+     */
     suspend fun createWorkoutLog(workout: WorkoutLog): Int = dbQuery {
         WorkoutLogs.insert {
             it[userId] = workout.userId
@@ -248,6 +417,12 @@ class ActivityService(database: Database) {
         }[WorkoutLogs.id]
     }
 
+    /**
+     * Retrieves a single workout log by its ID.
+     *
+     * @param id The ID of the workout log to retrieve.
+     * @return The matching [WorkoutLog], or null if not found.
+     */
     suspend fun getWorkoutLog(id: Int): WorkoutLog? = dbQuery {
         WorkoutLogs.selectAll()
             .where { WorkoutLogs.id eq id }
@@ -266,6 +441,12 @@ class ActivityService(database: Database) {
             .singleOrNull()
     }
 
+    /**
+     * Retrieves all workout logs for a specific user.
+     *
+     * @param userIdValue The ID of the user whose workouts to retrieve.
+     * @return A list of [WorkoutLog] objects for the given user.
+     */
     suspend fun getWorkoutsForUser(userIdValue: Int): List<WorkoutLog> = dbQuery {
         WorkoutLogs.selectAll()
             .where { WorkoutLogs.userId eq userIdValue }
@@ -283,6 +464,13 @@ class ActivityService(database: Database) {
             }
     }
 
+    /**
+     * Retrieves the cardio activity history for a specific user.
+     * Only includes Running, Cycling, and Swimming activity types.
+     *
+     * @param userIdValue The ID of the user whose cardio history to retrieve.
+     * @return A list of [CardioHistoryItem] objects sorted by date descending.
+     */
     suspend fun getCardioHistory(userIdValue: Int): List<CardioHistoryItem> = dbQuery {
         val cardioTypes = listOf("Running", "Cycling", "Swimming")
 
@@ -304,6 +492,14 @@ class ActivityService(database: Database) {
             }
     }
 
+    /**
+     * Counts the number of workout logs for a user within a date range.
+     *
+     * @param userIdValue The ID of the user.
+     * @param startDate The start of the date range (ISO format: yyyy-MM-dd).
+     * @param endDate The end of the date range (ISO format: yyyy-MM-dd).
+     * @return The number of workout logs within the given date range.
+     */
     suspend fun countWorkoutsForUserBetween(
         userIdValue: Int,
         startDate: String,
@@ -315,6 +511,12 @@ class ActivityService(database: Database) {
             }
     }
 
+    /**
+     * Retrieves a summary of the most recent workout for a user.
+     *
+     * @param userIdValue The ID of the user.
+     * @return A [LatestWorkoutSummary] for the most recent workout, or null if none exist.
+     */
     suspend fun getLatestWorkoutSummaryForUser(userIdValue: Int): LatestWorkoutSummary? {
         val latestWorkout = getWorkoutsForUser(userIdValue)
             .maxByOrNull { it.logDate }
@@ -335,10 +537,21 @@ class ActivityService(database: Database) {
         )
     }
 
+    /**
+     * Deletes a workout log from the database by its ID.
+     *
+     * @param id The ID of the workout log to delete.
+     */
     suspend fun deleteWorkoutLog(id: Int) = dbQuery {
         WorkoutLogs.deleteWhere { WorkoutLogs.id eq id }
     }
 
+    /**
+     * Creates a new workout exercise entry linking a workout log to an exercise.
+     *
+     * @param workoutExercise The workout exercise data to save.
+     * @return The auto-generated ID of the new workout exercise entry.
+     */
     suspend fun createWorkoutExercise(workoutExercise: WorkoutExercise): Int = dbQuery {
         WorkoutExercises.insert {
             it[workoutLogId] = workoutExercise.workoutLogId
@@ -349,6 +562,12 @@ class ActivityService(database: Database) {
         }[WorkoutExercises.id]
     }
 
+    /**
+     * Retrieves the weightlifting history for a specific user.
+     *
+     * @param userIdValue The ID of the user whose weightlifting history to retrieve.
+     * @return A list of [WeightliftingHistoryItem] objects sorted by date descending.
+     */
     suspend fun getWeightliftingHistory(userIdValue: Int): List<WeightliftingHistoryItem> = dbQuery {
         (WorkoutExercises innerJoin WorkoutLogs innerJoin Exercises)
             .selectAll()
@@ -367,6 +586,12 @@ class ActivityService(database: Database) {
             .sortedByDescending { it.logDate }
     }
 
+    /**
+     * Creates a new workout lap entry in the database.
+     *
+     * @param lap The lap data to save.
+     * @return The auto-generated ID of the new lap entry.
+     */
     suspend fun createWorkoutLap(lap: WorkoutLap): Int = dbQuery {
         WorkoutLaps.insert {
             it[workoutLogId] = lap.workoutLogId
@@ -377,6 +602,12 @@ class ActivityService(database: Database) {
         }[WorkoutLaps.id]
     }
 
+    /**
+     * Creates a new GPS trackpoint entry in the database.
+     *
+     * @param trackpoint The trackpoint data to save.
+     * @return The auto-generated ID of the new trackpoint entry.
+     */
     suspend fun createTrackpoint(trackpoint: Trackpoint): Int = dbQuery {
         Trackpoints.insert {
             it[lapId] = trackpoint.lapId
@@ -389,6 +620,12 @@ class ActivityService(database: Database) {
         }[Trackpoints.id]
     }
 
+    /**
+     * Retrieves all trackpoints for a specific lap.
+     *
+     * @param lapIdValue The ID of the lap whose trackpoints to retrieve.
+     * @return A list of [Trackpoint] objects for the given lap.
+     */
     suspend fun getTrackpointsForLap(lapIdValue: Int): List<Trackpoint> = dbQuery {
         Trackpoints.selectAll()
             .where { Trackpoints.lapId eq lapIdValue }
@@ -405,6 +642,12 @@ class ActivityService(database: Database) {
             }
     }
 
+    /**
+     * Executes a database query on the IO dispatcher using a suspended transaction.
+     *
+     * @param block The database operation to execute.
+     * @return The result of the database operation.
+     */
     private suspend fun <T> dbQuery(block: suspend () -> T): T =
         withContext(Dispatchers.IO) { suspendTransaction { block() } }
 }
