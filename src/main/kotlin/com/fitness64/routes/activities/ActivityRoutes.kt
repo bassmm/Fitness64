@@ -415,4 +415,3 @@ private fun parseWeightliftingRows(params: Parameters): List<WeightliftingLogged
     }
     return parsedRows
 }
-
