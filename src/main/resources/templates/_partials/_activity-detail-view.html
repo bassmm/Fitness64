@@ -1,0 +1,292 @@
+{% if activity.type == "cardio" %}
+
+<div class="row g-4 mb-4">
+    {% if activity.distance %}
+    <div class="col-md-4">
+        <div class="card shadow-soft h-100">
+            <div class="card-body text-center p-4">
+                <p
+                    class="text-muted text-uppercase fw-semibold mb-1"
+                    style="font-size: 0.75rem; letter-spacing: 0.05em"
+                >
+                    Distance
+                </p>
+                <p class="display-5 fw-bold mb-0">{{ activity.distance }}</p>
+                <p class="text-muted mb-0">kilometers</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    <div class="col-md-4">
+        <div class="card shadow-soft h-100">
+            <div class="card-body text-center p-4">
+                <p
+                    class="text-muted text-uppercase fw-semibold mb-1"
+                    style="font-size: 0.75rem; letter-spacing: 0.05em"
+                >
+                    Duration
+                </p>
+                <p class="display-5 fw-bold mb-0">{{ activity.duration }}</p>
+                <p class="text-muted mb-0">minutes</p>
+            </div>
+        </div>
+    </div>
+    {% if activity.calories %}
+    <div class="col-md-4">
+        <div class="card shadow-soft h-100">
+            <div class="card-body text-center p-4">
+                <p
+                    class="text-muted text-uppercase fw-semibold mb-1"
+                    style="font-size: 0.75rem; letter-spacing: 0.05em"
+                >
+                    Calories
+                </p>
+                <p class="display-5 fw-bold mb-0">{{ activity.calories }}</p>
+                <p class="text-muted mb-0">burned</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card shadow-soft">
+    <div class="card-body p-5">
+        <div class="row g-4">
+            <div class="col-md-6">
+                <p
+                    class="text-muted text-uppercase fw-semibold mb-1"
+                    style="font-size: 0.7rem; letter-spacing: 0.05em"
+                >
+                    Activity Type
+                </p>
+                <p class="h6 mb-0">{{ activity.category }}</p>
+            </div>
+            <div class="col-md-6">
+                <p
+                    class="text-muted text-uppercase fw-semibold mb-1"
+                    style="font-size: 0.7rem; letter-spacing: 0.05em"
+                >
+                    Date
+                </p>
+                <p class="h6 mb-0">{{ activity.date }}</p>
+            </div>
+            {% if activity.source and activity.source != 'Manual entry' %}
+            <div class="col-md-6">
+                <p
+                    class="text-muted text-uppercase fw-semibold mb-1"
+                    style="font-size: 0.7rem; letter-spacing: 0.05em"
+                >
+                    Source
+                </p>
+                <p class="h6 mb-0">{{ activity.source }}</p>
+            </div>
+            {% endif %} {% if activity.notes %}
+            <div class="col-12">
+                <p
+                    class="text-muted text-uppercase fw-semibold mb-1"
+                    style="font-size: 0.7rem; letter-spacing: 0.05em"
+                >
+                    Notes
+                </p>
+                <p class="mb-0">{{ activity.notes }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% elseif activity.type == "weightlifting" %}
+
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="card shadow-soft h-100">
+            <div class="card-body text-center p-4">
+                <p
+                    class="text-muted text-uppercase fw-semibold mb-1"
+                    style="font-size: 0.75rem; letter-spacing: 0.05em"
+                >
+                    Duration
+                </p>
+                <p class="display-5 fw-bold mb-0">{{ activity.duration }}</p>
+                <p class="text-muted mb-0">minutes</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-soft h-100">
+            <div class="card-body text-center p-4">
+                <p
+                    class="text-muted text-uppercase fw-semibold mb-1"
+                    style="font-size: 0.75rem; letter-spacing: 0.05em"
+                >
+                    Total Sets
+                </p>
+                <p class="display-5 fw-bold mb-0">{{ activity.totalSets }}</p>
+                <p class="text-muted mb-0">across all exercises</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-soft h-100">
+            <div class="card-body text-center p-4">
+                <p
+                    class="text-muted text-uppercase fw-semibold mb-1"
+                    style="font-size: 0.75rem; letter-spacing: 0.05em"
+                >
+                    Exercises
+                </p>
+                <p class="display-5 fw-bold mb-0">
+                    {{ activity.exercises | length }}
+                </p>
+                <p class="text-muted mb-0">different movements</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-soft">
+    <div class="card-body p-5">
+        <h3 class="h5 mb-3">Exercises</h3>
+        <div class="list-group list-group-flush mb-4">
+            {% for exercise in activity.exercises %}
+            <div
+                class="list-group-item d-flex justify-content-between align-items-center px-0"
+            >
+                <div>
+                    <h6 class="mb-1 fw-semibold">
+                        {{ exercise.exerciseName }}
+                    </h6>
+                    <span class="text-muted"
+                        >{{ exercise.sets }} sets &times; {{ exercise.reps }}
+                        reps</span
+                    >
+                </div>
+                <span class="badge bg-light text-dark fs-6"
+                    >{{ exercise.weight | default('-') }} kg</span
+                >
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if activity.notes %}
+        <div class="border-top pt-3">
+            <p
+                class="text-muted text-uppercase fw-semibold mb-1"
+                style="font-size: 0.7rem; letter-spacing: 0.05em"
+            >
+                Notes
+            </p>
+            <p class="mb-0">{{ activity.notes }}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% elseif activity.type == "race" %}
+
+<div class="row g-4 mb-4">
+    {% if activity.finishTime %}
+    <div class="col-md-4">
+        <div class="card shadow-soft h-100">
+            <div class="card-body text-center p-4">
+                <p
+                    class="text-muted text-uppercase fw-semibold mb-1"
+                    style="font-size: 0.75rem; letter-spacing: 0.05em"
+                >
+                    Finish Time
+                </p>
+                <p class="display-5 fw-bold mb-0">{{ activity.finishTime }}</p>
+            </div>
+        </div>
+    </div>
+    {% endif %} {% if activity.overallRank %}
+    <div class="col-md-4">
+        <div class="card shadow-soft h-100">
+            <div class="card-body text-center p-4">
+                <p
+                    class="text-muted text-uppercase fw-semibold mb-1"
+                    style="font-size: 0.75rem; letter-spacing: 0.05em"
+                >
+                    Overall Rank
+                </p>
+                <p class="display-5 fw-bold mb-0">
+                    #{{ activity.overallRank }}
+                </p>
+            </div>
+        </div>
+    </div>
+    {% endif %} {% if activity.categoryRank %}
+    <div class="col-md-4">
+        <div class="card shadow-soft h-100">
+            <div class="card-body text-center p-4">
+                <p
+                    class="text-muted text-uppercase fw-semibold mb-1"
+                    style="font-size: 0.75rem; letter-spacing: 0.05em"
+                >
+                    Category Rank
+                </p>
+                <p class="display-5 fw-bold mb-0">
+                    #{{ activity.categoryRank }}
+                </p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card shadow-soft">
+    <div class="card-body p-5">
+        <div class="row g-4">
+            <div class="col-md-6">
+                <p
+                    class="text-muted text-uppercase fw-semibold mb-1"
+                    style="font-size: 0.7rem; letter-spacing: 0.05em"
+                >
+                    Date
+                </p>
+                <p class="h6 mb-0">{{ activity.date }}</p>
+            </div>
+            {% if activity.location %}
+            <div class="col-md-6">
+                <p
+                    class="text-muted text-uppercase fw-semibold mb-1"
+                    style="font-size: 0.7rem; letter-spacing: 0.05em"
+                >
+                    Location
+                </p>
+                <p class="h6 mb-0">{{ activity.location }}</p>
+            </div>
+            {% endif %} {% if activity.category_name %}
+            <div class="col-md-6">
+                <p
+                    class="text-muted text-uppercase fw-semibold mb-1"
+                    style="font-size: 0.7rem; letter-spacing: 0.05em"
+                >
+                    Race Category
+                </p>
+                <p class="h6 mb-0">{{ activity.category_name }}</p>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if activity.isPersonalBest %}
+        <div class="border-top pt-3 mt-4">
+            <span class="badge bg-success-subtle text-success fs-6"
+                >Personal Best</span
+            >
+        </div>
+        {% endif %} {% if activity.certificateUrl %}
+        <div class="border-top pt-3 mt-3">
+            <a
+                href="{{ activity.certificateUrl }}"
+                target="_blank"
+                class="btn btn-sm btn-neutral"
+            >
+                <i class="bi bi-box-arrow-up-right me-2"></i>View Certificate
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endif %}
