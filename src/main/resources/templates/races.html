@@ -11,7 +11,7 @@ page_heading %}Race History{% endblock %} {% block content %}
         </p>
     </div>
     <a class="btn btn-primary" href="/races/log"
-        ><i class="bi bi-flag me-2"></i>Log a Race</a
+        ><i aria-hidden="true" class="bi bi-flag me-2"></i>Log a Race</a
     >
 </div>
 
@@ -23,7 +23,7 @@ page_heading %}Race History{% endblock %} {% block content %}
             Log your first race result to start tracking personal bests.
         </p>
         <a class="btn btn-primary" href="/races/log"
-            ><i class="bi bi-plus-circle me-2"></i>Log your first race</a
+            ><i aria-hidden="true" class="bi bi-plus-circle me-2"></i>Log your first race</a
         >
     </div>
 </div>
@@ -39,7 +39,7 @@ page_heading %}Race History{% endblock %} {% block content %}
                     <div>
                         <h3 class="h5 mb-1">{{ race.eventName }}</h3>
                         <p class="text-sm text-muted mb-0">
-                            <i class="bi bi-calendar-event me-2"></i>{{
+                            <i aria-hidden="true" class="bi bi-calendar-event me-2"></i>{{
                             race.eventDate }}
                         </p>
                     </div>
@@ -51,18 +51,18 @@ page_heading %}Race History{% endblock %} {% block content %}
                 </div>
                 <div class="d-flex flex-column gap-2 text-sm text-muted mb-4">
                     {% if race.location %}<span
-                        ><i class="bi bi-geo-alt me-2"></i>{{ race.location
+                        ><i aria-hidden="true" class="bi bi-geo-alt me-2"></i>{{ race.location
                         }}</span
                     >{% endif %} {% if race.category %}<span
-                        ><i class="bi bi-tag me-2"></i>{{ race.category }}</span
+                        ><i aria-hidden="true" class="bi bi-tag me-2"></i>{{ race.category }}</span
                     >{% endif %} {% if race.finishTime %}<span
-                        ><i class="bi bi-stopwatch me-2"></i>{{ race.finishTime
+                        ><i aria-hidden="true" class="bi bi-stopwatch me-2"></i>{{ race.finishTime
                         }}</span
                     >{% endif %} {% if race.overallRank %}<span
-                        ><i class="bi bi-trophy me-2"></i>Overall rank: {{
+                        ><i aria-hidden="true" class="bi bi-trophy me-2"></i>Overall rank: {{
                         race.overallRank }}</span
                     >{% endif %} {% if race.categoryRank %}<span
-                        ><i class="bi bi-award me-2"></i>Category rank: {{
+                        ><i aria-hidden="true" class="bi bi-award me-2"></i>Category rank: {{
                         race.categoryRank }}</span
                     >{% endif %}
                 </div>
@@ -72,7 +72,7 @@ page_heading %}Race History{% endblock %} {% block content %}
                     target="_blank"
                     class="btn btn-sm btn-neutral"
                 >
-                    <i class="bi bi-box-arrow-up-right me-2"></i>View
+                    <i aria-hidden="true" class="bi bi-box-arrow-up-right me-2"></i>View
                     Certificate
                 </a>
                 {% endif %}
@@ -85,7 +85,7 @@ page_heading %}Race History{% endblock %} {% block content %}
 
 <div class="mt-5">
     <a class="btn btn-neutral" href="/home"
-        ><i class="bi bi-arrow-left me-2"></i>Back to Home</a
+        ><i aria-hidden="true" class="bi bi-arrow-left me-2"></i>Back to Home</a
     >
 </div>
 {% endblock %}

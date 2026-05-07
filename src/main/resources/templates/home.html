@@ -1,5 +1,8 @@
-{% extends "base" %} {% block title %}Home{% endblock %} {% block page_heading
-%}Dashboard{% endblock %} {% block content %}
+{% extends "base" %} 
+{% block title %}Home{% endblock %} 
+{% block page_heading %}Dashboard{% endblock %} 
+
+{% block content %}
 <section class="hero-card card shadow-soft mb-6">
   <div class="card-body p-5 p-lg-6 position-relative z-1">
     <div class="row align-items-center g-5">
@@ -17,18 +20,19 @@
         </p>
         <div class="d-flex flex-wrap gap-3">
           <a class="btn btn-primary" href="/log"
-            ><i class="bi bi-plus-circle me-2"></i>Start Activity</a
+            ><i aria-hidden="true" class="bi bi-plus-circle me-2"></i>Start Activity</a
           >
           <a class="btn btn-neutral" href="/plan"
-            ><i class="bi bi-calendar2-week me-2"></i>View Plan</a
+            ><i aria-hidden="true" class="bi bi-calendar2-week me-2"></i>View Plan</a
           >
         </div>
       </div>
+
       <div class="col-lg-4">
         <div class="rounded-4 border bg-body p-4 shadow-sm">
           <div class="d-flex align-items-center gap-3 mb-4">
             <span class="stat-icon bg-primary-subtle text-primary"
-              ><i class="bi bi-activity"></i
+              ><i aria-hidden="true" class="bi bi-activity"></i
             ></span>
             <div>
               <div class="text-muted text-sm">Today</div>
@@ -50,34 +54,103 @@
     <div class="card card-hover h-100">
       <div class="card-body p-5">
         <span class="stat-icon bg-primary-subtle text-primary mb-4"
-          ><i class="bi bi-fire"></i
+          ><i aria-hidden="true" class="bi bi-fire"></i
         ></span>
         <p class="text-muted text-sm mb-1">Consistency</p>
         <h3 class="h5 mb-0">{{ streak }}</h3>
       </div>
     </div>
   </div>
+
   <div class="col-md-4">
     <div class="card card-hover h-100">
       <div class="card-body p-5">
         <span class="stat-icon bg-info-subtle text-info mb-4"
-          ><i class="bi bi-bullseye"></i
+          ><i aria-hidden="true" class="bi bi-bullseye"></i
         ></span>
         <p class="text-muted text-sm mb-1">Next Goal</p>
         <h3 class="h5 mb-0">{{ nextGoal }}</h3>
       </div>
     </div>
   </div>
+
   <div class="col-md-4">
     <div class="card card-hover h-100">
       <div class="card-body p-5">
         <span class="stat-icon bg-warning-subtle text-warning mb-4"
-          ><i class="bi bi-trophy"></i
+          ><i aria-hidden="true" class="bi bi-trophy"></i
         ></span>
         <p class="text-muted text-sm mb-1">Latest Achievement</p>
         <h3 class="h5 mb-0">{{ achievement }}</h3>
       </div>
     </div>
+  </div>
+</div>
+
+<div class="card mb-6">
+  <div class="card-body p-5">
+    <div
+      class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4"
+    >
+      <div>
+        <p class="page-kicker">This week's plan</p>
+        <h2 class="h4 mb-1">Your weekly training summary</h2>
+        <p class="text-muted mb-0">
+          A quick view of your planned sessions for this week.
+        </p>
+      </div>
+
+      <a class="btn btn-neutral" href="/plan">
+        <i class="bi bi-calendar2-week me-2"></i>View full plan
+      </a>
+    </div>
+
+    {% if weeklyPlanSummary is not empty %}
+    <div class="row g-3">
+      {% for session in weeklyPlanSummary %}
+      <div class="col-md-6 col-xl-3">
+        <div class="border rounded-4 p-4 h-100 bg-body">
+          <div
+            class="d-flex align-items-start justify-content-between gap-3 mb-3"
+          >
+            <div>
+              <p class="text-muted text-sm mb-1">{{ session.day }}</p>
+              <h3 class="h6 mb-0 text-heading">{{ session.session }}</h3>
+            </div>
+
+            {% if session.isRestDay %}
+            <span class="badge bg-secondary-subtle text-secondary">
+              Rest
+            </span>
+            {% else %}
+            <span class="badge bg-primary-subtle text-primary">
+              {{ session.intensity }}
+            </span>
+            {% endif %}
+          </div>
+
+          {% if session.isRestDay %}
+          <p class="text-sm text-muted mb-0">Recovery day</p>
+          {% else %}
+          <p class="text-sm text-muted mb-0">
+            {{ session.durationMinutes }} min · {{ session.intensity }}
+          </p>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="rounded-4 border bg-body p-4">
+      <h3 class="h5 mb-2">No weekly plan yet</h3>
+      <p class="text-muted mb-3">
+        Generate a weekly plan to see your training schedule here.
+      </p>
+      <a class="btn btn-primary" href="/plan">
+        <i class="bi bi-calendar-plus me-2"></i>Generate weekly plan
+      </a>
+    </div>
+    {% endif %}
   </div>
 </div>
 
@@ -94,9 +167,10 @@
         </p>
       </div>
       <a class="btn btn-neutral" href="/logout"
-        ><i class="bi bi-box-arrow-right me-2"></i>Logout</a
+        ><i aria-hidden="true" class="bi bi-box-arrow-right me-2"></i>Logout</a
       >
     </div>
+
     <div class="d-flex flex-wrap gap-3">
       <a class="btn btn-primary" href="/log">Log Workout</a>
       <a class="btn btn-neutral" href="/plan">Weekly Plan</a>
