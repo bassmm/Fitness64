@@ -357,13 +357,13 @@ class ApplicationTest {
     }
 
     /**
-     * Verifies that posting to the TCX upload endpoint redirects unauthenticated users.
+     * Verifies that posting to the import endpoint redirects unauthenticated users.
      */
     @Test
-    fun testTcxUploadPostRedirectsWhenNotLoggedIn() = testApplication {
+    fun testImportPostRedirectsWhenNotLoggedIn() = testApplication {
         application { module() }
         val noRedirectClient = createClient { followRedirects = false }
-        val response = noRedirectClient.post("/tcx/upload")
+        val response = noRedirectClient.post("/import")
         assertEquals(HttpStatusCode.Found, response.status)
     }
 
