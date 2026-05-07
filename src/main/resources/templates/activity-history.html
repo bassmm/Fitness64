@@ -35,14 +35,14 @@
     <div class="card-body p-5">
         <div class="d-flex align-items-center gap-3 mb-4">
             <span class="stat-icon bg-primary-subtle text-primary">
-                <i class="bi bi-graph-up-arrow"></i>
+                <i aria-hidden="true" class="bi bi-graph-up-arrow"></i>
             </span>
             <div>
                 <p class="page-kicker mb-1">Strength</p>
                 <h2 class="h4 mb-0">Weightlifting Volume Over Time</h2>
             </div>
         </div>
-        <canvas id="volumeChart" height="80"></canvas>
+        <canvas id="volumeChart" height="80" role="img" aria-label="Weightlifting volume over time chart"></canvas>
     </div>
 </div>
 {% endif %}
@@ -75,7 +75,7 @@
     <div class="card-body p-0">
         {% if activities is not empty %}
         <div class="table-responsive">
-            <table class="table table-hover mb-0">
+            <table class="table table-hover mb-0" aria-label="Activity history">
                 <thead class="bg-body-secondary">
                     <tr>
                         <th class="ps-5">Date</th>
@@ -88,7 +88,7 @@
                 </thead>
                 <tbody>
                     {% for item in activities %}
-                    <tr style="cursor: pointer;" onclick="window.location.href='/activities/{{ item.id }}'">
+                    <tr style="cursor: pointer;" onclick="window.location.href='/activities/{{ item.id }}'" tabindex="0" role="link" aria-label="{{ item.title }} on {{ item.date }}" onkeydown="if(event.key==='Enter'||event.key===' ')window.location.href='/activities/{{ item.id }}'">
                         <td class="ps-5 fw-semibold">{{ item.date }}</td>
                         <td>
                             {{ item.category }}
@@ -154,7 +154,7 @@
         {% else %}
         <div class="empty-state m-5">
             <span class="stat-icon bg-primary-subtle text-primary mb-4">
-                <i class="bi bi-bar-chart"></i>
+                <i aria-hidden="true" class="bi bi-bar-chart"></i>
             </span>
             <h3 class="h5">No activities yet</h3>
             <p class="text-muted">

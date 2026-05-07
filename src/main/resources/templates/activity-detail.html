@@ -14,7 +14,7 @@
         hx-get="/activities/{{ activity.id }}/edit"
         hx-target="#activity-edit-area"
         hx-swap="innerHTML">
-        <i class="bi bi-pencil-square me-2"></i>Edit Activity
+        <i aria-hidden="true" class="bi bi-pencil-square me-2"></i>Edit Activity
     </button>
 </div>
 
@@ -24,7 +24,7 @@
 
 <div class="mt-5">
     <a class="btn btn-neutral" href="/activities">
-        <i class="bi bi-arrow-left me-2"></i>Back to Activities
+        <i aria-hidden="true" class="bi bi-arrow-left me-2"></i>Back to Activities
     </a>
 </div>
 {% endblock %}
