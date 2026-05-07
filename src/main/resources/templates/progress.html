@@ -254,6 +254,9 @@
     });
     {% endif %}
 
+    {% set hasDistanceData = false %}
+    {% for item in distanceByWeek %}{% if item.distance > 0 %}{% set hasDistanceData = true %}{% endif %}{% endfor %}
+    {% if hasDistanceData %}
     const distanceByWeek = [
         {% for item in distanceByWeek %}
             { week: "{{ item.week }}", distance: {{ item.distance }} }{% if not loop.last %},{% endif %}
@@ -284,5 +287,8 @@
             }
         }
     });
+    {% else %}
+    document.getElementById('distanceChart').style.display = 'none';
+    {% endif %}
 </script>
 {% endblock %}

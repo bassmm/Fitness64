@@ -160,13 +160,15 @@ private fun buildDistanceByWeek(
         name == "Running" || name == "Cycling"
     }
 
-    val weekBoundaries = (0 until 4).map { i ->
-        val weekEnd = today.minusDays(today.dayOfWeek.value.toLong() - 1).minusDays((i * 7).toLong())
-        val weekStart = weekEnd.minusDays(6)
-        weekStart to weekEnd
-    }.asReversed()
+    val mondayOfCurrentWeek = today.minusDays(today.dayOfWeek.value.toLong() - 1)
 
-    return weekBoundaries.mapIndexed { i, (start, end) ->
+    val weekRanges = (0 until 4).map { i ->
+        val weekStart = mondayOfCurrentWeek.minusWeeks((3 - i).toLong())
+        val weekEnd = weekStart.plusDays(6)
+        weekStart to weekEnd
+    }
+
+    return weekRanges.mapIndexed { i, (start, end) ->
         val distance = runningOrCycling
             .filter {
                 val d = runCatching { LocalDate.parse(it.logDate) }.getOrNull()
