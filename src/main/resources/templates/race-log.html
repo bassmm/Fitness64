@@ -11,7 +11,7 @@ page_heading %}Log a Race{% endblock %} {% block content %}
         </p>
     </div>
     <a class="btn btn-neutral" href="/races"
-        ><i class="bi bi-arrow-left me-2"></i>Back to Race History</a
+        ><i aria-hidden="true" class="bi bi-arrow-left me-2"></i>Back to Race History</a
     >
 </div>
 
@@ -22,7 +22,7 @@ page_heading %}Log a Race{% endblock %} {% block content %}
             class="alert alert-danger d-flex align-items-center gap-2"
             role="alert"
         >
-            <i class="bi bi-exclamation-triangle"></i>
+            <i aria-hidden="true" class="bi bi-exclamation-triangle"></i>
             <span>{{ error }}</span>
         </div>
         {% endif %}
@@ -153,7 +153,7 @@ page_heading %}Log a Race{% endblock %} {% block content %}
 
             <div class="d-flex flex-column flex-sm-row gap-2 mt-4">
                 <button class="btn btn-primary" type="submit">
-                    <i class="bi bi-check2-circle me-2"></i>Save Race
+                    <i aria-hidden="true" class="bi bi-check2-circle me-2"></i>Save Race
                 </button>
                 <a class="btn btn-neutral" href="/races">Cancel</a>
             </div>
