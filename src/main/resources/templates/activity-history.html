@@ -40,7 +40,9 @@
                 </p>
 
                 <div role="status" aria-live="polite" class="visually-hidden">
-                    {% if hasDateFilter %}
+                    {% if dateRangeError %}
+                        Date range error. Showing all activities.
+                    {% elseif hasDateFilter %}
                         Activity list filtered by selected date range.
                     {% else %}
                         Showing all activities.
@@ -132,6 +134,12 @@
                 </p>
 
                 <form method="get" action="/activities" class="d-grid gap-3">
+                    {% if dateRangeError %}
+                    <div class="alert alert-warning" role="alert">
+                        {{ dateRangeError }}
+                    </div>
+                    {% endif %}
+
                     <fieldset>
                         <legend class="visually-hidden">
                             Filter activities by date range
@@ -163,6 +171,7 @@
                                 id="toDate"
                                 name="toDate"
                                 value="{{ toDate }}"
+                                min="{{ fromDate }}"
                                 class="form-control"
                                 aria-describedby="toDateHelp"
                             >
@@ -233,4 +242,23 @@
     });
 </script>
 {% endif %}
+
+<script>
+    const fromDateInput = document.getElementById('fromDate');
+    const toDateInput = document.getElementById('toDate');
+
+    if (fromDateInput && toDateInput) {
+        fromDateInput.addEventListener('change', () => {
+            toDateInput.min = fromDateInput.value;
+
+            if (
+                toDateInput.value &&
+                fromDateInput.value &&
+                toDateInput.value < fromDateInput.value
+            ) {
+                toDateInput.value = fromDateInput.value;
+            }
+        });
+    }
+</script>
 {% endblock %}

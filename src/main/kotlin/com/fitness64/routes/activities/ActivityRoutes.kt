@@ -16,7 +16,6 @@ import io.ktor.server.pebble.PebbleContent
 import io.ktor.server.request.receiveParameters
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondRedirect
-import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
@@ -184,6 +183,12 @@ fun Application.configureActivityRoutes(
                     .takeIf { it.isNotBlank() }
                     ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
 
+                val dateRangeError = if (fromDate != null && toDate != null && fromDate.isAfter(toDate)) {
+                    "From date must be before or the same as To date."
+                } else {
+                    ""
+                }
+
                 fun isDateInRange(dateValue: String): Boolean {
                     val itemDate = runCatching { LocalDate.parse(dateValue) }.getOrNull()
                         ?: return false
@@ -267,11 +272,11 @@ fun Application.configureActivityRoutes(
                 }
 
                 val activities = (cardioItems + weightliftingItems + raceItems)
-                    .filter { isDateInRange(it.date) }
+                    .filter { dateRangeError.isNotBlank() || isDateInRange(it.date) }
                     .sortedByDescending { it.date }
 
                 val volumeBySession = weightliftingHistory
-                    .filter { isDateInRange(it.logDate) }
+                    .filter { dateRangeError.isNotBlank() || isDateInRange(it.logDate) }
                     .sortedBy { it.logDate }
                     .map { item ->
                         mapOf(
@@ -288,7 +293,8 @@ fun Application.configureActivityRoutes(
                             "volumeBySession" to volumeBySession,
                             "fromDate" to fromDateParam,
                             "toDate" to toDateParam,
-                            "hasDateFilter" to (fromDateParam.isNotBlank() || toDateParam.isNotBlank())
+                            "hasDateFilter" to (fromDateParam.isNotBlank() || toDateParam.isNotBlank()),
+                            "dateRangeError" to dateRangeError
                         )
                     )
                 )
