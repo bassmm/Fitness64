@@ -20,6 +20,7 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import io.ktor.http.HttpStatusCode
+import java.net.URI
 
 private data class ActivityFeedItem(
     val id: String,
@@ -29,7 +30,14 @@ private data class ActivityFeedItem(
     val title: String,
     val summary: String,
     val metric: String,
-    val notes: String
+    val notes: String,
+    val location: String = "",
+    val raceCategory: String = "",
+    val finishTime: String = "",
+    val overallRank: Int? = null,
+    val categoryRank: Int? = null,
+    val isPersonalBest: Boolean = false,
+    val certificateUrl: String = ""
 )
 
 private data class ActivityDetail(
@@ -84,7 +92,7 @@ private suspend fun resolveActivity(type: String, resourceId: Int, userId: Int,
             location = race.location, categoryName = race.category,
             finishTime = race.finishTime, overallRank = race.overallRank,
             categoryRank = race.categoryRank, isPersonalBest = race.isPersonalBest,
-            certificateUrl = race.certificateUrl
+            certificateUrl = safeExternalUrl(race.certificateUrl).ifBlank { null }
         )
     }
     else -> null
@@ -106,6 +114,21 @@ private fun activityDetailMap(activity: ActivityDetail): Map<String, Any> = mapO
     )
 )
 
+
+private fun safeExternalUrl(value: String?): String {
+    val trimmed = value?.trim().orEmpty()
+    if (trimmed.isBlank()) return ""
+
+    val uri = runCatching { URI(trimmed) }.getOrNull() ?: return ""
+    val scheme = uri.scheme?.lowercase() ?: return ""
+
+    return if ((scheme == "http" || scheme == "https") && !uri.host.isNullOrBlank()) {
+        trimmed
+    } else {
+        ""
+    }
+}
+
 fun Application.configureActivityRoutes(
     activityService: ActivityService,
     userService: UserService,
@@ -116,6 +139,10 @@ fun Application.configureActivityRoutes(
         authenticate("auth-session") {
             get("/activities") {
                 val (_, userId) = call.requireAuthenticatedUser(userService) ?: return@get
+                val selectedFilter = call.request.queryParameters["filter"]
+                    ?.lowercase()
+                    ?.takeIf { it in setOf("all", "workouts", "races") }
+                    ?: "all"
 
                 val cardioHistory = activityService.getCardioHistory(userId)
                 val weightliftingHistory = weightliftingService.getWeightliftingHistory(userId)
@@ -152,21 +179,57 @@ fun Application.configureActivityRoutes(
                     val metric = race.finishTime
                         ?: race.overallRank?.let { "Overall #$it" }
                         ?: "Completed"
-                    val summary = listOfNotNull(race.location, race.category).joinToString(" • ").ifBlank { "Race logged" }
-                    val notePrefix = if (race.isPersonalBest) "Personal best. " else ""
-                    val noteBody = race.certificateUrl?.let { "Certificate: $it" } ?: ""
 
                     ActivityFeedItem(
-                        id = "race-${race.id}", type = "race", date = race.eventDate,
-                        category = "Race", title = race.eventName, summary = summary,
-                        metric = metric, notes = "$notePrefix$noteBody".trim()
+                        id = "race-${race.id}",
+                        type = "race",
+                        date = race.eventDate,
+                        category = "Race",
+                        title = race.eventName,
+                        summary = "Race result",
+                        metric = metric,
+                        notes = if (race.isPersonalBest) "Personal best" else "",
+                        location = race.location ?: "",
+                        raceCategory = race.category ?: "",
+                        finishTime = race.finishTime ?: "",
+                        overallRank = race.overallRank,
+                        categoryRank = race.categoryRank,
+                        isPersonalBest = race.isPersonalBest,
+                        certificateUrl = safeExternalUrl(race.certificateUrl)
                     )
                 }
 
-                val activities = (cardioItems + weightliftingItems + raceItems)
+                val allActivities = (cardioItems + weightliftingItems + raceItems)
                     .sortedByDescending { it.date }
 
-                call.respond(PebbleContent("activity-history", mapOf("activities" to activities)))
+                val filteredActivities = when (selectedFilter) {
+                    "workouts" -> allActivities.filter { it.type != "race" }
+                    "races" -> allActivities.filter { it.type == "race" }
+                    else -> allActivities
+                }
+
+                val volumeBySession = weightliftingHistory
+                    .sortedBy { it.logDate }
+                    .map { item ->
+                        mapOf(
+                            "date" to item.logDate,
+                            "totalSets" to item.totalSets
+                        )
+                    }
+
+                call.respond(
+                    PebbleContent(
+                        "activity-history",
+                        mapOf(
+                            "activities" to filteredActivities,
+                            "selectedFilter" to selectedFilter,
+                            "allCount" to allActivities.size,
+                            "workoutCount" to allActivities.count { it.type != "race" },
+                            "raceCount" to raceItems.size,
+                            "volumeBySession" to volumeBySession
+                        )
+                    )
+                )
             }
 
             get("/activities/{id}") {
