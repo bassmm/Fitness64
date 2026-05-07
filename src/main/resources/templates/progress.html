@@ -62,7 +62,16 @@
                         <h2 class="h4 mb-0">Workouts per Day</h2>
                     </div>
                 </div>
-                <canvas id="weeklyChart" height="120"></canvas>
+                {% set hasWeeklyData = false %}
+                {% for item in workoutsByDay %}{% if item.count > 0 %}{% set hasWeeklyData = true %}{% endif %}{% endfor %}
+                {% if hasWeeklyData %}
+                    <canvas id="weeklyChart" height="120"></canvas>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-calendar-x text-muted" style="font-size: 2rem;"></i>
+                        <p class="text-muted mb-0 mt-2">No workouts logged this week yet.</p>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -82,13 +91,18 @@
                 {% if activityBreakdown is not empty %}
                     <canvas id="pieChart" height="180"></canvas>
                 {% else %}
-                    <p class="text-muted">No activities logged this week yet.</p>
+                    <div class="text-center py-5">
+                        <i class="bi bi-pie-chart text-muted" style="font-size: 2rem;"></i>
+                        <p class="text-muted mb-0 mt-2">No activities logged this week yet.</p>
+                    </div>
                 {% endif %}
             </div>
         </div>
     </div>
 </div>
 
+{% set hasDistanceData = false %}
+{% for item in distanceByWeek %}{% if item.distance > 0 %}{% set hasDistanceData = true %}{% endif %}{% endfor %}
 <div class="card shadow-soft mb-6">
     <div class="card-body p-5">
         <div class="d-flex align-items-center gap-3 mb-4">
@@ -100,7 +114,14 @@
                 <h2 class="h4 mb-0">Distance Over Last 4 Weeks (km)</h2>
             </div>
         </div>
-        <canvas id="distanceChart" height="80"></canvas>
+        {% if hasDistanceData %}
+            <canvas id="distanceChart" height="80"></canvas>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-graph-down-arrow text-muted" style="font-size: 2rem;"></i>
+                <p class="text-muted mb-0 mt-2">Log running or cycling activities with distance to see your trend.</p>
+            </div>
+        {% endif %}
     </div>
 </div>
 
@@ -187,108 +208,35 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    const primaryColor = 'rgba(185, 28, 28, 0.8)';
-    const primaryBorder = 'rgba(185, 28, 28, 1)';
-    const colors = [
-        'rgba(185, 28, 28, 0.8)',
-        'rgba(100, 116, 139, 0.8)',
-        'rgba(15, 23, 42, 0.8)',
-        'rgba(234, 179, 8, 0.8)',
-        'rgba(34, 197, 94, 0.8)'
-    ];
-
-    const workoutsByDay = [
+    {% set hasWeeklyData = false %}
+    {% for item in workoutsByDay %}{% if item.count > 0 %}{% set hasWeeklyData = true %}{% endif %}{% endfor %}
+    {% if hasWeeklyData %}
+    window.weeklyChartData = [
         {% for item in workoutsByDay %}
             { day: "{{ item.day }}", count: {{ item.count }} }{% if not loop.last %},{% endif %}
         {% endfor %}
     ];
-
-    new Chart(document.getElementById('weeklyChart'), {
-        type: 'bar',
-        data: {
-            labels: workoutsByDay.map(d => d.day),
-            datasets: [{
-                label: 'Workouts',
-                data: workoutsByDay.map(d => d.count),
-                backgroundColor: primaryColor,
-                borderColor: primaryBorder,
-                borderWidth: 1,
-                borderRadius: 6
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: {
-                y: { beginAtZero: true, ticks: { stepSize: 1 } }
-            }
-        }
-    });
+    {% endif %}
 
     {% if activityBreakdown is not empty %}
-    const breakdown = [
+    window.pieChartData = [
         {% for item in activityBreakdown %}
             { type: "{{ item.type }}", count: {{ item.count }} }{% if not loop.last %},{% endif %}
         {% endfor %}
     ];
-
-    new Chart(document.getElementById('pieChart'), {
-        type: 'doughnut',
-        data: {
-            labels: breakdown.map(d => d.type),
-            datasets: [{
-                data: breakdown.map(d => d.count),
-                backgroundColor: colors.slice(0, breakdown.length),
-                borderWidth: 2,
-                borderColor: '#fff'
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { position: 'bottom' }
-            }
-        }
-    });
     {% endif %}
 
     {% set hasDistanceData = false %}
     {% for item in distanceByWeek %}{% if item.distance > 0 %}{% set hasDistanceData = true %}{% endif %}{% endfor %}
     {% if hasDistanceData %}
-    const distanceByWeek = [
+    window.distanceChartData = [
         {% for item in distanceByWeek %}
             { week: "{{ item.week }}", distance: {{ item.distance }} }{% if not loop.last %},{% endif %}
         {% endfor %}
     ];
-
-    new Chart(document.getElementById('distanceChart'), {
-        type: 'line',
-        data: {
-            labels: distanceByWeek.map(d => d.week),
-            datasets: [{
-                label: 'Distance (km)',
-                data: distanceByWeek.map(d => d.distance),
-                borderColor: primaryBorder,
-                backgroundColor: 'rgba(185, 28, 28, 0.1)',
-                borderWidth: 2,
-                pointBackgroundColor: primaryBorder,
-                pointRadius: 5,
-                fill: true,
-                tension: 0.3
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: {
-                y: { beginAtZero: true }
-            }
-        }
-    });
-    {% else %}
-    document.getElementById('distanceChart').style.display = 'none';
     {% endif %}
+
+    initProgressCharts();
 </script>
 {% endblock %}

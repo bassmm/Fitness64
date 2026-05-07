@@ -1,28 +1,26 @@
-{% extends "base" %}
-
-{% block title %}{{ activity.title }}{% endblock %}
-{% block page_heading %}{{ activity.title }}{% endblock %}
-
-{% block head %}
+{% extends "base" %} {% block title %}{{ activity.title }}{% endblock %} {%
+block page_heading %}{{ activity.title }}{% endblock %} {% block head %}
 <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
     crossorigin=""
 />
-{% endblock %}
-
-{% block content %}
-<div class="d-flex flex-column flex-lg-row align-items-lg-end justify-content-between gap-3 mb-5">
+{% endblock %} {% block content %}
+<div
+    class="d-flex flex-column flex-lg-row align-items-lg-end justify-content-between gap-3 mb-5"
+>
     <div>
         <p class="page-kicker mb-1">{{ activity.category }}</p>
         <h2 class="h3 mb-1">{{ activity.title }}</h2>
         <p class="text-muted mb-0">{{ activity.date }}</p>
     </div>
-    <button class="btn btn-primary"
+    <button
+        class="btn btn-primary"
         hx-get="/activities/{{ activity.id }}/edit"
         hx-target="#activity-edit-area"
-        hx-swap="innerHTML">
+        hx-swap="innerHTML"
+    >
         <i class="bi bi-pencil-square me-2"></i>Edit Activity
     </button>
 </div>
@@ -36,11 +34,8 @@
         <i class="bi bi-arrow-left me-2"></i>Back to Activities
     </a>
 </div>
-{% endblock %}
-
-{% block scripts %}
-{% if activity.type == "cardio" %}
-{% if activity.heartRateData is not empty %}
+{% endblock %} {% block scripts %} {% if activity.type == "cardio" %} {% if
+activity.heartRateData is not empty %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     const heartRateData = [
@@ -102,12 +97,20 @@
         }
     });
 </script>
-{% endif %}
+{% endif %} {% if activity.laps is not empty %}
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
-{% if activity.laps is not empty %}
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-    crossorigin=""></script>
+<!-- Maplibre GL -->
+<link
+    href="https://unpkg.com/maplibre-gl/dist/maplibre-gl.css"
+    rel="stylesheet"
+/>
+<script src="https://unpkg.com/maplibre-gl/dist/maplibre-gl.js"></script>
+
+<!-- Maplibre GL Leaflet  -->
+<script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet/leaflet-maplibre-gl.js"></script>
 <script>
     const laps = [
         {% for lap in activity.laps %}
@@ -121,6 +124,11 @@
 
     const map = L.map('route-map', { zoomControl: false });
     L.control.zoom({ position: 'topright' }).addTo(map);
+
+    L.maplibreGL({
+      style: 'https://tiles.openfreemap.org/styles/bright',
+    }).addTo(map)
+
 
     let allBounds = [];
     let firstPoint = null;
@@ -164,6 +172,4 @@
         map.fitBounds(allBounds, { padding: [20, 20] });
     }
 </script>
-{% endif %}
-{% endif %}
-{% endblock %}
+{% endif %} {% endif %} {% endblock %}
