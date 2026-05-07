@@ -26,7 +26,30 @@
                href="/activities?filter=races">
                 Races<span class="badge text-bg-light ms-1">{{ raceCount }}</span>
             </a>
-        </div>        
+        </div>
+
+        <form class="d-flex gap-2" method="get" action="/activities" role="search">
+            <input type="hidden" name="filter" value="{{ selectedFilter }}">
+
+            <input
+                class="form-control form-control-sm"
+                type="search"
+                name="search"
+                value="{{ searchQuery }}"
+                placeholder="Search by title, type, or date"
+                aria-label="Search activities by title, type, or date"
+            >
+
+            <button class="btn btn-sm btn-primary" type="submit">
+                Search
+            </button>
+
+            {% if searchQuery %}
+                <a class="btn btn-sm btn-outline-secondary" href="/activities?filter={{ selectedFilter }}">
+                    Clear
+                </a>
+            {% endif %}
+        </form>
     </div>
 </div>
 
@@ -61,7 +84,9 @@
                     {% endif %}
                 </h3>
                 <p class="text-sm text-muted mb-0">
-                    {% if selectedFilter == "races" %}
+                    {% if searchQuery %}
+                        Showing {{ resultCount }} result{% if resultCount != 1 %}s{% endif %} for "{{ searchQuery }}".
+                    {% elseif selectedFilter == "races" %}
                         Race results with finish times, rankings, categories, and certificates.
                     {% elseif selectedFilter == "workouts" %}
                         Cardio and weightlifting sessions without race results.
@@ -88,7 +113,12 @@
                 </thead>
                 <tbody>
                     {% for item in activities %}
-                    <tr style="cursor: pointer;" onclick="window.location.href='/activities/{{ item.id }}'" tabindex="0" role="link" aria-label="{{ item.title }} on {{ item.date }}" onkeydown="if(event.key==='Enter'||event.key===' ')window.location.href='/activities/{{ item.id }}'">
+                    <tr style="cursor: pointer;"
+                        onclick="window.location.href='/activities/{{ item.id }}'"
+                        tabindex="0"
+                        role="link"
+                        aria-label="{{ item.title }} on {{ item.date }}"
+                        onkeydown="if(event.key==='Enter'||event.key===' ')window.location.href='/activities/{{ item.id }}'">
                         <td class="ps-5 fw-semibold">{{ item.date }}</td>
                         <td>
                             {{ item.category }}
@@ -156,9 +186,17 @@
             <span class="stat-icon bg-primary-subtle text-primary mb-4">
                 <i aria-hidden="true" class="bi bi-bar-chart"></i>
             </span>
-            <h3 class="h5">No activities yet</h3>
+            <h3 class="h5">
+                {% if searchQuery %}
+                    No matching activities
+                {% else %}
+                    No activities yet
+                {% endif %}
+            </h3>
             <p class="text-muted">
-                {% if selectedFilter == "races" %}
+                {% if searchQuery %}
+                    No activities match "{{ searchQuery }}". Try searching by title, type, or date.
+                {% elseif selectedFilter == "races" %}
                     No races have been logged yet.
                 {% elseif selectedFilter == "workouts" %}
                     No workouts have been logged yet.
