@@ -11,7 +11,7 @@
         <p class="page-summary mb-0">View and update your personal details, goals, and training preferences.</p>
     </div>
     <button class="btn btn-primary" hx-get="/profile/edit-form" hx-target="#profile-edit-area" hx-swap="innerHTML">
-        <i class="bi bi-pencil-square me-2"></i>Edit Profile
+        <i aria-hidden="true" class="bi bi-pencil-square me-2"></i>Edit Profile
     </button>
 </div>
 
@@ -21,7 +21,7 @@
 
 <div class="mt-5">
     <a class="btn btn-neutral" href="/home">
-        <i class="bi bi-arrow-left me-2"></i>Back to Home
+        <i aria-hidden="true" class="bi bi-arrow-left me-2"></i>Back to Home
     </a>
 </div>
 {% endblock %}

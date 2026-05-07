@@ -1,6 +1,6 @@
 {% if error is not empty %}
 <div class="alert alert-danger mb-3" role="alert">
-    <i class="bi bi-exclamation-triangle me-2"></i>{{ error }}
+    <i aria-hidden="true" class="bi bi-exclamation-triangle me-2"></i>{{ error }}
 </div>
 {% endif %}
 
@@ -44,7 +44,7 @@
 
     <div class="d-flex gap-3 mt-4">
         <button type="submit" class="btn btn-primary">
-            <i class="bi bi-check2-circle me-2"></i>Save Changes
+            <i aria-hidden="true" class="bi bi-check2-circle me-2"></i>Save Changes
         </button>
         <button type="button" class="btn btn-neutral" hx-get="/profile/view" hx-target="#profile-edit-area" hx-swap="innerHTML">
             Cancel

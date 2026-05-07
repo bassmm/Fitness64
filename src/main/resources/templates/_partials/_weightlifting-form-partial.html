@@ -1,7 +1,7 @@
 <div class="card shadow-soft">
     <div class="card-body p-5">
         {% if error %}
-            <div class="alert alert-danger d-flex align-items-center gap-2" role="alert"><i class="bi bi-exclamation-triangle-fill"></i><span>{{ error }}</span></div>
+            <div class="alert alert-danger d-flex align-items-center gap-2" role="alert"><i aria-hidden="true" class="bi bi-exclamation-triangle-fill"></i><span>{{ error }}</span></div>
         {% endif %}
 
         <form hx-post="/log/submit" hx-target="#log-form-area" hx-swap="innerHTML" hx-indicator="#submit-spinner" class="row g-4">
@@ -10,7 +10,7 @@
 
             <div class="col-12">
                 <button type="button" hx-get="/log/picker" hx-target="#log-form-area" hx-swap="innerHTML" class="btn btn-sm btn-neutral">
-                    <i class="bi bi-arrow-left me-1"></i>Change activity
+                    <i aria-hidden="true" class="bi bi-arrow-left me-1"></i>Change activity
                 </button>
             </div>
 
@@ -34,30 +34,34 @@
             <div class="col-12">
                 <div class="d-flex align-items-center justify-content-between gap-3 mb-3">
                     <h3 class="h6 mb-0">Exercises</h3>
-                    <button class="btn btn-sm btn-neutral" type="button" id="add-exercise"><i class="bi bi-plus-lg me-2"></i>Add exercise</button>
+                    <button class="btn btn-sm btn-neutral" type="button" id="add-exercise"><i aria-hidden="true" class="bi bi-plus-lg me-2"></i>Add exercise</button>
                 </div>
 
                 <div class="vstack gap-3" id="exercise-list">
                     <div class="border rounded-3 p-3 exercise-row">
                         <div class="row g-3 align-items-end">
                             <div class="col-lg-5">
-                                <label class="form-label">Exercise name</label>
-                                <input class="form-control" name="exerciseName" type="text" placeholder="e.g. Bench Press" required>
+                                <label class="form-label">Exercise name
+                                    <input class="form-control" name="exerciseName" type="text" placeholder="e.g. Bench Press" required>
+                                </label>
                             </div>
                             <div class="col-lg-2">
-                                <label class="form-label">Sets</label>
-                                <input class="form-control" name="sets" type="number" min="1" required>
+                                <label class="form-label">Sets
+                                    <input class="form-control" name="sets" type="number" min="1" required>
+                                </label>
                             </div>
                             <div class="col-lg-2">
-                                <label class="form-label">Reps</label>
-                                <input class="form-control" name="reps" type="number" min="1" required>
+                                <label class="form-label">Reps
+                                    <input class="form-control" name="reps" type="number" min="1" required>
+                                </label>
                             </div>
                             <div class="col-lg-2">
-                                <label class="form-label">Weight (kg)</label>
-                                <input class="form-control" name="weight" type="number" min="0" step="0.1" placeholder="Optional">
+                                <label class="form-label">Weight (kg)
+                                    <input class="form-control" name="weight" type="number" min="0" step="0.1" placeholder="Optional">
+                                </label>
                             </div>
                             <div class="col-lg-1 d-grid">
-                                <button class="btn btn-sm btn-neutral remove-exercise" type="button" title="Remove row"><i class="bi bi-x-lg"></i></button>
+                                <button class="btn btn-sm btn-neutral remove-exercise" type="button" aria-label="Remove exercise row"><i aria-hidden="true" class="bi bi-x-lg"></i></button>
                             </div>
                         </div>
                     </div>
@@ -67,7 +71,7 @@
             <div class="col-12 d-flex flex-wrap align-items-center gap-3">
                 <button class="btn btn-primary" type="submit">
                     <span id="submit-spinner" class="spinner-border spinner-border-sm d-none me-2"></span>
-                    <i class="bi bi-check2-circle me-2"></i>Save Session
+                    <i aria-hidden="true" class="bi bi-check2-circle me-2"></i>Save Session
                 </button>
                 <button type="button" hx-get="/log/picker" hx-target="#log-form-area" hx-swap="innerHTML" class="btn btn-neutral">Cancel</button>
             </div>
