@@ -16,15 +16,15 @@
         <div class="btn-group" role="group" aria-label="Activity filters">
             <a class="btn btn-sm {% if selectedFilter == "all" %}btn-primary{% else %}btn-outline-primary{% endif %}"
                href="/activities?filter=all">
-                All{% if allCount is not empty %} <span class="badge text-bg-light ms-1">{{ allCount }}</span>{% endif %}
+                All<span class="badge text-bg-light ms-1">{{ allCount }}</span>
             </a>
             <a class="btn btn-sm {% if selectedFilter == "workouts" %}btn-primary{% else %}btn-outline-primary{% endif %}"
                href="/activities?filter=workouts">
-                Workouts{% if workoutCount is not empty %} <span class="badge text-bg-light ms-1">{{ workoutCount }}</span>{% endif %}
+                Workouts<span class="badge text-bg-light ms-1">{{ workoutCount }}</span>
             </a>
             <a class="btn btn-sm {% if selectedFilter == "races" %}btn-primary{% else %}btn-outline-primary{% endif %}"
                href="/activities?filter=races">
-                Races{% if raceCount is not empty %} <span class="badge text-bg-light ms-1">{{ raceCount }}</span>{% endif %}
+                Races<span class="badge text-bg-light ms-1">{{ raceCount }}</span>
             </a>
         </div>
         <a class="btn btn-outline-secondary btn-sm" href="/races/log">
@@ -95,7 +95,7 @@
                         <td class="ps-5 fw-semibold">{{ item.date }}</td>
                         <td>
                             {{ item.category }}
-                            {% if item.type == "race" and item.personalBest %}
+                            {% if item.type == "race" and item.isPersonalBest %}
                                 <div class="mt-1">
                                     <span class="badge text-bg-warning">Personal best</span>
                                 </div>
