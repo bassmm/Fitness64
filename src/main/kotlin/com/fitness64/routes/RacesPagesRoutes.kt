@@ -10,6 +10,27 @@ import io.ktor.server.pebble.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import java.net.URI
+
+private fun normaliseCertificateUrl(value: String): String? {
+    val trimmed = value.trim()
+
+    if (trimmed.isBlank()) {
+        return null
+    }
+
+    val uri = runCatching {
+        URI(trimmed)
+    }.getOrNull() ?: return null
+
+    val scheme = uri.scheme?.lowercase() ?: return null
+
+    return if ((scheme == "http" || scheme == "https") && !uri.host.isNullOrBlank()) {
+        trimmed
+    } else {
+        null
+    }
+}
 
 fun Application.configureRacesPagesRoutes(
     userService: UserService,
@@ -18,27 +39,27 @@ fun Application.configureRacesPagesRoutes(
     routing {
         authenticate("auth-session") {
             get("/races") {
-                val (_, userId) = call.requireAuthenticatedUser(userService) ?: return@get
-
-                val races = raceService.getRacesForUser(userId)
-                    .sortedByDescending { it.eventDate }
-
-                call.respondTemplate("races", mapOf("races" to races))
+                call.respondRedirect("/activities?filter=races")
             }
 
             get("/races/log") {
-                call.respondTemplate("race-log", mapOf(
-                    "error" to "",
-                    "eventName" to "",
-                    "eventDate" to "",
-                    "location" to "",
-                    "category" to "",
-                    "finishTime" to "",
-                    "overallRank" to "",
-                    "categoryRank" to "",
-                    "certificateUrl" to "",
-                    "isPersonalBest" to false
-                ))
+                val eventDate = call.request.queryParameters["date"] ?: ""
+
+                call.respondTemplate(
+                    "race-log",
+                    mapOf<String, Any>(
+                        "error" to "",
+                        "eventName" to "",
+                        "eventDate" to eventDate,
+                        "location" to "",
+                        "category" to "",
+                        "finishTime" to "",
+                        "overallRank" to "",
+                        "categoryRank" to "",
+                        "certificateUrl" to "",
+                        "isPersonalBest" to false
+                    )
+                )
             }
 
             post("/races/log") {
@@ -52,22 +73,45 @@ fun Application.configureRacesPagesRoutes(
                 val finishTime = params["finishTime"]?.trim().orEmpty()
                 val overallRankText = params["overallRank"]?.trim().orEmpty()
                 val categoryRankText = params["categoryRank"]?.trim().orEmpty()
-                val certificateUrl = params["certificateUrl"]?.trim().orEmpty()
+                val certificateUrlText = params["certificateUrl"]?.trim().orEmpty()
+                val certificateUrl = normaliseCertificateUrl(certificateUrlText)
                 val isPersonalBest = params["isPersonalBest"] == "true"
 
+                if (certificateUrlText.isNotBlank() && certificateUrl == null) {
+                    call.respondTemplate(
+                        "race-log",
+                        mapOf<String, Any>(
+                            "error" to "Certificate URL must start with http:// or https://.",
+                            "eventName" to eventName,
+                            "eventDate" to eventDate,
+                            "location" to location,
+                            "category" to category,
+                            "finishTime" to finishTime,
+                            "overallRank" to overallRankText,
+                            "categoryRank" to categoryRankText,
+                            "certificateUrl" to certificateUrlText,
+                            "isPersonalBest" to isPersonalBest
+                        )
+                    )
+                    return@post
+                }
+
                 if (eventName.isBlank() || eventDate.isBlank()) {
-                    call.respondTemplate("race-log", mapOf(
-                        "error" to "Race name and date are required.",
-                        "eventName" to eventName,
-                        "eventDate" to eventDate,
-                        "location" to location,
-                        "category" to category,
-                        "finishTime" to finishTime,
-                        "overallRank" to overallRankText,
-                        "categoryRank" to categoryRankText,
-                        "certificateUrl" to certificateUrl,
-                        "isPersonalBest" to isPersonalBest
-                    ))
+                    call.respondTemplate(
+                        "race-log",
+                        mapOf<String, Any>(
+                            "error" to "Race name and date are required.",
+                            "eventName" to eventName,
+                            "eventDate" to eventDate,
+                            "location" to location,
+                            "category" to category,
+                            "finishTime" to finishTime,
+                            "overallRank" to overallRankText,
+                            "categoryRank" to categoryRankText,
+                            "certificateUrl" to certificateUrlText,
+                            "isPersonalBest" to isPersonalBest
+                        )
+                    )
                     return@post
                 }
 
@@ -82,11 +126,11 @@ fun Application.configureRacesPagesRoutes(
                         overallRank = overallRankText.toIntOrNull(),
                         categoryRank = categoryRankText.toIntOrNull(),
                         isPersonalBest = isPersonalBest,
-                        certificateUrl = certificateUrl.ifBlank { null }
+                        certificateUrl = certificateUrl
                     )
                 )
 
-                call.respondRedirect("/races")
+                call.respondRedirect("/activities?filter=races")
             }
         }
     }
