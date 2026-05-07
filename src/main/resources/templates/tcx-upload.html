@@ -12,7 +12,7 @@ page_heading %}Import TCX{% endblock %} {% block content %}
         </p>
     </div>
     <a class="btn btn-neutral" href="/home"
-        ><i class="bi bi-arrow-left me-2"></i>Back to Home</a
+        ><i aria-hidden="true" class="bi bi-arrow-left me-2"></i>Back to Home</a
     >
 </div>
 
@@ -23,7 +23,7 @@ page_heading %}Import TCX{% endblock %} {% block content %}
             class="alert alert-danger d-flex align-items-center gap-2"
             role="alert"
         >
-            <i class="bi bi-exclamation-triangle"></i>
+            <i aria-hidden="true" class="bi bi-exclamation-triangle"></i>
             <span>{{ error }}</span>
         </div>
         {% endif %} {% if success %}
@@ -31,7 +31,7 @@ page_heading %}Import TCX{% endblock %} {% block content %}
             class="alert alert-success d-flex align-items-center gap-2"
             role="alert"
         >
-            <i class="bi bi-check-circle"></i>
+            <i aria-hidden="true" class="bi bi-check-circle"></i>
             <span>{{ success }}</span>
         </div>
         {% endif %}
@@ -60,7 +60,7 @@ page_heading %}Import TCX{% endblock %} {% block content %}
 
             <div class="d-flex flex-column flex-sm-row gap-2">
                 <button class="btn btn-primary" type="submit">
-                    <i class="bi bi-upload me-2"></i>Upload and Import
+                    <i aria-hidden="true" class="bi bi-upload me-2"></i>Upload and Import
                 </button>
             </div>
         </form>

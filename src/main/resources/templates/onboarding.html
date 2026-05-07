@@ -11,7 +11,7 @@ block page_heading %}Choose Training Plan{% endblock %} {% block content %}
         </p>
     </div>
     <a class="btn btn-neutral" href="/home"
-        ><i class="bi bi-arrow-left me-2"></i>Skip for now</a
+        ><i aria-hidden="true" class="bi bi-arrow-left me-2"></i>Skip for now</a
     >
 </div>
 
@@ -34,17 +34,17 @@ block page_heading %}Choose Training Plan{% endblock %} {% block content %}
             <div>
                 {% if recommendedPlan == "beginner" %}
                 <span class="badge bg-success-subtle text-success"
-                    ><i class="bi bi-stars me-1"></i>Recommended: Beginner
+                    ><i aria-hidden="true" class="bi bi-stars me-1"></i>Recommended: Beginner
                     All-Rounder</span
                 >
                 {% elseif recommendedPlan == "custom" %}
                 <span class="badge bg-success-subtle text-success"
-                    ><i class="bi bi-stars me-1"></i>Recommended: Custom
+                    ><i aria-hidden="true" class="bi bi-stars me-1"></i>Recommended: Custom
                     Plan</span
                 >
                 {% else %}
                 <span class="badge bg-secondary-subtle text-secondary"
-                    ><i class="bi bi-info-circle me-1"></i>No specific
+                    ><i aria-hidden="true" class="bi bi-info-circle me-1"></i>No specific
                     recommendation</span
                 >
                 {% endif %}
@@ -55,7 +55,7 @@ block page_heading %}Choose Training Plan{% endblock %} {% block content %}
 
 {% if error %}
 <div class="alert alert-danger d-flex align-items-center gap-2" role="alert">
-    <i class="bi bi-exclamation-triangle"></i>
+    <i aria-hidden="true" class="bi bi-exclamation-triangle"></i>
     <span>{{ error }}</span>
 </div>
 {% endif %}
@@ -84,7 +84,7 @@ block page_heading %}Choose Training Plan{% endblock %} {% block content %}
                     </p>
                     {% if recommendedPlan == "beginner" %}
                     <span class="badge bg-success-subtle text-success"
-                        ><i class="bi bi-stars me-1"></i>Recommended</span
+                        ><i aria-hidden="true" class="bi bi-stars me-1"></i>Recommended</span
                     >
                     {% endif %}
                 </div>
@@ -159,7 +159,7 @@ block page_heading %}Choose Training Plan{% endblock %} {% block content %}
                     </p>
                     {% if recommendedPlan == "custom" %}
                     <span class="badge bg-success-subtle text-success"
-                        ><i class="bi bi-stars me-1"></i>Recommended</span
+                        ><i aria-hidden="true" class="bi bi-stars me-1"></i>Recommended</span
                     >
                     {% endif %}
                 </div>
@@ -169,7 +169,7 @@ block page_heading %}Choose Training Plan{% endblock %} {% block content %}
 
     <div class="d-flex flex-column flex-sm-row gap-2 mt-4">
         <button class="btn btn-primary" type="submit">
-            <i class="bi bi-check2-circle me-2"></i>Create My Plan
+            <i aria-hidden="true" class="bi bi-check2-circle me-2"></i>Create My Plan
         </button>
     </div>
 </form>

@@ -1,6 +1,6 @@
 {% if error is not empty %}
 <div class="alert alert-danger mb-3" role="alert">
-    <i class="bi bi-exclamation-triangle me-2"></i>{{ error }}
+    <i aria-hidden="true" class="bi bi-exclamation-triangle me-2"></i>{{ error }}
 </div>
 {% endif %}
 
@@ -15,8 +15,8 @@
                     <input type="text" id="name" name="name" class="form-control" value="{{ activity.title }}">
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label">Date</label>
-                    <input type="date" class="form-control" value="{{ activity.date }}" disabled>
+                    <label for="activityDate" class="form-label">Date</label>
+                    <input type="date" id="activityDate" class="form-control" value="{{ activity.date }}" disabled>
                 </div>
                 <div class="col-md-6">
                     <label for="duration" class="form-label">Duration (minutes)</label>
@@ -26,7 +26,7 @@
 
             <div class="d-flex align-items-center justify-content-between gap-3 mb-3">
                 <h3 class="h6 mb-0">Exercises</h3>
-                <button class="btn btn-sm btn-neutral" type="button" id="add-exercise"><i class="bi bi-plus-lg me-2"></i>Add exercise</button>
+                <button class="btn btn-sm btn-neutral" type="button" id="add-exercise"><i aria-hidden="true" class="bi bi-plus-lg me-2"></i>Add exercise</button>
             </div>
 
             <div class="vstack gap-3 mb-4" id="exercise-list">
@@ -34,23 +34,27 @@
                 <div class="border rounded-3 p-3 exercise-row">
                     <div class="row g-3 align-items-end">
                         <div class="col-lg-5">
-                            <label class="form-label">Exercise name</label>
-                            <input class="form-control" name="exerciseName" type="text" value="{{ exercise.exerciseName }}" required>
+                            <label class="form-label">Exercise name
+                                <input class="form-control" name="exerciseName" type="text" value="{{ exercise.exerciseName }}" required>
+                            </label>
                         </div>
                         <div class="col-lg-2">
-                            <label class="form-label">Sets</label>
-                            <input class="form-control" name="sets" type="number" min="1" value="{{ exercise.sets }}" required>
+                            <label class="form-label">Sets
+                                <input class="form-control" name="sets" type="number" min="1" value="{{ exercise.sets }}" required>
+                            </label>
                         </div>
                         <div class="col-lg-2">
-                            <label class="form-label">Reps</label>
-                            <input class="form-control" name="reps" type="number" min="1" value="{{ exercise.reps }}" required>
+                            <label class="form-label">Reps
+                                <input class="form-control" name="reps" type="number" min="1" value="{{ exercise.reps }}" required>
+                            </label>
                         </div>
                         <div class="col-lg-2">
-                            <label class="form-label">Weight (kg)</label>
-                            <input class="form-control" name="weight" type="number" min="0" step="0.1" value="{{ exercise.weight | default('') }}">
+                            <label class="form-label">Weight (kg)
+                                <input class="form-control" name="weight" type="number" min="0" step="0.1" value="{{ exercise.weight | default('') }}">
+                            </label>
                         </div>
                         <div class="col-lg-1 d-grid">
-                            <button class="btn btn-sm btn-neutral remove-exercise" type="button" title="Remove row"><i class="bi bi-x-lg"></i></button>
+                            <button class="btn btn-sm btn-neutral remove-exercise" type="button" aria-label="Remove exercise row"><i aria-hidden="true" class="bi bi-x-lg"></i></button>
                         </div>
                     </div>
                 </div>
@@ -64,7 +68,7 @@
 
             <div class="d-flex gap-3">
                 <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-check2-circle me-2"></i>Save Changes
+                    <i aria-hidden="true" class="bi bi-check2-circle me-2"></i>Save Changes
                 </button>
                 <button type="button" class="btn btn-neutral"
                     hx-get="/activities/{{ activity.id }}/view"
