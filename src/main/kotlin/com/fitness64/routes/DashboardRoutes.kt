@@ -34,11 +34,11 @@ fun Application.configureDashboardRoutes(
                 val today = LocalDate.now()
                 val todayDayName = today.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.ENGLISH)
 
-                val todayTraining = planService.getPlanSessionByDay(userId, todayDayName)?.session
-                    ?: "No training planned"
-
-                // New: get the full weekly plan so Home can show a summary/quick view
                 val weeklyPlanSummary = planService.getPlan(userId)
+                val todayTraining = weeklyPlanSummary
+                    .firstOrNull { it.day == todayDayName }
+                    ?.session
+                    ?: "No training planned"
 
                 val startOfWeek = getStartOfWeek(today)
                 val startDate = startOfWeek.toString()
