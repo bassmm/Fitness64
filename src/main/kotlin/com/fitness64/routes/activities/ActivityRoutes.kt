@@ -19,7 +19,6 @@ import io.ktor.server.response.respondRedirect
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
-import io.ktor.http.HttpStatusCode
 import java.net.URI
 import java.time.LocalDate
 
@@ -38,7 +37,7 @@ private data class ActivityFeedItem(
     val overallRank: Int? = null,
     val categoryRank: Int? = null,
     val isPersonalBest: Boolean = false,
-    val certificateUrl: String = ""
+    val certificateUrl: String? = null
 )
 
 private data class ActivityDetail(
