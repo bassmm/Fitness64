@@ -19,6 +19,8 @@ import io.ktor.server.response.respondRedirect
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
+import io.ktor.http.HttpStatusCode
+import java.net.URI
 import java.time.LocalDate
 
 private data class ActivityFeedItem(
@@ -29,7 +31,14 @@ private data class ActivityFeedItem(
     val title: String,
     val summary: String,
     val metric: String,
-    val notes: String
+    val notes: String,
+    val location: String = "",
+    val raceCategory: String = "",
+    val finishTime: String = "",
+    val overallRank: Int? = null,
+    val categoryRank: Int? = null,
+    val isPersonalBest: Boolean = false,
+    val certificateUrl: String = ""
 )
 
 private data class ActivityDetail(
@@ -116,19 +125,12 @@ private suspend fun resolveActivity(
             ?: return null
 
         ActivityDetail(
-            id = "race-${race.id}",
-            type = "race",
-            category = "Race",
-            title = race.eventName,
-            date = race.eventDate,
-            duration = 0,
-            location = race.location,
-            categoryName = race.category,
-            finishTime = race.finishTime,
-            overallRank = race.overallRank,
-            categoryRank = race.categoryRank,
-            isPersonalBest = race.isPersonalBest,
-            certificateUrl = race.certificateUrl
+            id = "race-${race.id}", type = "race", category = "Race",
+            title = race.eventName, date = race.eventDate, duration = 0,
+            location = race.location, categoryName = race.category,
+            finishTime = race.finishTime, overallRank = race.overallRank,
+            categoryRank = race.categoryRank, isPersonalBest = race.isPersonalBest,
+            certificateUrl = safeExternalUrl(race.certificateUrl).ifBlank { null }
         )
     }
 
@@ -161,6 +163,21 @@ private fun activityDetailMap(activity: ActivityDetail): Map<String, Any> = mapO
     )
 )
 
+
+private fun safeExternalUrl(value: String?): String {
+    val trimmed = value?.trim().orEmpty()
+    if (trimmed.isBlank()) return ""
+
+    val uri = runCatching { URI(trimmed) }.getOrNull() ?: return ""
+    val scheme = uri.scheme?.lowercase() ?: return ""
+
+    return if ((scheme == "http" || scheme == "https") && !uri.host.isNullOrBlank()) {
+        trimmed
+    } else {
+        ""
+    }
+}
+
 fun Application.configureActivityRoutes(
     activityService: ActivityService,
     userService: UserService,
@@ -171,6 +188,10 @@ fun Application.configureActivityRoutes(
         authenticate("auth-session") {
             get("/activities") {
                 val (_, userId) = call.requireAuthenticatedUser(userService) ?: return@get
+                val selectedFilter = call.request.queryParameters["filter"]
+                    ?.lowercase()
+                    ?.takeIf { it in setOf("all", "workouts", "races") }
+                    ?: "all"
 
                 val fromDateParam = call.request.queryParameters["fromDate"]?.trim().orEmpty()
                 val toDateParam = call.request.queryParameters["toDate"]?.trim().orEmpty()
@@ -259,7 +280,7 @@ fun Application.configureActivityRoutes(
                     val notePrefix = if (race.isPersonalBest) "Personal best. " else ""
                     val noteBody = race.certificateUrl?.let { "Certificate: $it" } ?: ""
 
-                    ActivityFeedItem(
+                   ActivityFeedItem(
                         id = "race-${race.id}",
                         type = "race",
                         date = race.eventDate,
@@ -267,16 +288,36 @@ fun Application.configureActivityRoutes(
                         title = race.eventName,
                         summary = summary,
                         metric = metric,
-                        notes = "$notePrefix$noteBody".trim()
+                        notes = "$notePrefix$noteBody".trim(),
+                        location = race.location ?: "",
+                        raceCategory = race.category ?: "",
+                        finishTime = race.finishTime ?: "",
+                        overallRank = race.overallRank,
+                        categoryRank = race.categoryRank,
+                        isPersonalBest = race.isPersonalBest,
+                        certificateUrl = safeExternalUrl(race.certificateUrl).ifBlank { null }
                     )
                 }
 
-                val activities = (cardioItems + weightliftingItems + raceItems)
-                    .filter { dateRangeError.isNotBlank() || isDateInRange(it.date) }
+                val allActivities = cardioItems + weightliftingItems + raceItems
+
+                val activities = allActivities
+                    .filter { item ->
+                        when (selectedFilter) {
+                            "workouts" -> item.type != "race"
+                            "races" -> item.type == "race"
+                            else -> true
+                        }
+                    }
+                    .filter { item ->
+                        dateRangeError.isNotBlank() || isDateInRange(item.date)
+                    }
                     .sortedByDescending { it.date }
 
                 val volumeBySession = weightliftingHistory
-                    .filter { dateRangeError.isNotBlank() || isDateInRange(it.logDate) }
+                    .filter {
+                        dateRangeError.isNotBlank() || isDateInRange(it.logDate)
+                    }
                     .sortedBy { it.logDate }
                     .map { item ->
                         mapOf(
@@ -290,6 +331,10 @@ fun Application.configureActivityRoutes(
                         "activity-history",
                         mapOf(
                             "activities" to activities,
+                            "selectedFilter" to selectedFilter,
+                            "allCount" to allActivities.size,
+                            "workoutsCount" to allActivities.count { it.type != "race" },
+                            "racesCount" to allActivities.count { it.type == "race" },
                             "volumeBySession" to volumeBySession,
                             "fromDate" to fromDateParam,
                             "toDate" to toDateParam,
