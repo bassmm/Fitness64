@@ -15,6 +15,7 @@ import io.ktor.server.auth.authenticate
 import io.ktor.server.pebble.PebbleContent
 import io.ktor.server.request.receiveMultipart
 import io.ktor.server.response.respond
+import io.ktor.server.response.respondRedirect
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
@@ -28,66 +29,151 @@ fun Application.configureTcxUploadRoutes(
     routing {
         authenticate("auth-session") {
             get("/tcx/upload") {
-                call.respond(PebbleContent("tcx-upload", mapOf("error" to "", "success" to "")))
+                call.respondRedirect("/import")
             }
 
-            post("/tcx/upload") {
+            get("/import") {
+                call.respond(PebbleContent("import", mapOf("error" to "", "success" to "")))
+            }
+
+            post("/import") {
                 val (_, userId) = call.requireAuthenticatedUser(userService) ?: return@post
 
                 val multipart = call.receiveMultipart()
-                var parsed: ParsedTcxData? = null
+                var fileBytes: ByteArray? = null
+                var fileName = ""
 
                 multipart.forEachPart { part ->
                     if (part is PartData.FileItem) {
-                        parsed = TcxParser.parse(part.provider().toInputStream())
+                        fileName = part.originalFileName ?: ""
+                        fileBytes = part.provider().toInputStream().readBytes()
                         part.dispose()
                     }
                 }
 
-                val tcxData = parsed
-                if (tcxData == null) {
-                    call.respond(PebbleContent("tcx-upload", mapOf("error" to "No file uploaded or file could not be parsed.", "success" to "")))
+                val bytes = fileBytes
+                if (bytes == null || bytes.isEmpty()) {
+                    call.respond(PebbleContent("import", mapOf("error" to "No file uploaded.", "success" to "")))
                     return@post
                 }
 
-                val activityTypeId = activityService.getActivityTypeByName("Running")
-                    ?: activityService.createActivityType(ActivityType("Running"))
-
-                val workoutLogId = activityService.createWorkoutLog(
-                    WorkoutLog(
-                        userId = userId, activityTypeId = activityTypeId,
-                        logDate = LocalDate.now().toString(),
-                        duration = tcxData.totalDuration, distance = tcxData.totalDistance,
-                        notes = "Imported from TCX file", calories = tcxData.totalCalories, source = "tcx_import",
-                        name = "Running Session"
-                    )
-                )
-
-                for (lap in tcxData.laps) {
-                    val lapId = activityService.createWorkoutLap(
-                        WorkoutLap(
-                            workoutLogId = workoutLogId, startTime = lap.startTime,
-                            totalTimeSeconds = lap.totalTimeSeconds,
-                            distance = lap.distance, calories = lap.calories
-                        )
-                    )
-                    for (trackpoint in lap.trackpoints) {
-                        activityService.createTrackpoint(
-                            Trackpoint(
-                                lapId = lapId, time = trackpoint.time,
-                                latitude = trackpoint.latitude, longitude = trackpoint.longitude,
-                                altitude = trackpoint.altitude, distance = trackpoint.distance,
-                                heartRate = trackpoint.heartRate
-                            )
-                        )
-                    }
+                val extension = fileName.substringAfterLast('.', "").lowercase()
+                if (extension !in setOf("tcx", "gpx", "csv")) {
+                    call.respond(PebbleContent("import", mapOf("error" to "Unsupported file type '$extension'. Please upload a TCX, GPX, or CSV file.", "success" to "")))
+                    return@post
                 }
 
-                call.respond(PebbleContent("tcx-upload", mapOf(
-                    "error" to "",
-                    "success" to "TCX file imported successfully! ${tcxData.laps.size} laps and ${tcxData.laps.sumOf { it.trackpoints.size }} trackpoints saved."
-                )))
+                when (extension) {
+                    "tcx", "gpx" -> importTrackFile(bytes, extension, userId, activityService, call)
+                    "csv" -> importCsvFile(bytes, userId, activityService, call)
+                }
             }
         }
     }
+}
+
+private suspend fun importTrackFile(
+    bytes: ByteArray,
+    extension: String,
+    userId: Int,
+    activityService: ActivityService,
+    call: io.ktor.server.application.ApplicationCall
+) {
+    val tcxData = runCatching {
+        if (extension == "gpx") GpxParser.parse(bytes.inputStream())
+        else TcxParser.parse(bytes.inputStream())
+    }.getOrElse {
+        call.respond(PebbleContent("import", mapOf("error" to "Could not parse file: ${it.message}", "success" to "")))
+        return
+    }
+
+    val activityTypeId = activityService.getActivityTypeByName("Running")
+        ?: activityService.createActivityType(ActivityType("Running"))
+
+    val workoutLogId = activityService.createWorkoutLog(
+        WorkoutLog(
+            userId = userId,
+            activityTypeId = activityTypeId,
+            logDate = LocalDate.now().toString(),
+            duration = tcxData.totalDuration,
+            distance = tcxData.totalDistance,
+            notes = "Imported from ${extension.uppercase()} file",
+            calories = tcxData.totalCalories,
+            source = "${extension}_import",
+            name = "Running Session"
+        )
+    )
+
+    for (lap in tcxData.laps) {
+        val lapId = activityService.createWorkoutLap(
+            WorkoutLap(
+                workoutLogId = workoutLogId,
+                startTime = lap.startTime,
+                totalTimeSeconds = lap.totalTimeSeconds,
+                distance = lap.distance,
+                calories = lap.calories
+            )
+        )
+        for (trackpoint in lap.trackpoints) {
+            activityService.createTrackpoint(
+                Trackpoint(
+                    lapId = lapId,
+                    time = trackpoint.time,
+                    latitude = trackpoint.latitude,
+                    longitude = trackpoint.longitude,
+                    altitude = trackpoint.altitude,
+                    distance = trackpoint.distance,
+                    heartRate = trackpoint.heartRate
+                )
+            )
+        }
+    }
+
+    call.respond(
+        PebbleContent(
+            "import",
+            mapOf(
+                "error" to "",
+                "success" to "${extension.uppercase()} file imported successfully! ${tcxData.laps.size} lap(s) and ${tcxData.laps.sumOf { it.trackpoints.size }} trackpoints saved."
+            )
+        )
+    )
+}
+
+private suspend fun importCsvFile(
+    bytes: ByteArray,
+    userId: Int,
+    activityService: ActivityService,
+    call: io.ktor.server.application.ApplicationCall
+) {
+    val csv = runCatching {
+        CsvParser.parse(bytes.inputStream())
+    }.getOrElse {
+        call.respond(PebbleContent("import", mapOf("error" to "Could not parse CSV: ${it.message}", "success" to "")))
+        return
+    }
+
+    val activityTypeId = activityService.getActivityTypeByName(csv.activityType)
+        ?: activityService.createActivityType(ActivityType(csv.activityType))
+
+    activityService.createWorkoutLog(
+        WorkoutLog(
+            userId = userId,
+            activityTypeId = activityTypeId,
+            logDate = csv.date,
+            duration = csv.durationSeconds,
+            distance = csv.distanceMetres,
+            notes = csv.notes.ifBlank { "Imported from CSV file" },
+            calories = csv.calories,
+            source = "csv_import",
+            name = "${csv.activityType} Session"
+        )
+    )
+
+    call.respond(
+        PebbleContent(
+            "import",
+            mapOf("error" to "", "success" to "CSV imported successfully! Activity logged for ${csv.date}.")
+        )
+    )
 }

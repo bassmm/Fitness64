@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Fitness64 Test" xmlns="http://www.topografix.com/GPX/1/1">
+  <trk>
+    <name>Morning Run</name>
+    <trkseg>
+      <trkpt lat="51.5074" lon="-0.1278">
+        <ele>10.0</ele>
+        <time>2026-05-07T07:00:00Z</time>
+      </trkpt>
+      <trkpt lat="51.5080" lon="-0.1265">
+        <ele>11.0</ele>
+        <time>2026-05-07T07:05:00Z</time>
+      </trkpt>
+      <trkpt lat="51.5090" lon="-0.1250">
+        <ele>12.0</ele>
+        <time>2026-05-07T07:10:00Z</time>
+      </trkpt>
+      <trkpt lat="51.5100" lon="-0.1235">
+        <ele>11.5</ele>
+        <time>2026-05-07T07:15:00Z</time>
+      </trkpt>
+      <trkpt lat="51.5110" lon="-0.1220">
+        <ele>10.5</ele>
+        <time>2026-05-07T07:20:00Z</time>
+      </trkpt>
+      <trkpt lat="51.5120" lon="-0.1205">
+        <ele>10.0</ele>
+        <time>2026-05-07T07:25:00Z</time>
+      </trkpt>
+    </trkseg>
+  </trk>
+</gpx>
