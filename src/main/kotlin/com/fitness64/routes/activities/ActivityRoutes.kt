@@ -129,6 +129,25 @@ private fun safeExternalUrl(value: String?): String {
     }
 }
 
+internal fun activityMatchesSearch(
+    query: String,
+    title: String,
+    type: String,
+    category: String,
+    date: String
+): Boolean {
+    val trimmedQuery = query.trim()
+
+    if (trimmedQuery.isBlank()) {
+        return true
+    }
+
+    return title.contains(trimmedQuery, ignoreCase = true) ||
+            type.contains(trimmedQuery, ignoreCase = true) ||
+            category.contains(trimmedQuery, ignoreCase = true) ||
+            date.contains(trimmedQuery, ignoreCase = true)
+}
+
 fun Application.configureActivityRoutes(
     activityService: ActivityService,
     userService: UserService,
@@ -143,6 +162,8 @@ fun Application.configureActivityRoutes(
                     ?.lowercase()
                     ?.takeIf { it in setOf("all", "workouts", "races") }
                     ?: "all"
+
+                val searchQuery = call.request.queryParameters["search"]?.trim().orEmpty()
 
                 val cardioHistory = activityService.getCardioHistory(userId)
                 val weightliftingHistory = weightliftingService.getWeightliftingHistory(userId)
@@ -208,6 +229,16 @@ fun Application.configureActivityRoutes(
                     else -> allActivities
                 }
 
+                val searchedActivities = filteredActivities.filter { activity ->
+                    activityMatchesSearch(
+                        query = searchQuery,
+                        title = activity.title,
+                        type = activity.type,
+                        category = activity.category,
+                        date = activity.date
+                    )
+                }
+
                 val volumeBySession = weightliftingHistory
                     .sortedBy { it.logDate }
                     .map { item ->
@@ -221,8 +252,10 @@ fun Application.configureActivityRoutes(
                     PebbleContent(
                         "activity-history",
                         mapOf(
-                            "activities" to filteredActivities,
+                            "activities" to searchedActivities,
                             "selectedFilter" to selectedFilter,
+                            "searchQuery" to searchQuery,
+                            "resultCount" to searchedActivities.size,
                             "allCount" to allActivities.size,
                             "workoutCount" to allActivities.count { it.type != "race" },
                             "raceCount" to raceItems.size,
