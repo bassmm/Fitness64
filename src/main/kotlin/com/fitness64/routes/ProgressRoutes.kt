@@ -64,6 +64,10 @@ fun Application.configureProgressRoutes(
                 val runningRecords = buildRunningRecords(workouts, activityTypeNames)
                 val cyclingRecords = buildCyclingRecords(workouts, activityTypeNames)
 
+                val workoutsByDay = buildWorkoutsByDay(workouts, weightliftingHistory, startOfWeek)
+                val activityBreakdown = buildActivityBreakdown(workouts, weightliftingHistory, activityTypeNames, startOfWeek)
+                val distanceByWeek = buildDistanceByWeek(workouts, activityTypeNames, today)
+
                 val achievements = buildList {
                     if (activeDays >= 10) add("Logged workouts on $activeDays different days")
                     if (workoutsThisWeek >= 3) add("Completed $workoutsThisWeek workouts this week")
@@ -87,9 +91,95 @@ fun Application.configureProgressRoutes(
                     "nextGoal" to nextGoal,
                     "runningRecords" to runningRecords,
                     "cyclingRecords" to cyclingRecords,
-                    "achievements" to achievements
+                    "achievements" to achievements,
+                    "workoutsByDay" to workoutsByDay,
+                    "activityBreakdown" to activityBreakdown,
+                    "distanceByWeek" to distanceByWeek
                 ))
             }
         }
+    }
+}
+
+private data class DayCount(val day: String, val count: Int)
+private data class TypeCount(val type: String, val count: Int)
+private data class WeekDistance(val week: String, val distance: Double)
+
+private fun buildWorkoutsByDay(
+    workouts: List<com.fitness64.schema.WorkoutLog>,
+    weightliftingHistory: List<com.fitness64.schema.WeightliftingHistoryItem>,
+    startOfWeek: LocalDate
+): List<DayCount> {
+    val dayNames = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+
+    val cardioDates = workouts.mapNotNull { runCatching { LocalDate.parse(it.logDate) }.getOrNull() }
+    val weightliftingDates = weightliftingHistory.mapNotNull { runCatching { LocalDate.parse(it.logDate) }.getOrNull() }
+    val allDates = cardioDates + weightliftingDates
+
+    return dayNames.mapIndexed { index, day ->
+        val date = startOfWeek.plusDays(index.toLong())
+        val count = allDates.count { it == date }
+        DayCount(day = day, count = count)
+    }
+}
+
+private fun buildActivityBreakdown(
+    workouts: List<com.fitness64.schema.WorkoutLog>,
+    weightliftingHistory: List<com.fitness64.schema.WeightliftingHistoryItem>,
+    activityTypeNames: Map<Int, String>,
+    startOfWeek: LocalDate
+): List<TypeCount> {
+    val today = LocalDate.now()
+    val cardioThisWeek = workouts.filter {
+        val d = runCatching { LocalDate.parse(it.logDate) }.getOrNull()
+        d != null && d >= startOfWeek && d <= today
+    }.mapNotNull { activityTypeNames[it.activityTypeId] }
+
+    val weightliftingThisWeek = weightliftingHistory.count {
+        val d = runCatching { LocalDate.parse(it.logDate) }.getOrNull()
+        d != null && d >= startOfWeek && d <= today
+    }
+
+    val counts = cardioThisWeek.groupingBy { it }.eachCount().toMutableMap()
+    if (weightliftingThisWeek > 0) {
+        counts["Weightlifting"] = (counts["Weightlifting"] ?: 0) + weightliftingThisWeek
+    }
+
+    return counts.entries
+        .map { TypeCount(type = it.key, count = it.value) }
+        .sortedByDescending { it.count }
+}
+
+private fun buildDistanceByWeek(
+    workouts: List<com.fitness64.schema.WorkoutLog>,
+    activityTypeNames: Map<Int, String>,
+    today: LocalDate
+): List<WeekDistance> {
+    val runningOrCycling = workouts.filter {
+        val name = activityTypeNames[it.activityTypeId]
+        name == "Running" || name == "Cycling"
+    }
+
+    val weekBoundaries = (0 until 4).map { i ->
+        val weekEnd = today.minusDays(today.dayOfWeek.value.toLong() - 1).minusDays((i * 7).toLong())
+        val weekStart = weekEnd.minusDays(6)
+        weekStart to weekEnd
+    }.asReversed()
+
+    return weekBoundaries.mapIndexed { i, (start, end) ->
+        val distance = runningOrCycling
+            .filter {
+                val d = runCatching { LocalDate.parse(it.logDate) }.getOrNull()
+                d != null && d >= start && d <= end
+            }
+            .sumOf { it.distance ?: 0.0 }
+        val label = when (i) {
+            0 -> "3 weeks ago"
+            1 -> "2 weeks ago"
+            2 -> "Last week"
+            3 -> "This week"
+            else -> "Week ${i + 1}"
+        }
+        WeekDistance(week = label, distance = distance)
     }
 }
