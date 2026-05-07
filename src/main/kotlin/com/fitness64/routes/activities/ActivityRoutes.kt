@@ -19,7 +19,11 @@ import io.ktor.server.response.respondRedirect
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
+import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.YearMonth
+import java.time.format.TextStyle
+import java.util.Locale
 
 private data class ActivityFeedItem(
     val id: String,
@@ -172,129 +176,138 @@ fun Application.configureActivityRoutes(
             get("/activities") {
                 val (_, userId) = call.requireAuthenticatedUser(userService) ?: return@get
 
-                val fromDateParam = call.request.queryParameters["fromDate"]?.trim().orEmpty()
-                val toDateParam = call.request.queryParameters["toDate"]?.trim().orEmpty()
+                val selectedDateParam = call.request.queryParameters["date"]?.trim().orEmpty()
+                val monthParam = call.request.queryParameters["month"]?.trim().orEmpty()
+                val yearParam = call.request.queryParameters["year"]?.trim().orEmpty()
 
-                val fromDate = fromDateParam
+                val selectedDate = selectedDateParam
                     .takeIf { it.isNotBlank() }
                     ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
 
-                val toDate = toDateParam
-                    .takeIf { it.isNotBlank() }
-                    ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+                val today = LocalDate.now()
 
-                val dateRangeError = if (fromDate != null && toDate != null && fromDate.isAfter(toDate)) {
-                    "From date must be before or the same as To date."
-                } else {
-                    ""
-                }
-
-                fun isDateInRange(dateValue: String): Boolean {
-                    val itemDate = runCatching { LocalDate.parse(dateValue) }.getOrNull()
-                        ?: return false
-
-                    val matchesFrom = fromDate == null || !itemDate.isBefore(fromDate)
-                    val matchesTo = toDate == null || !itemDate.isAfter(toDate)
-
-                    return matchesFrom && matchesTo
-                }
+                val navMonth = monthParam.toIntOrNull() ?: today.monthValue
+                val navYear = yearParam.toIntOrNull() ?: today.year
+                val yearMonth = runCatching { YearMonth.of(navYear, navMonth) }.getOrNull() ?: YearMonth.from(today)
 
                 val cardioHistory = activityService.getCardioHistory(userId)
                 val weightliftingHistory = weightliftingService.getWeightliftingHistory(userId)
                 val raceHistory = raceService.getRacesForUser(userId)
 
-                val cardioItems = cardioHistory.map { item ->
-                    val cardioCategory = if (item.activityType in listOf("Running", "Cycling", "Swimming")) {
-                        item.activityType
-                    } else {
-                        "Cardio"
-                    }
+                val activityDates = (cardioHistory.map { it.logDate }
+                    + weightliftingHistory.map { it.logDate }
+                    + raceHistory.map { it.eventDate }).toSet()
 
+                val firstOfMonth = yearMonth.atDay(1)
+                val lastOfMonth = yearMonth.atEndOfMonth()
+                val startDay = firstOfMonth.dayOfWeek.value % 7
+                val daysInMonth = yearMonth.lengthOfMonth()
+                val totalCells = (startDay + daysInMonth + 6) / 7 * 7
+
+                val calendarDays = buildList {
+                    for (i in 0 until startDay) {
+                        add(mapOf(
+                            "day" to "",
+                            "date" to "",
+                            "month" to "",
+                            "year" to "",
+                            "hasActivity" to false,
+                            "isToday" to false,
+                            "isSelected" to false,
+                            "isCurrentMonth" to false
+                        ))
+                    }
+                    for (day in 1..daysInMonth) {
+                        val date = yearMonth.atDay(day)
+                        val dateStr = date.toString()
+                        add(mapOf(
+                            "day" to day,
+                            "date" to dateStr,
+                            "month" to date.monthValue,
+                            "year" to date.year,
+                            "hasActivity" to (dateStr in activityDates),
+                            "isToday" to (date == today),
+                            "isSelected" to (selectedDate != null && date == selectedDate),
+                            "isCurrentMonth" to true
+                        ))
+                    }
+                    while (size < totalCells) {
+                        add(mapOf(
+                            "day" to "",
+                            "date" to "",
+                            "month" to "",
+                            "year" to "",
+                            "hasActivity" to false,
+                            "isToday" to false,
+                            "isSelected" to false,
+                            "isCurrentMonth" to false
+                        ))
+                    }
+                }
+
+                val prevMonth = yearMonth.minusMonths(1)
+                val nextMonth = yearMonth.plusMonths(1)
+
+                val cardioItems = cardioHistory.map { item ->
+                    val cardioCategory = if (item.activityType in listOf("Running", "Cycling", "Swimming"))
+                        item.activityType else "Cardio"
                     val displayName = item.name?.takeIf { it.isNotBlank() }
                         ?: "${item.activityType} Session"
-
                     ActivityFeedItem(
-                        id = "cardio-${item.id}",
-                        type = "cardio",
-                        date = item.logDate,
-                        category = cardioCategory,
+                        id = "cardio-${item.id}", type = "cardio",
+                        date = item.logDate, category = cardioCategory,
                         title = displayName,
                         summary = item.distance?.let { "$it km" } ?: "Distance not recorded",
-                        metric = "${item.duration} min",
-                        notes = item.notes ?: ""
+                        metric = "${item.duration} min", notes = item.notes ?: ""
                     )
                 }
 
                 val weightliftingItems = weightliftingHistory.map { item ->
                     val exerciseSummary = item.exercises
-                        .joinToString(", ") { exercise ->
-                            "${exercise.exerciseName} ${exercise.sets}x${exercise.reps}"
-                        }
+                        .joinToString(", ") { "${it.exerciseName} ${it.sets}x${it.reps}" }
                         .ifBlank { "${item.totalSets} total sets" }
-
-                    val displayName = item.name?.takeIf { it.isNotBlank() }
-                        ?: "Weightlifting Session"
-
+                    val displayName = item.name?.takeIf { it.isNotBlank() } ?: "Weightlifting Session"
                     ActivityFeedItem(
-                        id = "weightlifting-${item.id}",
-                        type = "weightlifting",
-                        date = item.logDate,
-                        category = "Weightlifting",
-                        title = displayName,
-                        summary = exerciseSummary,
-                        metric = "${item.duration} min",
-                        notes = item.notes ?: ""
+                        id = "weightlifting-${item.id}", type = "weightlifting",
+                        date = item.logDate, category = "Weightlifting",
+                        title = displayName, summary = exerciseSummary,
+                        metric = "${item.duration} min", notes = item.notes ?: ""
                     )
                 }
 
                 val raceItems = raceHistory.map { race ->
-                    val metric = race.finishTime
-                        ?: race.overallRank?.let { "Overall #$it" }
-                        ?: "Completed"
-
-                    val summary = listOfNotNull(race.location, race.category)
-                        .joinToString(" • ")
-                        .ifBlank { "Race logged" }
-
+                    val metric = race.finishTime ?: race.overallRank?.let { "Overall #$it" } ?: "Completed"
+                    val summary = listOfNotNull(race.location, race.category).joinToString(" • ").ifBlank { "Race logged" }
                     val notePrefix = if (race.isPersonalBest) "Personal best. " else ""
                     val noteBody = race.certificateUrl?.let { "Certificate: $it" } ?: ""
-
                     ActivityFeedItem(
-                        id = "race-${race.id}",
-                        type = "race",
-                        date = race.eventDate,
-                        category = "Race",
-                        title = race.eventName,
-                        summary = summary,
-                        metric = metric,
-                        notes = "$notePrefix$noteBody".trim()
+                        id = "race-${race.id}", type = "race",
+                        date = race.eventDate, category = "Race",
+                        title = race.eventName, summary = summary,
+                        metric = metric, notes = "$notePrefix$noteBody".trim()
                     )
                 }
 
                 val activities = (cardioItems + weightliftingItems + raceItems)
-                    .filter { dateRangeError.isNotBlank() || isDateInRange(it.date) }
-                    .sortedByDescending { it.date }
-
-                val volumeBySession = weightliftingHistory
-                    .filter { dateRangeError.isNotBlank() || isDateInRange(it.logDate) }
-                    .sortedBy { it.logDate }
-                    .map { item ->
-                        mapOf(
-                            "date" to item.logDate,
-                            "totalSets" to item.totalSets
-                        )
+                    .let { list ->
+                        if (selectedDate != null) list.filter { it.date == selectedDate.toString() }
+                        else list
                     }
+                    .sortedByDescending { it.date }
 
                 call.respond(
                     PebbleContent(
                         "activity-history",
                         mapOf(
                             "activities" to activities,
-                            "volumeBySession" to volumeBySession,
-                            "fromDate" to fromDateParam,
-                            "toDate" to toDateParam,
-                            "hasDateFilter" to (fromDateParam.isNotBlank() || toDateParam.isNotBlank()),
-                            "dateRangeError" to dateRangeError
+                            "calendarMonth" to yearMonth.month.getDisplayName(TextStyle.FULL, Locale.ENGLISH) + " " + yearMonth.year,
+                            "calendarDays" to calendarDays,
+                            "prevMonth" to prevMonth.monthValue,
+                            "prevYear" to prevMonth.year,
+                            "nextMonth" to nextMonth.monthValue,
+                            "nextYear" to nextMonth.year,
+                            "selectedDate" to (selectedDate?.toString() ?: ""),
+                            "hasDateFilter" to (selectedDate != null)
                         )
                     )
                 )
