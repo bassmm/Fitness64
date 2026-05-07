@@ -20,6 +20,7 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import io.ktor.http.HttpStatusCode
+import java.net.URI
 
 private data class ActivityFeedItem(
     val id: String,
@@ -36,7 +37,6 @@ private data class ActivityFeedItem(
     val overallRank: Int? = null,
     val categoryRank: Int? = null,
     val isPersonalBest: Boolean = false,
-    val personalBest: Boolean = false,
     val certificateUrl: String = ""
 )
 
@@ -92,7 +92,7 @@ private suspend fun resolveActivity(type: String, resourceId: Int, userId: Int,
             location = race.location, categoryName = race.category,
             finishTime = race.finishTime, overallRank = race.overallRank,
             categoryRank = race.categoryRank, isPersonalBest = race.isPersonalBest,
-            certificateUrl = race.certificateUrl
+            certificateUrl = safeExternalUrl(race.certificateUrl).ifBlank { null }
         )
     }
     else -> null
@@ -113,6 +113,21 @@ private fun activityDetailMap(activity: ActivityDetail): Map<String, Any> = mapO
         "availableActivityTypes" to activity.availableActivityTypes
     )
 )
+
+
+private fun safeExternalUrl(value: String?): String {
+    val trimmed = value?.trim().orEmpty()
+    if (trimmed.isBlank()) return ""
+
+    val uri = runCatching { URI(trimmed) }.getOrNull() ?: return ""
+    val scheme = uri.scheme?.lowercase() ?: return ""
+
+    return if ((scheme == "http" || scheme == "https") && !uri.host.isNullOrBlank()) {
+        trimmed
+    } else {
+        ""
+    }
+}
 
 fun Application.configureActivityRoutes(
     activityService: ActivityService,
@@ -164,11 +179,6 @@ fun Application.configureActivityRoutes(
                     val metric = race.finishTime
                         ?: race.overallRank?.let { "Overall #$it" }
                         ?: "Completed"
-                    val summary = listOfNotNull(race.location, race.category)
-                        .joinToString(" • ")
-                        .ifBlank { "Race logged" }
-                    val notePrefix = if (race.isPersonalBest) "Personal best. " else ""
-                    val noteBody = race.certificateUrl?.let { "Certificate: $it" } ?: ""
 
                     ActivityFeedItem(
                         id = "race-${race.id}",
@@ -176,17 +186,16 @@ fun Application.configureActivityRoutes(
                         date = race.eventDate,
                         category = "Race",
                         title = race.eventName,
-                        summary = summary,
+                        summary = "Race result",
                         metric = metric,
-                        notes = "$notePrefix$noteBody".trim(),
+                        notes = if (race.isPersonalBest) "Personal best" else "",
                         location = race.location ?: "",
                         raceCategory = race.category ?: "",
                         finishTime = race.finishTime ?: "",
                         overallRank = race.overallRank,
                         categoryRank = race.categoryRank,
                         isPersonalBest = race.isPersonalBest,
-                        personalBest = race.isPersonalBest,
-                        certificateUrl = race.certificateUrl ?: ""
+                        certificateUrl = safeExternalUrl(race.certificateUrl)
                     )
                 }
 
