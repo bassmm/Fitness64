@@ -33,7 +33,7 @@
     </head>
 
     <body class="bg-body-secondary" hx-boost="true">
-        <a class="visually-hidden-focusable position-absolute top-0 start-0 p-2 bg-primary text-white" href="#main-content">Skip to main content</a>
+        <a href="#main-content" onfocus="this.style.top='0'" onblur="this.style.top='-100px'" style="position:fixed;top:-100px;left:0;z-index:9999;padding:0.5rem 1.25rem;background:#b91c1c;color:#fff;text-decoration:none;font-weight:600;border-radius:0 0 4px 0;">Skip to main content</a>
         <div class="app-shell min-vh-100">
             <aside class="app-sidebar border-end bg-body shadow-soft">
                 <div
