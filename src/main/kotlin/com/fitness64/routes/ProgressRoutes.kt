@@ -103,7 +103,7 @@ fun Application.configureProgressRoutes(
                     "achievements" to achievements,
                     "workoutsByDay" to workoutsByDay,
                     "activityBreakdown" to activityBreakdown,
-                    "distanceByWeek" to distanceByWeek
+                    "distanceByWeek" to distanceByWeek,
                     "volumeBySession" to volumeBySession
                 ))
             }

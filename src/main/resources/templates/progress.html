@@ -68,7 +68,7 @@
                     <canvas id="weeklyChart" height="120"></canvas>
                 {% else %}
                     <div class="text-center py-5">
-                        <i class="bi bi-calendar-x text-muted" style="font-size: 2rem;"></i>
+                        <i aria-hidden="true" class="bi bi-calendar-x text-muted" style="font-size: 2rem;"></i>
                         <p class="text-muted mb-0 mt-2">No workouts logged this week yet.</p>
                     </div>
                 {% endif %}
@@ -92,7 +92,7 @@
                     <canvas id="pieChart" height="180" role="img" aria-label="Doughnut chart showing activity type breakdown"></canvas>
                 {% else %}
                     <div class="text-center py-5">
-                        <i class="bi bi-pie-chart text-muted" style="font-size: 2rem;"></i>
+                        <i aria-hidden="true" class="bi bi-pie-chart text-muted" style="font-size: 2rem;"></i>
                         <p class="text-muted mb-0 mt-2">No activities logged this week yet.</p>
                     </div>
                 {% endif %}
@@ -118,7 +118,7 @@
             <canvas id="distanceChart" height="80" role="img" aria-label="Line chart showing distance in kilometres over the last 4 weeks"></canvas>
         {% else %}
             <div class="text-center py-5">
-                <i class="bi bi-graph-down-arrow text-muted" style="font-size: 2rem;"></i>
+                <i aria-hidden="true" class="bi bi-graph-down-arrow text-muted" style="font-size: 2rem;"></i>
                 <p class="text-muted mb-0 mt-2">Log running or cycling activities with distance to see your trend.</p>
             </div>
         {% endif %}
@@ -223,6 +223,7 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     {% set hasWeeklyData = false %}
     {% for item in workoutsByDay %}{% if item.count > 0 %}{% set hasWeeklyData = true %}{% endif %}{% endfor %}
@@ -252,75 +253,131 @@
     ];
     {% endif %}
 
-    initProgressCharts();
-
-    {% set hasDistanceData = false %}
-    {% for item in distanceByWeek %}{% if item.distance > 0 %}{% set hasDistanceData = true %}{% endif %}{% endfor %}
-    {% if hasDistanceData %}
-    new Chart(document.getElementById('distanceChart'), {
-        type: 'line',
-        data: {
-            labels: distanceByWeek.map(d => d.week),
-            datasets: [{
-                label: 'Distance (km)',
-                data: distanceByWeek.map(d => d.distance),
-                borderColor: primaryBorder,
-                backgroundColor: 'rgba(185, 28, 28, 0.1)',
-                borderWidth: 2,
-                pointBackgroundColor: primaryBorder,
-                pointRadius: 5,
-                fill: true,
-                tension: 0.3
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: {
-                y: { beginAtZero: true }
-            }
-        }
-    });
-    {% endif %}
-
     {% if volumeBySession is not empty %}
-    const volumeBySession = [
+    window.volumeChartData = [
         {% for item in volumeBySession %}
             { date: "{{ item.date }}", totalSets: {{ item.totalSets }} }{% if not loop.last %},{% endif %}
         {% endfor %}
     ];
-
-    new Chart(document.getElementById('volumeChart'), {
-        type: 'line',
-        data: {
-            labels: volumeBySession.map(d => d.date),
-            datasets: [{
-                label: 'Total Sets',
-                data: volumeBySession.map(d => d.totalSets),
-                borderColor: primaryBorder,
-                backgroundColor: 'rgba(185, 28, 28, 0.1)',
-                borderWidth: 2,
-                pointBackgroundColor: primaryBorder,
-                pointRadius: 5,
-                fill: true,
-                tension: 0.3
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: { stepSize: 1 },
-                    title: { display: true, text: 'Total Sets' }
-                },
-                x: {
-                    title: { display: true, text: 'Session Date' }
-                }
-            }
-        }
-    });
     {% endif %}
+
+    function initProgressCharts() {
+        const weeklyEl = document.getElementById('weeklyChart');
+        const pieEl = document.getElementById('pieChart');
+        const distEl = document.getElementById('distanceChart');
+        const volEl = document.getElementById('volumeChart');
+
+        if (weeklyEl && !weeklyEl._chart && window.weeklyChartData) {
+            weeklyEl._chart = new Chart(weeklyEl, {
+                type: 'bar',
+                data: {
+                    labels: window.weeklyChartData.map(d => d.day),
+                    datasets: [{
+                        label: 'Workouts',
+                        data: window.weeklyChartData.map(d => d.count),
+                        backgroundColor: 'rgba(185, 28, 28, 0.8)',
+                        borderColor: 'rgba(185, 28, 28, 1)',
+                        borderWidth: 1,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                    }
+                }
+            });
+        }
+
+        if (pieEl && !pieEl._chart && window.pieChartData) {
+            pieEl._chart = new Chart(pieEl, {
+                type: 'doughnut',
+                data: {
+                    labels: window.pieChartData.map(d => d.type),
+                    datasets: [{
+                        data: window.pieChartData.map(d => d.count),
+                        backgroundColor: [
+                            'rgba(185, 28, 28, 0.8)',
+                            'rgba(100, 116, 139, 0.8)',
+                            'rgba(15, 23, 42, 0.8)',
+                            'rgba(234, 179, 8, 0.8)',
+                            'rgba(34, 197, 94, 0.8)'
+                        ].slice(0, window.pieChartData.length),
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+
+        if (distEl && !distEl._chart && window.distanceChartData) {
+            distEl._chart = new Chart(distEl, {
+                type: 'line',
+                data: {
+                    labels: window.distanceChartData.map(d => d.week),
+                    datasets: [{
+                        label: 'Distance (km)',
+                        data: window.distanceChartData.map(d => d.distance),
+                        borderColor: 'rgba(185, 28, 28, 1)',
+                        backgroundColor: 'rgba(185, 28, 28, 0.1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(185, 28, 28, 1)',
+                        pointRadius: 5,
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        if (volEl && !volEl._chart && window.volumeChartData) {
+            volEl._chart = new Chart(volEl, {
+                type: 'line',
+                data: {
+                    labels: window.volumeChartData.map(d => d.date),
+                    datasets: [{
+                        label: 'Total Sets',
+                        data: window.volumeChartData.map(d => d.totalSets),
+                        borderColor: 'rgba(185, 28, 28, 1)',
+                        backgroundColor: 'rgba(185, 28, 28, 0.1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(185, 28, 28, 1)',
+                        pointRadius: 5,
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1 },
+                            title: { display: true, text: 'Total Sets' }
+                        },
+                        x: {
+                            title: { display: true, text: 'Session Date' }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    initProgressCharts();
 </script>
 {% endblock %}

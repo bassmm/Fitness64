@@ -28,95 +28,6 @@
             crossorigin="anonymous"
         ></script>
         <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/ext/json-enc.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-        <script>
-            document.body.addEventListener('htmx:afterSwap', function(evt) {
-                initProgressCharts();
-            });
-
-            function initProgressCharts() {
-                const weeklyEl = document.getElementById('weeklyChart');
-                const pieEl = document.getElementById('pieChart');
-                const distEl = document.getElementById('distanceChart');
-
-                if (weeklyEl && !weeklyEl._chart && window.weeklyChartData) {
-                    weeklyEl._chart = new Chart(weeklyEl, {
-                        type: 'bar',
-                        data: {
-                            labels: window.weeklyChartData.map(d => d.day),
-                            datasets: [{
-                                label: 'Workouts',
-                                data: window.weeklyChartData.map(d => d.count),
-                                backgroundColor: 'rgba(185, 28, 28, 0.8)',
-                                borderColor: 'rgba(185, 28, 28, 1)',
-                                borderWidth: 1,
-                                borderRadius: 6
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            plugins: { legend: { display: false } },
-                            scales: {
-                                y: { beginAtZero: true, ticks: { stepSize: 1 } }
-                            }
-                        }
-                    });
-                }
-
-                if (pieEl && !pieEl._chart && window.pieChartData) {
-                    pieEl._chart = new Chart(pieEl, {
-                        type: 'doughnut',
-                        data: {
-                            labels: window.pieChartData.map(d => d.type),
-                            datasets: [{
-                                data: window.pieChartData.map(d => d.count),
-                                backgroundColor: [
-                                    'rgba(185, 28, 28, 0.8)',
-                                    'rgba(100, 116, 139, 0.8)',
-                                    'rgba(15, 23, 42, 0.8)',
-                                    'rgba(234, 179, 8, 0.8)',
-                                    'rgba(34, 197, 94, 0.8)'
-                                ].slice(0, window.pieChartData.length),
-                                borderWidth: 2,
-                                borderColor: '#fff'
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            plugins: { legend: { position: 'bottom' } }
-                        }
-                    });
-                }
-
-                if (distEl && !distEl._chart && window.distanceChartData) {
-                    distEl._chart = new Chart(distEl, {
-                        type: 'line',
-                        data: {
-                            labels: window.distanceChartData.map(d => d.week),
-                            datasets: [{
-                                label: 'Distance (km)',
-                                data: window.distanceChartData.map(d => d.distance),
-                                borderColor: 'rgba(185, 28, 28, 1)',
-                                backgroundColor: 'rgba(185, 28, 28, 0.1)',
-                                borderWidth: 2,
-                                pointBackgroundColor: 'rgba(185, 28, 28, 1)',
-                                pointRadius: 5,
-                                fill: true,
-                                tension: 0.3
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            plugins: { legend: { display: false } },
-                            scales: {
-                                y: { beginAtZero: true }
-                            }
-                        }
-                    });
-                }
-            }
-        </script>
 
         {% block head %}{% endblock %}
     </head>
@@ -172,7 +83,7 @@
                                 >
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link rounded-3" href="/progress"
+                                <a class="nav-link rounded-3" href="/progress" hx-boost="false"
                                     ><i aria-hidden="true" class="bi bi-trophy me-3"></i
                                     >Progress</a
                                 >
@@ -301,7 +212,7 @@
                                     >Activities</a
                                 >
                                 <a
-                                    href="/progress"
+                                    href="/progress" hx-boost="false"
                                     class="text-muted text-decoration-none"
                                     >Progress</a
                                 >
@@ -364,9 +275,7 @@
                     <a class="nav-link rounded-3" href="/calendar"
                         ><i aria-hidden="true" class="bi bi-calendar3 me-3"></i>Calendar</a
                     >
-                    <a class="nav-link rounded-3" href="/progress"
-                        ><i aria-hidden="true" class="bi bi-trophy me-3"></i>Progress</a
-                    >
+                             <a class="nav-link rounded-3" href="/progress" hx-boost="false">
                     <a class="nav-link rounded-3" href="/races"
                         ><i aria-hidden="true" class="bi bi-flag me-3"></i>Races</a
                     >

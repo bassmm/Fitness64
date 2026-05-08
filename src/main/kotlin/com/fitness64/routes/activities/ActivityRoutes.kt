@@ -20,8 +20,7 @@ import io.ktor.server.response.respondRedirect
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
-import io.ktor.http.HttpStatusCode
-import java.time.LocalTime
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.time.temporal.ChronoUnit
@@ -234,13 +233,9 @@ private suspend fun buildLapDetails(workoutLogId: Int, activityService: Activity
     return result.ifEmpty { null }
 }
 
-private fun parseIsoTime(timeStr: String): LocalTime? {
+private fun parseTimestamp(timeStr: String): LocalDateTime? {
     return try {
-        if (timeStr.contains('T')) {
-            LocalTime.parse(timeStr.substringAfter('T').take(8))
-        } else {
-            LocalTime.parse(timeStr.take(8))
-        }
+        LocalDateTime.parse(timeStr.trimEnd('Z'))
     } catch (e: DateTimeParseException) {
         null
     }
@@ -264,14 +259,16 @@ private suspend fun buildHeartRateData(workoutLogId: Int, activityService: Activ
     val hrPoints = allTrackpoints.filter { it.heartRate != null && it.heartRate!! > 0 }
     if (hrPoints.isEmpty()) return null
 
-    val baseTime = parseIsoTime(hrPoints.first().time)
+    val baseTime = parseTimestamp(hrPoints.first().time)
     if (baseTime == null) return null
 
     return hrPoints.map { tp ->
-        val tpTime = parseIsoTime(tp.time)
+        val tpTime = parseTimestamp(tp.time)
         val elapsedSeconds = if (tpTime != null) ChronoUnit.SECONDS.between(baseTime, tpTime) else 0L
         HeartRatePoint(label = formatElapsed(elapsedSeconds), bpm = tp.heartRate!!)
     }
+}
+
 private fun safeExternalUrl(value: String?): String {
     val trimmed = value?.trim().orEmpty()
 

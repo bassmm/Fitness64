@@ -1,6 +1,7 @@
 {% if error is not empty %}
 <div class="alert alert-danger mb-3" role="alert">
-    <i aria-hidden="true" class="bi bi-exclamation-triangle me-2"></i>{{ error }}
+    <i aria-hidden="true" class="bi bi-exclamation-triangle me-2"></i>{{ error
+    }}
 </div>
 {% endif %}
 
@@ -8,53 +9,123 @@
     <div class="card-body p-5">
         <h3 class="h5 mb-4">Edit Race</h3>
 
-        <form hx-post="/activities/{{ activity.id }}/edit" hx-target="#activity-edit-area" hx-swap="innerHTML">
+        <form
+            hx-post="/activities/{{ activity.id }}/edit"
+            hx-target="#activity-edit-area"
+            hx-swap="innerHTML"
+        >
             <div class="row g-4 mb-4">
                 <div class="col-12">
                     <label for="eventName" class="form-label">Event Name</label>
-                    <input type="text" id="eventName" class="form-control" value="{{ activity.title }}" disabled>
+                    <input
+                        type="text"
+                        id="eventName"
+                        class="form-control"
+                        value="{{ activity.title }}"
+                        disabled
+                    />
                 </div>
                 <div class="col-md-6">
                     <label for="raceDate" class="form-label">Date</label>
-                    <input type="date" id="raceDate" class="form-control" value="{{ activity.date }}" disabled>
+                    <input
+                        type="date"
+                        id="raceDate"
+                        class="form-control"
+                        value="{{ activity.date }}"
+                        disabled
+                    />
                 </div>
                 <div class="col-md-6">
                     <label for="location" class="form-label">Location</label>
-                    <input type="text" id="location" class="form-control" value="{{ activity.location | default('') }}" disabled>
+                    <input
+                        type="text"
+                        id="location"
+                        class="form-control"
+                        value="{{ activity.location | default('') }}"
+                        disabled
+                    />
                 </div>
                 <div class="col-md-6">
                     <label for="category" class="form-label">Category</label>
-                    <input type="text" id="category" class="form-control" value="{{ activity.category_name | default('') }}" disabled>
+                    <input
+                        type="text"
+                        id="category"
+                        class="form-control"
+                        value="{{ activity.category_name | default('') }}"
+                        disabled
+                    />
                 </div>
                 <div class="col-md-6">
-                    <label for="finishTime" class="form-label">Finish Time</label>
-                    <input type="text" id="finishTime" name="finishTime" class="form-control" value="{{ activity.finishTime | default('') }}" placeholder="e.g., 00:45:30">
+                    <label for="finishTime" class="form-label"
+                        >Finish Time</label
+                    >
+                    <input
+                        type="text"
+                        id="finishTime"
+                        name="finishTime"
+                        class="form-control"
+                        value="{{ activity.finishTime | default('') }}"
+                        placeholder="e.g., 00:45:30"
+                    />
                 </div>
                 <div class="col-md-6">
-                    <label for="overallRank" class="form-label">Overall Rank</label>
-                    <input type="number" id="overallRank" name="overallRank" class="form-control" value="{{ activity.overallRank | default('') }}">
+                    <label for="overallRank" class="form-label"
+                        >Overall Rank</label
+                    >
+                    <input
+                        type="number"
+                        id="overallRank"
+                        name="overallRank"
+                        class="form-control"
+                        value="{{ activity.overallRank | default('') }}"
+                    />
                 </div>
                 <div class="col-md-6">
                     <div class="form-check mt-4">
-                        <input type="checkbox" id="isPersonalBest" name="isPersonalBest" class="form-check-input" value="on"
-                            {% if activity.isPersonalBest %}checked{% endif %}>
-                        <label for="isPersonalBest" class="form-check-label">Personal Best</label>
+                        <input
+                            type="checkbox"
+                            id="isPersonalBest"
+                            name="isPersonalBest"
+                            class="form-check-input"
+                            value="on"
+                            {%
+                            if
+                            activity.isPersonalBest
+                            %}checked{%
+                            endif
+                            %}
+                        />
+                        <label for="isPersonalBest" class="form-check-label"
+                            >Personal Best</label
+                        >
                     </div>
                 </div>
                 <div class="col-12">
-                    <label for="certificateUrl" class="form-label">Certificate URL</label>
-                    <input type="url" id="certificateUrl" class="form-control" value="{{ activity.certificateUrl | default('') }}" disabled>
+                    <label for="certificateUrl" class="form-label"
+                        >Certificate URL</label
+                    >
+                    <input
+                        type="url"
+                        id="certificateUrl"
+                        class="form-control"
+                        value="{{ activity.certificateUrl | default('') }}"
+                        disabled
+                    />
                 </div>
             </div>
 
             <div class="d-flex gap-3">
                 <button type="submit" class="btn btn-primary">
-                    <i aria-hidden="true" class="bi bi-check2-circle me-2"></i>Save Changes
+                    <i aria-hidden="true" class="bi bi-check2-circle me-2"></i
+                    >Save Changes
                 </button>
-                <button type="button" class="btn btn-neutral"
+                <button
+                    type="button"
+                    class="btn btn-neutral"
                     hx-get="/activities/{{ activity.id }}/view"
                     hx-target="#activity-edit-area"
-                    hx-swap="innerHTML">
+                    hx-swap="innerHTML"
+                >
                     Cancel
                 </button>
             </div>
