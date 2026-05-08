@@ -3,6 +3,7 @@ package com.fitness64.routes.activities
 import com.fitness64.core.isHtmxRequest
 import com.fitness64.core.requireAuthenticatedUser
 import com.fitness64.core.respondHx
+import com.fitness64.core.respondHxRedirect
 import com.fitness64.schema.ActivityService
 import com.fitness64.schema.Trackpoint
 import com.fitness64.schema.RaceService
@@ -256,7 +257,7 @@ private suspend fun buildHeartRateData(workoutLogId: Int, activityService: Activ
         allTrackpoints.addAll(activityService.getTrackpointsForLap(lap.id))
     }
 
-    val hrPoints = allTrackpoints.filter { it.heartRate != null && it.heartRate!! > 0 }
+    val hrPoints = allTrackpoints.filter { it.heartRate != null && it.heartRate > 0 }
     if (hrPoints.isEmpty()) return null
 
     val baseTime = parseTimestamp(hrPoints.first().time)
@@ -344,10 +345,10 @@ fun Application.configureActivityRoutes(
                 val raceHistory = raceService.getRacesForUser(userId)
 
                 val activityDates = (
-                    cardioHistory.map { it.logDate } +
-                        weightliftingHistory.map { it.logDate } +
-                        raceHistory.map { it.eventDate }
-                    ).toSet()
+                        cardioHistory.map { it.logDate } +
+                                weightliftingHistory.map { it.logDate } +
+                                raceHistory.map { it.eventDate }
+                        ).toSet()
 
                 val firstOfMonth = yearMonth.atDay(1)
                 val startDay = firstOfMonth.dayOfWeek.value % 7
@@ -515,7 +516,10 @@ fun Application.configureActivityRoutes(
                         "activity-history",
                         mapOf(
                             "activities" to activities,
-                            "calendarMonth" to yearMonth.month.getDisplayName(TextStyle.FULL, Locale.ENGLISH) + " " + yearMonth.year,
+                            "calendarMonth" to yearMonth.month.getDisplayName(
+                                TextStyle.FULL,
+                                Locale.ENGLISH
+                            ) + " " + yearMonth.year,
                             "calendarDays" to calendarDays,
                             "prevMonth" to prevMonth.monthValue,
                             "prevYear" to prevMonth.year,
@@ -653,6 +657,7 @@ fun Application.configureActivityRoutes(
                 val params = call.receiveParameters()
                 val duration = params["duration"]?.toIntOrNull() ?: 0
                 val notes = params["notes"] ?: ""
+                val date = params["date"]?.trim().orEmpty()
 
                 if (duration <= 0) {
                     val editTemplate = when (type) {
@@ -710,7 +715,8 @@ fun Application.configureActivityRoutes(
                             notes,
                             calories,
                             newActivityTypeId,
-                            workoutName
+                            workoutName,
+                            date
                         )
                     }
 
@@ -747,7 +753,8 @@ fun Application.configureActivityRoutes(
                             resourceId,
                             duration,
                             notes,
-                            workoutName
+                            workoutName,
+                            date
                         )
                         weightliftingService.updateWorkoutSessionExercises(resourceId, exerciseRows)
                     }
@@ -762,32 +769,15 @@ fun Application.configureActivityRoutes(
                             finishTime,
                             overallRank,
                             isPersonalBest,
-                            notes
+                            notes,
+                            date
                         )
                     }
 
                     else -> return@post call.respond(HttpStatusCode.BadRequest, "Invalid activity type")
                 }
 
-                val updatedActivity = resolveActivity(
-                    type,
-                    resourceId,
-                    userId,
-                    activityService,
-                    weightliftingService,
-                    raceService
-                )
-
-                if (updatedActivity != null && call.isHtmxRequest()) {
-                    call.respondHx(
-                        templateName = "_partials/_activity-detail-view",
-                        model = activityDetailMap(updatedActivity),
-                        target = "#activity-edit-area",
-                        swap = "innerHTML"
-                    )
-                } else {
-                    call.respondRedirect("/activities")
-                }
+                call.respondHxRedirect("/activities/$id")
             }
         }
     }

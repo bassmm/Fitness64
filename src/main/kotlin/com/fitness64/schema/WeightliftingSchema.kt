@@ -260,12 +260,15 @@ class WeightliftingService(database: Database) {
      * @param notes The new session notes.
      * @param name Optional new custom workout name.
      */
-    suspend fun updateWorkoutSession(id: Int, duration: Int, notes: String, name: String? = null) = dbQuery {
+    suspend fun updateWorkoutSession(id: Int, duration: Int, notes: String, name: String? = null, date: String? = null) = dbQuery {
         WeightliftingWorkoutLogs.update({ WeightliftingWorkoutLogs.id eq id }) {
             it[WeightliftingWorkoutLogs.duration] = duration
             it[WeightliftingWorkoutLogs.notes] = notes
             if (name != null) {
                 it[WeightliftingWorkoutLogs.workoutName] = name
+            }
+            if (date != null) {
+                it[WeightliftingWorkoutLogs.logDate] = date
             }
         }
     }

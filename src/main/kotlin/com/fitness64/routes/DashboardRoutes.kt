@@ -35,10 +35,23 @@ fun Application.configureDashboardRoutes(
                 val todayDayName = today.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.ENGLISH)
 
                 val weeklyPlanSummary = planService.getPlan(userId)
-                val todayTraining = weeklyPlanSummary
-                    .firstOrNull { it.day == todayDayName }
+                val todaySession = weeklyPlanSummary.firstOrNull { it.day == todayDayName }
+                val todayTraining = todaySession
                     ?.session
                     ?: "No training planned"
+
+                val currentPlanType = planService.getPlanType(userId) ?: "No plan selected"
+                val weeklyPlan = weeklyPlanSummary.mapIndexed { index, entry ->
+                    val date = getStartOfWeek(today).plusDays(index.toLong())
+                    mapOf(
+                        "day" to entry.day,
+                        "date" to date.toString(),
+                        "session" to entry.session,
+                        "durationMinutes" to entry.durationMinutes,
+                        "intensity" to entry.intensity,
+                        "isRestDay" to entry.isRestDay
+                    )
+                }
 
                 val startOfWeek = getStartOfWeek(today)
                 val startDate = startOfWeek.toString()
@@ -72,18 +85,22 @@ fun Application.configureDashboardRoutes(
                     else -> "Latest ${latestCardio.name ?: "${latestCardio.activityType} Session"} logged"
                 }
 
-                call.respondTemplate(
-                    "home",
-                    mapOf(
-                        "user" to user.name,
-                        "today" to todayTraining,
-                        "todayDate" to today.toString(),
-                        "streak" to consistency,
-                        "nextGoal" to nextGoal,
-                        "achievement" to latestAchievement,
-                        "weeklyPlanSummary" to weeklyPlanSummary
-                    )
-                )
+                @Suppress("UNCHECKED_CAST")
+                val modelMap = mapOf(
+                    "user" to user.name,
+                    "today" to todayTraining,
+                    "todayDate" to today.toString(),
+                    "streak" to consistency,
+                    "nextGoal" to nextGoal,
+                    "achievement" to latestAchievement,
+                    "weeklyPlan" to weeklyPlan,
+                    "planType" to currentPlanType,
+                    "fitnessLevel" to (user.fitnessLevel ?: "Beginner"),
+                    "todaySession" to todaySession,
+                    "todayDayName" to todayDayName
+                ) as Map<String, Any>
+
+                call.respondTemplate("home", modelMap)
             }
 
             get("/profile") {

@@ -46,7 +46,7 @@
                 {% if cell.date is not empty %}
                 <a
                     href="/activities{% if cell.isSelected %}{% else %}?date={{ cell.date }}&month={{ cell.month }}&year={{ cell.year }}{% endif %}"
-                    class="d-inline-flex align-items-center justify-content-center rounded-circle text-decoration-none {% if cell.isSelected %}bg-primary text-white fw-bold{% elseif cell.isToday %}border border-primary fw-semibold{% endif %} {% if cell.hasActivity and not cell.isSelected %}position-relative{% endif %}"
+                    class="d-inline-flex align-items-center justify-content-center rounded-circle text-decoration-none calendar-day {% if cell.isSelected %}bg-primary text-white fw-bold{% elseif cell.isToday %}border border-primary fw-semibold{% endif %} {% if cell.hasActivity and not cell.isSelected %}position-relative{% endif %}"
                     style="
                         width: 100%;
                         height: 100%;

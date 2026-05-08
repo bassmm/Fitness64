@@ -145,89 +145,71 @@
                     </div>
                 </div>
 
-                <div class="card-body p-0">
+                <div class="card-body p-4">
                     {% if activities is not empty %}
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0" aria-label="Activity history">
-                            <thead class="bg-body-secondary">
-                                <tr>
-                                    <th class="ps-5">Date</th>
-                                    <th>Category</th>
-                                    <th>Activity</th>
-                                    <th>Summary</th>
-                                    <th>Result</th>
-                                    <th class="pe-5">Notes</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for item in activities %}
-                                <tr style="cursor: pointer;"
-                                    onclick="window.location.href='/activities/{{ item.id }}'"
-                                    tabindex="0"
-                                    role="link"
-                                    aria-label="{{ item.title }} on {{ item.date }}"
-                                    onkeydown="if(event.key==='Enter'||event.key===' ')window.location.href='/activities/{{ item.id }}'">
-                                    <td class="ps-5 fw-semibold">{{ item.date }}</td>
-                                    <td>
-                                        {{ item.category }}
+                    <div class="row g-3">
+                        {% for item in activities %}
+                        <div class="col-12 col-sm-6 col-xl-4">
+                            <div class="card card-hover h-100 border"
+                                 onclick="window.location.href='/activities/{{ item.id }}'"
+                                 tabindex="0" role="link"
+                                 aria-label="{{ item.title }} on {{ item.date }}"
+                                 onkeydown="if(event.key==='Enter'||event.key===' ')window.location.href='/activities/{{ item.id }}'">
+                                <div class="card-body p-4">
+                                    <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
+                                        <span class="text-muted text-xs">{{ item.date }}</span>
                                         {% if item.type == "race" and item.isPersonalBest %}
-                                            <div class="mt-1">
-                                                <span class="badge text-bg-warning">Personal best</span>
-                                            </div>
+                                        <span class="badge text-bg-warning flex-shrink-0" style="font-size:0.6rem;">PB</span>
                                         {% endif %}
-                                    </td>
-                                    <td>{{ item.title }}</td>
-                                    <td>
+                                        <span class="badge bg-primary-subtle text-primary flex-shrink-0">{{ item.category }}</span>
+                                    </div>
+
+                                    <h6 class="fw-semibold mb-1">{{ item.title }}</h6>
+                                    <p class="text-sm fw-medium mb-2">{{ item.metric }}</p>
+
+                                    {% if item.summary %}
+                                    <p class="text-xs text-muted mb-2 lh-sm" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
                                         {{ item.summary }}
+                                    </p>
+                                    {% endif %}
 
-                                        {% if item.type == "race" %}
-                                            <div class="text-sm text-muted mt-2">
-                                                {% if item.location %}
-                                                    <div>Location: {{ item.location }}</div>
-                                                {% endif %}
-
-                                                {% if item.raceCategory %}
-                                                    <div>Race category: {{ item.raceCategory }}</div>
-                                                {% endif %}
-
-                                                {% if item.overallRank %}
-                                                    <div>Overall rank: #{{ item.overallRank }}</div>
-                                                {% endif %}
-
-                                                {% if item.categoryRank %}
-                                                    <div>Category rank: #{{ item.categoryRank }}</div>
-                                                {% endif %}
-                                            </div>
+                                    {% if item.type == "race" %}
+                                    <div class="d-flex flex-wrap gap-1 mb-2">
+                                        {% if item.location %}
+                                        <span class="badge bg-secondary-subtle text-secondary" style="font-size:0.6rem;">{{ item.location }}</span>
                                         {% endif %}
-                                    </td>
-                                    <td>
-                                        {{ item.metric }}
-                                        {% if item.type == "race" and item.finishTime %}
-                                            <div class="text-sm text-muted mt-1">Finish time: {{ item.finishTime }}</div>
+                                        {% if item.raceCategory %}
+                                        <span class="badge bg-secondary-subtle text-secondary" style="font-size:0.6rem;">{{ item.raceCategory }}</span>
                                         {% endif %}
-                                    </td>
-                                    <td class="pe-5">
-                                        {% if item.notes %}
-                                            {{ item.notes }}
-                                        {% else %}
-                                            <span class="text-muted">—</span>
+                                        {% if item.overallRank %}
+                                        <span class="badge bg-secondary-subtle text-secondary" style="font-size:0.6rem;">#{{ item.overallRank }} overall</span>
                                         {% endif %}
+                                        {% if item.categoryRank %}
+                                        <span class="badge bg-secondary-subtle text-secondary" style="font-size:0.6rem;">#{{ item.categoryRank }} category</span>
+                                        {% endif %}
+                                        {% if item.finishTime %}
+                                        <span class="badge bg-secondary-subtle text-secondary" style="font-size:0.6rem;">{{ item.finishTime }}</span>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
 
-                                        {% if item.type == "race" and item.certificateUrl %}
-                                            <div class="mt-2">
-                                                <a href="{{ item.certificateUrl }}"
-                                                   onclick="event.stopPropagation();"
-                                                   target="_blank"
-                                                   rel="noopener noreferrer">
-                                                    View certificate
-                                                </a>
-                                            </div>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                                    {% if item.certificateUrl %}
+                                    <a href="{{ item.certificateUrl }}"
+                                       onclick="event.stopPropagation();" target="_blank"
+                                       rel="noopener noreferrer" class="text-sm d-inline-block mb-2">
+                                        View certificate
+                                    </a>
+                                    {% endif %}
+
+                                    {% if item.notes %}
+                                    <p class="text-xs text-muted mb-0 lh-sm" style="display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;">
+                                        {{ item.notes }}
+                                    </p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
                     </div>
                     {% else %}
                     <div class="empty-state m-5">

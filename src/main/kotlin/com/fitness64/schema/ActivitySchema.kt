@@ -448,7 +448,7 @@ class ActivityService(database: Database) {
      * @param activityTypeId The new activity type ID, or null to leave unchanged.
      * @param name The new custom workout name, or null to leave unchanged.
      */
-    suspend fun updateWorkoutLog(id: Int, duration: Int, distance: Double?, notes: String, calories: Int?, activityTypeId: Int?, name: String?) = dbQuery {
+    suspend fun updateWorkoutLog(id: Int, duration: Int, distance: Double?, notes: String, calories: Int?, activityTypeId: Int?, name: String?, date: String? = null) = dbQuery {
         WorkoutLogs.update({ WorkoutLogs.id eq id }) {
             it[WorkoutLogs.duration] = duration
             it[WorkoutLogs.distance] = distance
@@ -459,6 +459,9 @@ class ActivityService(database: Database) {
             }
             if (name != null) {
                 it[WorkoutLogs.workoutName] = name
+            }
+            if (date != null) {
+                it[WorkoutLogs.logDate] = date
             }
         }
     }

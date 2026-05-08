@@ -36,17 +36,7 @@
                         class="form-select"
                     >
                         {% for type in activity.availableActivityTypes %}
-                        <option
-                            value="{{ type }}"
-                            {%
-                            if
-                            type=""
-                            ="activity.category"
-                            %}
-                            selected{%
-                            endif
-                            %}
-                        >
+                        <option value="{{ type }}" {% if type == activity.category %}selected{% endif %}>
                             {{ type }}
                         </option>
                         {% endfor %}
@@ -57,9 +47,9 @@
                     <input
                         type="date"
                         id="activityDate"
+                        name="date"
                         class="form-control"
                         value="{{ activity.date }}"
-                        disabled
                     />
                 </div>
                 <div class="col-md-6">

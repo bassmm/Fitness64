@@ -80,7 +80,7 @@
                                         <span class="text-muted text-sm">
                                             {{ activity.duration }}
                                             {% if activity.distance %}
-                                                · {{ activity.distance }}
+                                                · {{ activity.distance | numberformat("0.00") }}
                                             {% endif %}
                                             {% if activity.notes %}
                                                 · {{ activity.notes }}
