@@ -13,61 +13,95 @@
     </div>
 
     <div class="d-flex flex-column align-items-lg-end gap-2">
-        <div class="btn-group" role="group" aria-label="Activity filters">
-            <a class="btn btn-sm {% if selectedFilter == "all" %}btn-primary{% else %}btn-outline-primary{% endif %}"
+        <div class="btn-group w-100" role="group" aria-label="Activity filters">
+            <a class="btn btn-sm {% if selectedFilter == "all" %}btn-primary{% else %}btn-neutral{% endif %}"
                href="/activities?filter=all">
                 All<span class="badge text-bg-light ms-1">{{ allCount }}</span>
             </a>
-            <a class="btn btn-sm {% if selectedFilter == "workouts" %}btn-primary{% else %}btn-outline-primary{% endif %}"
+            <a class="btn btn-sm {% if selectedFilter == "workouts" %}btn-primary{% else %}btn-neutral{% endif %}"
                href="/activities?filter=workouts">
                 Workouts<span class="badge text-bg-light ms-1">{{ workoutsCount }}</span>
             </a>
-            <a class="btn btn-sm {% if selectedFilter == "races" %}btn-primary{% else %}btn-outline-primary{% endif %}"
+            <a class="btn btn-sm {% if selectedFilter == "races" %}btn-primary{% else %}btn-neutral{% endif %}"
                href="/activities?filter=races">
                 Races<span class="badge text-bg-light ms-1">{{ racesCount }}</span>
             </a>
         </div>
 
-        <form class="d-flex gap-2" method="get" action="/activities" role="search">
+        <form id="searchForm" class="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center gap-2 w-100" method="get" action="/activities" role="search">
             <input type="hidden" name="filter" value="{{ selectedFilter }}">
 
             {% if hasDateFilter %}
                 <input type="hidden" name="date" value="{{ selectedDate }}">
             {% endif %}
 
-            <input
-                class="form-control form-control-sm"
-                type="search"
-                name="search"
-                value="{{ searchQuery }}"
-                placeholder="Search by title, type, or date"
-                aria-label="Search activities by title, type, or date"
-            >
-
-            <button class="btn btn-sm btn-primary" type="submit">
-                Search
-            </button>
-
-            {% if searchQuery %}
-                {% if hasDateFilter %}
-                    <a class="btn btn-sm btn-outline-secondary" href="/activities?filter={{ selectedFilter }}&date={{ selectedDate }}">
-                        Clear
-                    </a>
-                {% else %}
-                    <a class="btn btn-sm btn-outline-secondary" href="/activities?filter={{ selectedFilter }}">
-                        Clear
-                    </a>
+            <!-- Desktop: joined input-group -->
+            <div class="d-none d-lg-flex input-group input-group-sm flex-grow-1">
+                <input
+                    class="form-control"
+                    type="search"
+                    name="search"
+                    value="{{ searchQuery }}"
+                    placeholder="Search by title, type, or date"
+                    aria-label="Search activities by title, type, or date"
+                >
+                <button class="btn btn-primary" type="submit">
+                    Search
+                </button>
+                {% if searchQuery %}
+                    {% if hasDateFilter %}
+                        <a class="btn btn-neutral" href="/activities?filter={{ selectedFilter }}&date={{ selectedDate }}">
+                            Clear
+                        </a>
+                    {% else %}
+                        <a class="btn btn-neutral" href="/activities?filter={{ selectedFilter }}">
+                            Clear
+                        </a>
+                    {% endif %}
                 {% endif %}
-            {% endif %}
+            </div>
+
+            <!-- Mobile: search above, buttons below -->
+            <div class="d-flex d-lg-none flex-column gap-2 flex-grow-1">
+                <input
+                    class="form-control form-control-sm"
+                    type="search"
+                    name="search"
+                    value="{{ searchQuery }}"
+                    placeholder="Search by title, type, or date"
+                    aria-label="Search activities by title, type, or date"
+                >
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-primary flex-grow-1" type="submit">
+                        Search
+                    </button>
+                    {% if searchQuery %}
+                        {% if hasDateFilter %}
+                            <a class="btn btn-sm btn-neutral flex-grow-1" href="/activities?filter={{ selectedFilter }}&date={{ selectedDate }}">
+                                Clear
+                            </a>
+                        {% else %}
+                            <a class="btn btn-sm btn-neutral flex-grow-1" href="/activities?filter={{ selectedFilter }}">
+                                Clear
+                            </a>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
         </form>
+        <script nonce="{{ cspNonce }}">
+            document.getElementById('searchForm').addEventListener('submit', function() {
+                var inputs = this.querySelectorAll('[name=search]');
+                var visible = Array.from(inputs).find(function(el) { return el.offsetParent !== null; });
+                inputs.forEach(function(el) {
+                    if (el !== visible) el.removeAttribute('name');
+                });
+            });
+        </script>
     </div>
 </div>
 
 <div class="row g-4 align-items-start">
-    <aside class="col-12 col-lg-4 order-lg-1" aria-labelledby="date-filter-title">
-        {% include "_partials/_calendar-widget" %}
-    </aside>
-
     <section class="col-12 col-lg-8 order-lg-2" aria-labelledby="activity-list-title">
         <div id="activity-list">
             <div class="card shadow-soft">
@@ -79,7 +113,7 @@
                             {% elseif selectedFilter == "workouts" %}
                                 Workout Activities
                             {% else %}
-                                All Activities
+                                Activities
                             {% endif %}
                         </h3>
 
@@ -208,14 +242,14 @@
                             </p>
 
                             {% if hasDateFilter %}
-                                <a class="btn btn-outline-secondary" href="/activities?filter={{ selectedFilter }}&date={{ selectedDate }}">
+                                <a class="btn btn-neutral" href="/activities?filter={{ selectedFilter }}&date={{ selectedDate }}">
                                     Clear search
                                 </a>
-                                <a class="btn btn-outline-secondary" href="/activities?filter={{ selectedFilter }}">
+                                <a class="btn btn-neutral" href="/activities?filter={{ selectedFilter }}">
                                     Clear date filter
                                 </a>
                             {% else %}
-                                <a class="btn btn-outline-secondary" href="/activities?filter={{ selectedFilter }}">
+                                <a class="btn btn-neutral" href="/activities?filter={{ selectedFilter }}">
                                     Clear search
                                 </a>
                             {% endif %}
@@ -224,7 +258,7 @@
                             <p class="text-muted">
                                 No activities match the selected date.
                             </p>
-                            <a class="btn btn-outline-secondary" href="/activities?filter={{ selectedFilter }}">
+                            <a class="btn btn-neutral" href="/activities?filter={{ selectedFilter }}">
                                 Clear date filter
                             </a>
                         {% else %}
@@ -251,6 +285,10 @@
             </div>
         </div>
     </section>
+
+    <aside class="col-12 col-lg-4 order-lg-1" aria-labelledby="date-filter-title">
+        {% include "_partials/_calendar-widget" %}
+    </aside>
 </div>
 {% endblock %}
 
