@@ -45,7 +45,7 @@ fun Application.module() {
     configureRouting(userService, planService)
     configureDashboardRoutes(userService, activityService, weightliftingService, planService)
     configureLogRoutes(userService, activityService, weightliftingService)
-    configureCalendarRoutes(userService, activityService, weightliftingService, raceService, planService)
+    configureCalendarRoutes()
     configureProgressRoutes(userService, activityService, weightliftingService)
     configureRacesPagesRoutes(userService, raceService)
     configureActivityRoutes(activityService, userService, weightliftingService, raceService)
