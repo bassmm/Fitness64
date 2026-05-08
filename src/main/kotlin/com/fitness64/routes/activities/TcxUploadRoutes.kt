@@ -146,34 +146,33 @@ private suspend fun importCsvFile(
     activityService: ActivityService,
     call: io.ktor.server.application.ApplicationCall
 ) {
-    val csv = runCatching {
-        CsvParser.parse(bytes.inputStream())
+    runCatching {
+        val csv = CsvParser.parse(bytes.inputStream())
+        val activityTypeId = activityService.getActivityTypeByName(csv.activityType)?: 
+        activityService.createActivityType(ActivityType(csv.activityType))
+
+        activityService.createWorkoutLog(
+            WorkoutLog(
+                userId = userId,
+                activityTypeId = activityTypeId,
+                logDate = csv.date,
+                duration = csv.durationSeconds,
+                distance = csv.distanceMetres,
+                notes = csv.notes.ifBlank { "Imported from CSV file" },
+                calories = csv.calories,
+                source = "csv_import",
+                name = "${csv.activityType} Session"
+            )
+        )
+
+        call.respond(
+            PebbleContent(
+                "import",
+                mapOf("error" to "", "success" to "CSV imported successfully! Activity logged for ${csv.date}.")
+            )
+        )
     }.getOrElse {
         call.respond(PebbleContent("import", mapOf("error" to "Could not parse CSV: ${it.message}", "success" to "")))
         return
     }
-
-    val activityTypeId = activityService.getActivityTypeByName(csv.activityType)
-        ?: activityService.createActivityType(ActivityType(csv.activityType))
-
-    activityService.createWorkoutLog(
-        WorkoutLog(
-            userId = userId,
-            activityTypeId = activityTypeId,
-            logDate = csv.date,
-            duration = csv.durationSeconds,
-            distance = csv.distanceMetres,
-            notes = csv.notes.ifBlank { "Imported from CSV file" },
-            calories = csv.calories,
-            source = "csv_import",
-            name = "${csv.activityType} Session"
-        )
-    )
-
-    call.respond(
-        PebbleContent(
-            "import",
-            mapOf("error" to "", "success" to "CSV imported successfully! Activity logged for ${csv.date}.")
-        )
-    )
 }
