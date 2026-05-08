@@ -20,206 +20,239 @@
             </a>
             <a class="btn btn-sm {% if selectedFilter == "workouts" %}btn-primary{% else %}btn-outline-primary{% endif %}"
                href="/activities?filter=workouts">
-                Workouts<span class="badge text-bg-light ms-1">{{ workoutCount }}</span>
+                Workouts<span class="badge text-bg-light ms-1">{{ workoutsCount }}</span>
             </a>
             <a class="btn btn-sm {% if selectedFilter == "races" %}btn-primary{% else %}btn-outline-primary{% endif %}"
                href="/activities?filter=races">
-                Races<span class="badge text-bg-light ms-1">{{ raceCount }}</span>
+                Races<span class="badge text-bg-light ms-1">{{ racesCount }}</span>
             </a>
-        </div>        
-    </div>
-</div>
-
-{% if volumeBySession is not empty %}
-<div class="card shadow-soft mb-6">
-    <div class="card-body p-5">
-        <div class="d-flex align-items-center gap-3 mb-4">
-            <span class="stat-icon bg-primary-subtle text-primary">
-                <i aria-hidden="true" class="bi bi-graph-up-arrow"></i>
-            </span>
-            <div>
-                <p class="page-kicker mb-1">Strength</p>
-                <h2 class="h4 mb-0">Weightlifting Volume Over Time</h2>
-            </div>
         </div>
-        <canvas id="volumeChart" height="80" role="img" aria-label="Weightlifting volume over time chart"></canvas>
-    </div>
-</div>
-{% endif %}
 
-<div class="card shadow-soft">
-    <div class="card-header border-0 pb-0 pt-4 px-5">
-        <div class="d-flex flex-column flex-lg-row align-items-lg-start justify-content-between gap-3">
-            <div>
-                <h3 class="h5 mb-1">
-                    {% if selectedFilter == "races" %}
-                        Race Results
-                    {% elseif selectedFilter == "workouts" %}
-                        Workout Activities
-                    {% else %}
-                        All Activities
-                    {% endif %}
-                </h3>
-                <p class="text-sm text-muted mb-0">
-                    {% if selectedFilter == "races" %}
-                        Race results with finish times, rankings, categories, and certificates.
-                    {% elseif selectedFilter == "workouts" %}
-                        Cardio and weightlifting sessions without race results.
-                    {% else %}
-                        Cardio, weightlifting, and races in a single feed.
-                    {% endif %}
-                </p>
-            </div>
-        </div>
-    </div>
-    <div class="card-body p-0">
-        {% if activities is not empty %}
-        <div class="table-responsive">
-            <table class="table table-hover mb-0" aria-label="Activity history">
-                <thead class="bg-body-secondary">
-                    <tr>
-                        <th class="ps-5">Date</th>
-                        <th>Category</th>
-                        <th>Activity</th>
-                        <th>Summary</th>
-                        <th>Result</th>
-                        <th class="pe-5">Notes</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in activities %}
-                    <tr style="cursor: pointer;" onclick="window.location.href='/activities/{{ item.id }}'" tabindex="0" role="link" aria-label="{{ item.title }} on {{ item.date }}" onkeydown="if(event.key==='Enter'||event.key===' ')window.location.href='/activities/{{ item.id }}'">
-                        <td class="ps-5 fw-semibold">{{ item.date }}</td>
-                        <td>
-                            {{ item.category }}
-                            {% if item.type == "race" and item.isPersonalBest %}
-                                <div class="mt-1">
-                                    <span class="badge text-bg-warning">Personal best</span>
-                                </div>
-                            {% endif %}
-                        </td>
-                        <td>{{ item.title }}</td>
-                        <td>
-                            {{ item.summary }}
+        <form class="d-flex gap-2" method="get" action="/activities" role="search">
+            <input type="hidden" name="filter" value="{{ selectedFilter }}">
 
-                            {% if item.type == "race" %}
-                                <div class="text-sm text-muted mt-2">
-                                    {% if item.location %}
-                                        <div>Location: {{ item.location }}</div>
-                                    {% endif %}
-
-                                    {% if item.raceCategory %}
-                                        <div>Race category: {{ item.raceCategory }}</div>
-                                    {% endif %}
-
-                                    {% if item.overallRank %}
-                                        <div>Overall rank: #{{ item.overallRank }}</div>
-                                    {% endif %}
-
-                                    {% if item.categoryRank %}
-                                        <div>Category rank: #{{ item.categoryRank }}</div>
-                                    {% endif %}
-                                </div>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {{ item.metric }}
-                            {% if item.type == "race" and item.finishTime %}
-                                <div class="text-sm text-muted mt-1">Finish time: {{ item.finishTime }}</div>
-                            {% endif %}
-                        </td>
-                        <td class="pe-5">
-                            {% if item.notes %}
-                                {{ item.notes }}
-                            {% else %}
-                                <span class="text-muted">—</span>
-                            {% endif %}
-
-                            {% if item.type == "race" and item.certificateUrl %}
-                                <div class="mt-2">
-                                    <a href="{{ item.certificateUrl }}"
-                                       onclick="event.stopPropagation();"
-                                       target="_blank"
-                                       rel="noopener noreferrer">
-                                        View certificate
-                                    </a>
-                                </div>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% else %}
-        <div class="empty-state m-5">
-            <span class="stat-icon bg-primary-subtle text-primary mb-4">
-                <i aria-hidden="true" class="bi bi-bar-chart"></i>
-            </span>
-            <h3 class="h5">No activities yet</h3>
-            <p class="text-muted">
-                {% if selectedFilter == "races" %}
-                    No races have been logged yet.
-                {% elseif selectedFilter == "workouts" %}
-                    No workouts have been logged yet.
-                {% else %}
-                    Log your first workout or race to start your activity feed.
-                {% endif %}
-            </p>
-            {% if selectedFilter == "races" %}
-                <a class="btn btn-primary" href="/races/log">Log race</a>
-            {% else %}
-                <a class="btn btn-primary" href="/log">Log activity</a>
+            {% if hasDateFilter %}
+                <input type="hidden" name="date" value="{{ selectedDate }}">
             {% endif %}
-        </div>
-        {% endif %}
+
+            <input
+                class="form-control form-control-sm"
+                type="search"
+                name="search"
+                value="{{ searchQuery }}"
+                placeholder="Search by title, type, or date"
+                aria-label="Search activities by title, type, or date"
+            >
+
+            <button class="btn btn-sm btn-primary" type="submit">
+                Search
+            </button>
+
+            {% if searchQuery %}
+                {% if hasDateFilter %}
+                    <a class="btn btn-sm btn-outline-secondary" href="/activities?filter={{ selectedFilter }}&date={{ selectedDate }}">
+                        Clear
+                    </a>
+                {% else %}
+                    <a class="btn btn-sm btn-outline-secondary" href="/activities?filter={{ selectedFilter }}">
+                        Clear
+                    </a>
+                {% endif %}
+            {% endif %}
+        </form>
     </div>
+</div>
+
+<div class="row g-4 align-items-start">
+    <aside class="col-12 col-lg-4 order-lg-1" aria-labelledby="date-filter-title">
+        {% include "_partials/_calendar-widget" %}
+    </aside>
+
+    <section class="col-12 col-lg-8 order-lg-2" aria-labelledby="activity-list-title">
+        <div id="activity-list">
+            <div class="card shadow-soft">
+                <div class="card-header border-0 pb-0 pt-4 px-5">
+                    <div>
+                        <h3 id="activity-list-title" class="h5 mb-1">
+                            {% if selectedFilter == "races" %}
+                                Race Results
+                            {% elseif selectedFilter == "workouts" %}
+                                Workout Activities
+                            {% else %}
+                                All Activities
+                            {% endif %}
+                        </h3>
+
+                        <p class="text-sm text-muted mb-0">
+                            {% if searchQuery %}
+                                Showing {{ resultCount }} result{% if resultCount != 1 %}s{% endif %} for "{{ searchQuery }}".
+                            {% elseif hasDateFilter %}
+                                Showing activities for {{ selectedDate }}.
+                            {% elseif selectedFilter == "races" %}
+                                Race results with finish times, rankings, categories, and certificates.
+                            {% elseif selectedFilter == "workouts" %}
+                                Cardio and weightlifting sessions without race results.
+                            {% else %}
+                                Cardio, weightlifting, and races in a single feed.
+                            {% endif %}
+                        </p>
+                    </div>
+
+                    <div role="status" aria-live="polite" class="visually-hidden">
+                        {% if searchQuery and hasDateFilter %}
+                            Activity list filtered by search term and selected date.
+                        {% elseif searchQuery %}
+                            Activity list filtered by search term.
+                        {% elseif hasDateFilter %}
+                            Activity list filtered by selected date.
+                        {% else %}
+                            Showing activities for the selected filter.
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="card-body p-0">
+                    {% if activities is not empty %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" aria-label="Activity history">
+                            <thead class="bg-body-secondary">
+                                <tr>
+                                    <th class="ps-5">Date</th>
+                                    <th>Category</th>
+                                    <th>Activity</th>
+                                    <th>Summary</th>
+                                    <th>Result</th>
+                                    <th class="pe-5">Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in activities %}
+                                <tr style="cursor: pointer;"
+                                    onclick="window.location.href='/activities/{{ item.id }}'"
+                                    tabindex="0"
+                                    role="link"
+                                    aria-label="{{ item.title }} on {{ item.date }}"
+                                    onkeydown="if(event.key==='Enter'||event.key===' ')window.location.href='/activities/{{ item.id }}'">
+                                    <td class="ps-5 fw-semibold">{{ item.date }}</td>
+                                    <td>
+                                        {{ item.category }}
+                                        {% if item.type == "race" and item.isPersonalBest %}
+                                            <div class="mt-1">
+                                                <span class="badge text-bg-warning">Personal best</span>
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ item.title }}</td>
+                                    <td>
+                                        {{ item.summary }}
+
+                                        {% if item.type == "race" %}
+                                            <div class="text-sm text-muted mt-2">
+                                                {% if item.location %}
+                                                    <div>Location: {{ item.location }}</div>
+                                                {% endif %}
+
+                                                {% if item.raceCategory %}
+                                                    <div>Race category: {{ item.raceCategory }}</div>
+                                                {% endif %}
+
+                                                {% if item.overallRank %}
+                                                    <div>Overall rank: #{{ item.overallRank }}</div>
+                                                {% endif %}
+
+                                                {% if item.categoryRank %}
+                                                    <div>Category rank: #{{ item.categoryRank }}</div>
+                                                {% endif %}
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {{ item.metric }}
+                                        {% if item.type == "race" and item.finishTime %}
+                                            <div class="text-sm text-muted mt-1">Finish time: {{ item.finishTime }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td class="pe-5">
+                                        {% if item.notes %}
+                                            {{ item.notes }}
+                                        {% else %}
+                                            <span class="text-muted">—</span>
+                                        {% endif %}
+
+                                        {% if item.type == "race" and item.certificateUrl %}
+                                            <div class="mt-2">
+                                                <a href="{{ item.certificateUrl }}"
+                                                   onclick="event.stopPropagation();"
+                                                   target="_blank"
+                                                   rel="noopener noreferrer">
+                                                    View certificate
+                                                </a>
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="empty-state m-5">
+                        <span class="stat-icon bg-primary-subtle text-primary mb-4">
+                            <i aria-hidden="true" class="bi bi-bar-chart"></i>
+                        </span>
+
+                        {% if searchQuery %}
+                            <h3 class="h5">No matching activities</h3>
+                            <p class="text-muted">
+                                No activities match "{{ searchQuery }}". Try searching by title, type, or date.
+                            </p>
+
+                            {% if hasDateFilter %}
+                                <a class="btn btn-outline-secondary" href="/activities?filter={{ selectedFilter }}&date={{ selectedDate }}">
+                                    Clear search
+                                </a>
+                                <a class="btn btn-outline-secondary" href="/activities?filter={{ selectedFilter }}">
+                                    Clear date filter
+                                </a>
+                            {% else %}
+                                <a class="btn btn-outline-secondary" href="/activities?filter={{ selectedFilter }}">
+                                    Clear search
+                                </a>
+                            {% endif %}
+                        {% elseif hasDateFilter %}
+                            <h3 class="h5">No activities found</h3>
+                            <p class="text-muted">
+                                No activities match the selected date.
+                            </p>
+                            <a class="btn btn-outline-secondary" href="/activities?filter={{ selectedFilter }}">
+                                Clear date filter
+                            </a>
+                        {% else %}
+                            <h3 class="h5">No activities yet</h3>
+                            <p class="text-muted">
+                                {% if selectedFilter == "races" %}
+                                    No races have been logged yet.
+                                {% elseif selectedFilter == "workouts" %}
+                                    No workouts have been logged yet.
+                                {% else %}
+                                    Log your first workout or race to start your activity feed.
+                                {% endif %}
+                            </p>
+
+                            {% if selectedFilter == "races" %}
+                                <a class="btn btn-primary" href="/races/log">Log race</a>
+                            {% else %}
+                                <a class="btn btn-primary" href="/log">Log activity</a>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </section>
 </div>
 {% endblock %}
 
 {% block scripts %}
-{% if volumeBySession is not empty %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    const volumeBySession = [
-        {% for item in volumeBySession %}
-            { date: "{{ item.date }}", totalSets: {{ item.totalSets }} }{% if not loop.last %},{% endif %}
-        {% endfor %}
-    ];
-
-    new Chart(document.getElementById('volumeChart'), {
-        type: 'line',
-        data: {
-            labels: volumeBySession.map(d => d.date),
-            datasets: [{
-                label: 'Total Sets',
-                data: volumeBySession.map(d => d.totalSets),
-                borderColor: 'rgba(185, 28, 28, 1)',
-                backgroundColor: 'rgba(185, 28, 28, 0.1)',
-                borderWidth: 2,
-                pointBackgroundColor: 'rgba(185, 28, 28, 1)',
-                pointRadius: 5,
-                fill: true,
-                tension: 0.3
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { display: false }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: { stepSize: 1 },
-                    title: { display: true, text: 'Total Sets' }
-                },
-                x: {
-                    title: { display: true, text: 'Session Date' }
-                }
-            }
-        }
-    });
-</script>
-{% endif %}
 {% endblock %}
