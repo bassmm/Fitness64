@@ -1,6 +1,5 @@
 package com.fitness64.routes.activities
 
-import com.fitness64.core.isHtmxRequest
 import com.fitness64.core.requireAuthenticatedUser
 import com.fitness64.core.respondHx
 import com.fitness64.core.respondHxRedirect
@@ -22,7 +21,6 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.time.temporal.ChronoUnit
 import java.net.URI

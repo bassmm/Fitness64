@@ -61,7 +61,7 @@ fun Application.configurePlanRoutes(
              * POST /onboarding
              * Processes the onboarding form submission.
              * Generates a new training plan for the user based on their selected plan type.
-             * Redirects to /plan on success, or re-renders the form with an error if no plan was selected.
+              * Redirects to /home on success, or re-renders the form with an error if no plan was selected.
              */
             post("/onboarding") {
                 val auth = call.requireAuthenticatedUser(userService) ?: return@post
@@ -90,30 +90,14 @@ fun Application.configurePlanRoutes(
                 }
 
                 planService.generatePlanForType(userId, planType)
-                call.respondRedirect("/plan")
-            }
-
-            /**
-             * GET /plan
-             * Redirects to the home page where the full weekly plan is now displayed.
-             */
-            get("/plan") {
                 call.respondRedirect("/home")
-            }
-
-            /**
-             * POST /plan/generate
-             * Redirects to the onboarding page to allow the user to select a new plan type.
-             */
-            post("/plan/generate") {
-                call.respondRedirect("/onboarding")
             }
 
             /**
              * GET /plan/update-session
              * Displays the form for updating a specific day's planned session.
              * Pre-fills the form with the current session details for that day.
-             * Redirects to /plan if the day parameter is missing or invalid.
+             * Redirects to /home if the day parameter is missing or invalid.
              */
             get("/plan/update-session") {
                 val (_, userId) = call.requireAuthenticatedUser(userService) ?: return@get
@@ -121,13 +105,13 @@ fun Application.configurePlanRoutes(
                 val day = call.request.queryParameters["day"]?.trim().orEmpty()
 
                 if (day.isBlank()) {
-                    call.respondRedirect("/plan")
+                    call.respondRedirect("/home")
                     return@get
                 }
 
                 val currentSession = planService.getPlanSessionByDay(userId, day)
                 if (currentSession == null) {
-                    call.respondRedirect("/plan")
+                    call.respondRedirect("/home")
                     return@get
                 }
 
@@ -148,7 +132,7 @@ fun Application.configurePlanRoutes(
              * POST /plan/update-session
              * Processes the session update form submission.
              * Validates the new session name and updates the plan in the database.
-             * Redirects to /plan on success, or re-renders the form with an error if validation fails.
+             * Redirects to /home on success, or re-renders the form with an error if validation fails.
              */
             post("/plan/update-session") {
                 val (_, userId) = call.requireAuthenticatedUser(userService) ?: return@post
@@ -160,7 +144,7 @@ fun Application.configurePlanRoutes(
                 val newIntensity = params["newIntensity"]?.trim().orEmpty()
 
                 if (day.isBlank()) {
-                    call.respondRedirect("/plan")
+                    call.respondRedirect("/home")
                     return@post
                 }
 
@@ -182,7 +166,7 @@ fun Application.configurePlanRoutes(
                 }
 
                 planService.updatePlanSession(userId, day, newSession, newDuration, newIntensity)
-                call.respondRedirect("/plan")
+                call.respondRedirect("/home")
             }
         }
     }

@@ -11,6 +11,7 @@
 package com.fitness64
 
 import com.fitness64.core.module
+import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
 import io.ktor.client.statement.*
@@ -111,39 +112,6 @@ class ApplicationTest {
         application { module() }
         val noRedirectClient = createClient { followRedirects = false }
         val response = noRedirectClient.get("/progress")
-        assertEquals(HttpStatusCode.Found, response.status)
-    }
-
-    /**
-     * Verifies that /calendar redirects unauthenticated users to /login.
-     */
-    @Test
-    fun testCalendarRedirectsWhenNotLoggedIn() = testApplication {
-        application { module() }
-        val noRedirectClient = createClient { followRedirects = false }
-        val response = noRedirectClient.get("/calendar")
-        assertEquals(HttpStatusCode.Found, response.status)
-    }
-
-    /**
-     * Verifies that /plan redirects unauthenticated users to /login.
-     */
-    @Test
-    fun testPlanRedirectsWhenNotLoggedIn() = testApplication {
-        application { module() }
-        val noRedirectClient = createClient { followRedirects = false }
-        val response = noRedirectClient.get("/plan")
-        assertEquals(HttpStatusCode.Found, response.status)
-    }
-
-    /**
-     * Verifies that /races redirects unauthenticated users to /login.
-     */
-    @Test
-    fun testRacesRedirectsWhenNotLoggedIn() = testApplication {
-        application { module() }
-        val noRedirectClient = createClient { followRedirects = false }
-        val response = noRedirectClient.get("/races")
         assertEquals(HttpStatusCode.Found, response.status)
     }
 
@@ -382,5 +350,350 @@ class ApplicationTest {
             }
         )
         assertEquals(HttpStatusCode.Found, response.status)
+    }
+
+    // ==================== Authentication Helpers ====================
+
+    private suspend fun registerAndLogin(client: HttpClient, email: String): String {
+        client.submitForm("/register", formParameters = parameters {
+            append("name", "Test User")
+            append("email", email)
+            append("password", "password123")
+            append("fitnessLevel", "Intermediate")
+        })
+        val loginResp = client.submitForm("/login", formParameters = parameters {
+            append("email", email)
+            append("password", "password123")
+        })
+        val setCookie = loginResp.headers["Set-Cookie"] ?: ""
+        return setCookie.substringBefore(";")
+    }
+
+    // ==================== Authenticated Page Rendering ====================
+
+    @Test
+    fun testDashboardLoadsWhenAuthenticated() = testApplication {
+        application { module() }
+        val client = createClient { followRedirects = false }
+        val cookie = registerAndLogin(client, "dash-render@test.com")
+        val response = client.get("/home") { header("Cookie", cookie) }
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertContains(response.bodyAsText(), "Start your weekly streak")
+    }
+
+    @Test
+    fun testProfileLoadsWhenAuthenticated() = testApplication {
+        application { module() }
+        val client = createClient { followRedirects = false }
+        val cookie = registerAndLogin(client, "profile-render@test.com")
+        val response = client.get("/profile") { header("Cookie", cookie) }
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertContains(response.bodyAsText(), "Test User")
+    }
+
+    @Test
+    fun testLogPageLoadsWhenAuthenticated() = testApplication {
+        application { module() }
+        val client = createClient { followRedirects = false }
+        val cookie = registerAndLogin(client, "log-render@test.com")
+        val response = client.get("/log") { header("Cookie", cookie) }
+        assertEquals(HttpStatusCode.OK, response.status)
+    }
+
+    @Test
+    fun testActivitiesPageLoadsWhenAuthenticated() = testApplication {
+        application { module() }
+        val client = createClient { followRedirects = false }
+        val cookie = registerAndLogin(client, "activities-render@test.com")
+        val response = client.get("/activities") { header("Cookie", cookie) }
+        assertEquals(HttpStatusCode.OK, response.status)
+    }
+
+    @Test
+    fun testProgressPageLoadsWhenAuthenticated() = testApplication {
+        application { module() }
+        val client = createClient { followRedirects = false }
+        val cookie = registerAndLogin(client, "progress-render@test.com")
+        val response = client.get("/progress") { header("Cookie", cookie) }
+        assertEquals(HttpStatusCode.OK, response.status)
+    }
+
+    @Test
+    fun testOnboardingPageLoadsWhenAuthenticated() = testApplication {
+        application { module() }
+        val client = createClient { followRedirects = false }
+        val cookie = registerAndLogin(client, "onboard-render@test.com")
+        val response = client.get("/onboarding") { header("Cookie", cookie) }
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertContains(response.bodyAsText(), "Choose Training Plan")
+    }
+
+    @Test
+    fun testRaceLogPageLoadsWhenAuthenticated() = testApplication {
+        application { module() }
+        val client = createClient { followRedirects = false }
+        val cookie = registerAndLogin(client, "races-render@test.com")
+        val response = client.get("/races/log") { header("Cookie", cookie) }
+        assertEquals(HttpStatusCode.OK, response.status)
+    }
+
+    @Test
+    fun testImportPageLoadsWhenAuthenticated() = testApplication {
+        application { module() }
+        val client = createClient { followRedirects = false }
+        val cookie = registerAndLogin(client, "import-render@test.com")
+        val response = client.get("/import") { header("Cookie", cookie) }
+        assertEquals(HttpStatusCode.OK, response.status)
+    }
+
+    // ==================== Auth Flow ====================
+
+    @Test
+    fun testLogoutRedirectsToLogin() = testApplication {
+        application { module() }
+        val client = createClient { followRedirects = false }
+        val cookie = registerAndLogin(client, "logout-flow@test.com")
+        val response = client.get("/logout") { header("Cookie", cookie) }
+        assertEquals(HttpStatusCode.Found, response.status)
+        assertEquals("/login", response.headers[HttpHeaders.Location])
+    }
+
+    // ==================== HTMX Partial Endpoints ====================
+
+    @Test
+    fun testProfileViewHtmxEndpoint() = testApplication {
+        application { module() }
+        val client = createClient { followRedirects = false }
+        val cookie = registerAndLogin(client, "profile-view@test.com")
+        val response = client.get("/profile/view") { header("Cookie", cookie) }
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertContains(response.bodyAsText(), "Test User")
+    }
+
+    @Test
+    fun testProfileEditFormHtmxEndpoint() = testApplication {
+        application { module() }
+        val client = createClient { followRedirects = false }
+        val cookie = registerAndLogin(client, "profile-edit@test.com")
+        val response = client.get("/profile/edit-form") { header("Cookie", cookie) }
+        assertEquals(HttpStatusCode.OK, response.status)
+    }
+
+    @Test
+    fun testLogPickerHtmxEndpoint() = testApplication {
+        application { module() }
+        val client = createClient { followRedirects = false }
+        val cookie = registerAndLogin(client, "log-picker@test.com")
+        val response = client.get("/log/picker") { header("Cookie", cookie) }
+        assertEquals(HttpStatusCode.OK, response.status)
+    }
+
+    @Test
+    fun testLogFormCardioHtmxEndpoint() = testApplication {
+        application { module() }
+        val client = createClient { followRedirects = false }
+        val cookie = registerAndLogin(client, "log-cardio@test.com")
+        val response = client.get("/log/form?activityType=Running") {
+            header("Cookie", cookie)
+        }
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertContains(response.bodyAsText(), "Distance")
+    }
+
+    @Test
+    fun testLogFormWeightliftingHtmxEndpoint() = testApplication {
+        application { module() }
+        val client = createClient { followRedirects = false }
+        val cookie = registerAndLogin(client, "log-lift@test.com")
+        val response = client.get("/log/form?activityType=Weightlifting") {
+            header("Cookie", cookie)
+        }
+        assertEquals(HttpStatusCode.OK, response.status)
+    }
+
+    @Test
+    fun testLogFormWithBlankTypeShowsError() = testApplication {
+        application { module() }
+        val client = createClient { followRedirects = false }
+        val cookie = registerAndLogin(client, "log-blank@test.com")
+        val response = client.get("/log/form?activityType=") {
+            header("Cookie", cookie)
+        }
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertContains(response.bodyAsText(), "select an activity type")
+    }
+
+    // ==================== Workflow Tests ====================
+
+    @Test
+    fun testLogCardioWorkoutSuccess() = testApplication {
+        application { module() }
+        val client = createClient { followRedirects = false }
+        val cookie = registerAndLogin(client, "log-cardio-wf@test.com")
+        val response = client.submitForm("/log/submit", formParameters = parameters {
+            append("type", "Running")
+            append("activityDate", "2026-05-07")
+            append("distance", "10")
+            append("duration", "45")
+            append("notes", "Test run")
+        }) { header("Cookie", cookie) }
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertContains(response.bodyAsText(), "session logged")
+    }
+
+    @Test
+    fun testLogWeightliftingWorkoutSuccess() = testApplication {
+        application { module() }
+        val client = createClient { followRedirects = false }
+        val cookie = registerAndLogin(client, "log-lift-wf@test.com")
+        val response = client.submitForm("/log/submit", formParameters = parameters {
+            append("type", "Weightlifting")
+            append("activityDate", "2026-05-07")
+            append("duration", "60")
+            append("exerciseName", "Bench Press")
+            append("sets", "3")
+            append("reps", "10")
+            append("weight", "80")
+        }) { header("Cookie", cookie) }
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertContains(response.bodyAsText(), "session saved")
+    }
+
+    @Test
+    fun testLogCardioWorkoutWithMissingDurationShowsError() = testApplication {
+        application { module() }
+        val client = createClient { followRedirects = false }
+        val cookie = registerAndLogin(client, "log-cardio-err@test.com")
+        val response = client.submitForm("/log/submit", formParameters = parameters {
+            append("type", "Running")
+            append("activityDate", "2026-05-07")
+            append("distance", "10")
+            append("duration", "")
+        }) { header("Cookie", cookie) }
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertContains(response.bodyAsText(), "valid date and duration")
+    }
+
+    @Test
+    fun testProfileSaveUpdatesProfile() = testApplication {
+        application { module() }
+        val client = createClient { followRedirects = false }
+        val cookie = registerAndLogin(client, "profile-save-wf@test.com")
+        val response = client.submitForm("/profile/save", formParameters = parameters {
+            append("name", "Updated Name")
+            append("email", "profile-save-wf@test.com")
+            append("fitnessLevel", "Advanced")
+            append("goal", "Run a marathon")
+        }) { header("Cookie", cookie) }
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertContains(response.bodyAsText(), "Updated Name")
+        assertContains(response.bodyAsText(), "Advanced")
+    }
+
+    @Test
+    fun testProfileSaveWithBlankNameShowsError() = testApplication {
+        application { module() }
+        val client = createClient { followRedirects = false }
+        val cookie = registerAndLogin(client, "profile-save-err@test.com")
+        val response = client.submitForm("/profile/save", formParameters = parameters {
+            append("name", "")
+            append("email", "profile-save-err@test.com")
+        }) { header("Cookie", cookie) }
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertContains(response.bodyAsText(), "Name and email are required")
+    }
+
+    @Test
+    fun testRaceLogSubmitCreatesRecord() = testApplication {
+        application { module() }
+        val client = createClient { followRedirects = false }
+        val cookie = registerAndLogin(client, "race-submit@test.com")
+        val response = client.submitForm("/races/log", formParameters = parameters {
+            append("eventName", "Leeds 10K")
+            append("eventDate", "2026-05-11")
+            append("location", "Leeds")
+            append("category", "Senior Men")
+            append("finishTime", "42:30")
+            append("overallRank", "150")
+        }) { header("Cookie", cookie) }
+        assertEquals(HttpStatusCode.Found, response.status)
+        assertEquals("/activities?filter=races", response.headers[HttpHeaders.Location])
+    }
+
+    @Test
+    fun testRaceLogWithInvalidCertificateUrlShowsError() = testApplication {
+        application { module() }
+        val client = createClient { followRedirects = false }
+        val cookie = registerAndLogin(client, "race-cert-err@test.com")
+        val response = client.submitForm("/races/log", formParameters = parameters {
+            append("eventName", "Test Race")
+            append("eventDate", "2026-05-11")
+            append("certificateUrl", "ftp://bad.com/cert.pdf")
+        }) { header("Cookie", cookie) }
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertContains(response.bodyAsText(), "Certificate URL must start with")
+    }
+
+    @Test
+    fun testRaceLogWithMissingNameAndDateShowsError() = testApplication {
+        application { module() }
+        val client = createClient { followRedirects = false }
+        val cookie = registerAndLogin(client, "race-blank@test.com")
+        val response = client.submitForm("/races/log", formParameters = parameters {
+            append("eventName", "")
+            append("eventDate", "")
+        }) { header("Cookie", cookie) }
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertContains(response.bodyAsText(), "Race name and date are required")
+    }
+
+    @Test
+    fun testOnboardingWithValidPlanRedirectsToHome() = testApplication {
+        application { module() }
+        val client = createClient { followRedirects = false }
+        val cookie = registerAndLogin(client, "onboard-submit@test.com")
+        val response = client.submitForm("/onboarding", formParameters = parameters {
+            append("planType", "beginner")
+        }) { header("Cookie", cookie) }
+        assertEquals(HttpStatusCode.Found, response.status)
+        assertEquals("/home", response.headers[HttpHeaders.Location])
+    }
+
+    @Test
+    fun testOnboardingWithBlankPlanShowsError() = testApplication {
+        application { module() }
+        val client = createClient { followRedirects = false }
+        val cookie = registerAndLogin(client, "onboard-blank@test.com")
+        val response = client.submitForm("/onboarding", formParameters = parameters {
+            append("planType", "")
+        }) { header("Cookie", cookie) }
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertContains(response.bodyAsText(), "choose a training plan")
+    }
+
+    // ==================== Plan Update Session ====================
+
+    @Test
+    fun testPlanUpdateSessionWithMissingDayRedirectsToHome() = testApplication {
+        application { module() }
+        val client = createClient { followRedirects = false }
+        val cookie = registerAndLogin(client, "plan-update@test.com")
+        val response = client.get("/plan/update-session") {
+            header("Cookie", cookie)
+        }
+        assertEquals(HttpStatusCode.Found, response.status)
+        assertEquals("/home", response.headers[HttpHeaders.Location])
+    }
+
+    @Test
+    fun testPlanUpdateSessionWithInvalidDayRedirectsToHome() = testApplication {
+        application { module() }
+        val client = createClient { followRedirects = false }
+        val cookie = registerAndLogin(client, "plan-inv@test.com")
+        val response = client.get("/plan/update-session?day=Notaday") {
+            header("Cookie", cookie)
+        }
+        assertEquals(HttpStatusCode.Found, response.status)
+        assertEquals("/home", response.headers[HttpHeaders.Location])
     }
 }

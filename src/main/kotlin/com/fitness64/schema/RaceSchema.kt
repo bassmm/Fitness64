@@ -105,33 +105,6 @@ class RaceService(database: Database) {
     }
 
     /**
-     * Retrieves a single race record by its ID.
-     *
-     * @param id The ID of the race record to retrieve.
-     * @return The matching [RaceRecord], or null if not found.
-     */
-    suspend fun getRace(id: Int): RaceRecord? = dbQuery {
-        RaceRecords.selectAll()
-            .where { RaceRecords.id eq id }
-            .map {
-                RaceRecord(
-                    id = it[RaceRecords.id],
-                    userId = it[RaceRecords.userId],
-                    eventName = it[RaceRecords.eventName],
-                    eventDate = it[RaceRecords.eventDate],
-                    location = it[RaceRecords.location],
-                    category = it[RaceRecords.category],
-                    finishTime = it[RaceRecords.finishTime],
-                    overallRank = it[RaceRecords.overallRank],
-                    categoryRank = it[RaceRecords.categoryRank],
-                    isPersonalBest = it[RaceRecords.isPersonalBest],
-                    certificateUrl = it[RaceRecords.certificateUrl]
-                )
-            }
-            .singleOrNull()
-    }
-
-    /**
      * Retrieves all race records belonging to a specific user.
      *
      * @param userIdValue The ID of the user whose races to retrieve.
@@ -155,15 +128,6 @@ class RaceService(database: Database) {
                     certificateUrl = it[RaceRecords.certificateUrl]
                 )
             }
-    }
-
-    /**
-     * Deletes a race record from the database by its ID.
-     *
-     * @param id The ID of the race record to delete.
-     */
-    suspend fun deleteRace(id: Int) = dbQuery {
-        RaceRecords.deleteWhere { RaceRecords.id eq id }
     }
 
     /**

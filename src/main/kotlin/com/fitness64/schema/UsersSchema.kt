@@ -106,34 +106,6 @@ class UserService(database: Database) {
     }
 
     /**
-     * Retrieves a user by their ID.
-     *
-     * @param id The ID of the user to retrieve.
-     * @return The matching [User], or null if not found.
-     */
-    suspend fun read(id: Int): User? {
-        return dbQuery {
-            Users.selectAll()
-                .where { Users.userId eq id }
-                .map {
-                    User(
-                        id = it[Users.userId],
-                        name = it[Users.name],
-                        email = it[Users.email],
-                        passwordHash = it[Users.passwordHash],
-                        fitnessLevel = it[Users.fitnessLevel],
-                        goal = it[Users.goal],
-                        trainingDaysPerWeek = it[Users.trainingDaysPerWeek],
-                        preferredActivities = it[Users.preferredActivities],
-                        community = it[Users.community],
-                        createdAt = it[Users.createdAt]
-                    )
-                }
-                .singleOrNull()
-        }
-    }
-
-    /**
      * Retrieves a user by their email address.
      * Used during login and session validation.
      *
@@ -159,27 +131,6 @@ class UserService(database: Database) {
                     )
                 }
                 .singleOrNull()
-        }
-    }
-
-    /**
-     * Updates all fields of an existing user record.
-     *
-     * @param id The ID of the user to update.
-     * @param user The updated user data to save.
-     */
-    suspend fun update(id: Int, user: User) {
-        dbQuery {
-            Users.update({ Users.userId eq id }) {
-                it[name] = user.name
-                it[email] = user.email
-                it[passwordHash] = user.passwordHash
-                it[fitnessLevel] = user.fitnessLevel
-                it[goal] = user.goal
-                it[trainingDaysPerWeek] = user.trainingDaysPerWeek
-                it[preferredActivities] = user.preferredActivities
-                it[community] = user.community
-            }
         }
     }
 
@@ -216,17 +167,6 @@ class UserService(database: Database) {
                 it[Users.preferredActivities] = preferredActivities
                 it[Users.community] = community
             }
-        }
-    }
-
-    /**
-     * Deletes a user account from the database by their ID.
-     *
-     * @param id The ID of the user to delete.
-     */
-    suspend fun delete(id: Int) {
-        dbQuery {
-            Users.deleteWhere { Users.userId eq id }
         }
     }
 

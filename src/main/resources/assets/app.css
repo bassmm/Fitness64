@@ -621,6 +621,11 @@ footer a:focus {
         padding-left: 0;
     }
 
+    body {
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+    }
+
     header .container-fluid,
     main.container-fluid,
     footer .container-fluid {
