@@ -36,7 +36,7 @@
         <div class="app-shell min-vh-100">
             <aside class="app-sidebar border-end bg-body shadow-soft">
                 <div
-                    class="d-flex align-items-center justify-content-center px-6 py-4 border-bottom text-center"
+                    class="d-flex align-items-center justify-content-center px-6 py-5 border-bottom text-center"
                 >
                     <a
                         href="/home"
@@ -57,46 +57,30 @@
                                     >Dashboard</a
                                 >
                             </li>
+                           <li class="nav-item">
+                                <a class="nav-link rounded-3" href="/activities"
+                                    ><i class="bi bi-bar-chart-line me-3"></i
+                                    >Activity</a
+                                >
+                            </li>
                             <li class="nav-item">
                                 <a class="nav-link rounded-3" href="/log"
                                     ><i class="bi bi-plus-circle me-3"></i>Log
-                                    Activity</a
+                                    </a
                                 >
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link rounded-3" href="/activities"
-                                    ><i class="bi bi-bar-chart-line me-3"></i
-                                    >Activity History</a
-                                >
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link rounded-3" href="/plan"
-                                    ><i class="bi bi-calendar2-week me-3"></i
-                                    >Weekly Plan</a
-                                >
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link rounded-3" href="/calendar"
-                                    ><i class="bi bi-calendar3 me-3"></i
-                                    >Calendar</a
-                                >
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link rounded-3" href="/progress"
-                                    ><i class="bi bi-trophy me-3"></i
+                                <a
+                                    class="nav-link rounded-3"
+                                    href="/progress"
+                                    hx-boost="false"
+                                    ><i
+                                        aria-hidden="true"
+                                        class="bi bi-trophy me-3"
+                                    ></i
                                     >Progress</a
                                 >
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link rounded-3" href="/races"
-                                    ><i class="bi bi-flag me-3"></i>Races</a
-                                >
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link rounded-3" href="/tcx/upload"
-                                    ><i class="bi bi-upload me-3"></i>Import
-                                    TCX</a
-                                >
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link rounded-3" href="/profile"
@@ -113,7 +97,7 @@
                         <div class="card-body p-4">
                             <div class="d-flex align-items-center gap-3 mb-3">
                                 <span
-                                    class="icon icon-sm bg-primary text-white rounded-circle"
+                                    class="icon icon-sm text-primary"
                                 >
                                     <i class="bi bi-stars"></i>
                                 </span>
@@ -144,21 +128,11 @@
                 >
                     <div class="container-fluid px-4 px-lg-6">
                         <div
-                            class="d-flex align-items-center justify-content-between py-3"
+                            class="d-flex align-items-center justify-content-between px-2 py-4"
                         >
                             <div class="d-flex align-items-center gap-3">
-                                <button
-                                    class="btn btn-sm btn-neutral d-lg-none"
-                                    type="button"
-                                    data-bs-toggle="offcanvas"
-                                    data-bs-target="#mobileNavigation"
-                                    aria-controls="mobileNavigation"
-                                    aria-label="Open navigation"
-                                >
-                                    <i class="bi bi-list"></i>
-                                </button>
                                 <div>
-                                    <h1 class="h4 mb-0">
+                                    <h1 class="h4 fw-bolder text-primary text-uppercase mb-0">
                                         {% block page_heading %}Fitness64{%
                                         endblock %}
                                     </h1>
@@ -185,7 +159,10 @@
                     </div>
                 </header>
 
-                <main id="main-content" class="container-fluid px-4 px-lg-6 py-6">
+                <main
+                    id="main-content"
+                    class="container-fluid px-4 px-lg-6 py-6"
+                >
                     {% block content %}{% endblock %}
                 </main>
 
@@ -201,17 +178,18 @@
                                 class="d-flex align-items-center gap-3 text-sm"
                             >
                                 <a
-                                    href="/plan"
+                                    href="/home"
                                     class="text-muted text-decoration-none"
-                                    >Plan</a
+                                    >Home</a
                                 >
                                 <a
-                                    href="/calendar"
+                                    href="/activities"
                                     class="text-muted text-decoration-none"
-                                    >Calendar</a
+                                    >Activity</a
                                 >
                                 <a
                                     href="/progress"
+                                    hx-boost="false"
                                     class="text-muted text-decoration-none"
                                     >Progress</a
                                 >
@@ -222,100 +200,56 @@
             </div>
         </div>
 
-        <nav class="mobile-bottom-nav d-lg-none" aria-label="Mobile bottom navigation">
+        <nav
+            class="mobile-bottom-nav d-lg-none"
+            aria-label="Mobile bottom navigation"
+        >
             <a class="bottom-nav-link" href="/home" data-nav-path="/home">
-                <i class="bi bi-grid-1x2 bottom-nav-icon" aria-hidden="true"></i>
+                <i
+                    class="bi bi-grid-1x2 bottom-nav-icon"
+                    aria-hidden="true"
+                ></i>
                 <span>Home</span>
             </a>
 
-            <a class="bottom-nav-link" href="/activities" data-nav-path="/activities">
-                <i class="bi bi-bar-chart-line bottom-nav-icon" aria-hidden="true"></i>
+            <a
+                class="bottom-nav-link"
+                href="/activities"
+                data-nav-path="/activities"
+            >
+                <i
+                    class="bi bi-bar-chart-line bottom-nav-icon"
+                    aria-hidden="true"
+                ></i>
                 <span>Activity</span>
             </a>
 
-            <a class="bottom-nav-link bottom-nav-primary" href="/log" data-nav-path="/log">
+            <a
+                class="bottom-nav-link bottom-nav-primary"
+                href="/log"
+                data-nav-path="/log"
+            >
                 <i class="bi bi-plus-lg bottom-nav-icon" aria-hidden="true"></i>
                 <span>Log</span>
             </a>
 
-            <a class="bottom-nav-link" href="/plan" data-nav-path="/plan">
-                <i class="bi bi-calendar2-week bottom-nav-icon" aria-hidden="true"></i>
-                <span>Plan</span>
+            <a
+                class="bottom-nav-link"
+                href="/progress"
+                data-nav-path="/progress"
+            >
+                <i class="bi bi-trophy bottom-nav-icon" aria-hidden="true"></i>
+                <span>Progress</span>
             </a>
 
             <a class="bottom-nav-link" href="/profile" data-nav-path="/profile">
-                <i class="bi bi-person-circle bottom-nav-icon" aria-hidden="true"></i>
+                <i
+                    class="bi bi-person-circle bottom-nav-icon"
+                    aria-hidden="true"
+                ></i>
                 <span>Profile</span>
             </a>
         </nav>
-
-        <div id="toast-container" class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
-            {% if toast_message %}
-                {% include "_partials/_toast.html" %}
-            {% endif %}
-        </div>
-
-        <div
-            class="offcanvas offcanvas-start"
-            tabindex="-1"
-            id="mobileNavigation"
-            aria-labelledby="mobileNavigationLabel"
-        >
-            <div class="offcanvas-header border-bottom">
-                <div class="d-flex align-items-center gap-3">
-                    <div>
-                        <h2
-                            class="h4 mb-0 text-primary fw-bolder text-decoration-none text-uppercase"
-                            id="mobileNavigationLabel"
-                        >
-                            Fitness64
-                        </h2>
-                    </div>
-                </div>
-                <button
-                    type="button"
-                    class="btn-close"
-                    data-bs-dismiss="offcanvas"
-                    aria-label="Close navigation"
-                ></button>
-            </div>
-
-            <div class="offcanvas-body p-4">
-                <nav
-                    class="nav flex-column gap-1"
-                    aria-label="Mobile navigation"
-                >
-                    <a class="nav-link rounded-3" href="/home"
-                        ><i class="bi bi-grid-1x2 me-3"></i>Dashboard</a
-                    >
-                    <a class="nav-link rounded-3" href="/log"
-                        ><i class="bi bi-plus-circle me-3"></i>Log Activity</a
-                    >
-                    <a class="nav-link rounded-3" href="/activities"
-                        ><i class="bi bi-bar-chart-line me-3"></i>Activity
-                        History</a
-                    >
-                    <a class="nav-link rounded-3" href="/plan"
-                        ><i class="bi bi-calendar2-week me-3"></i>Weekly Plan</a
-                    >
-                    <a class="nav-link rounded-3" href="/calendar"
-                        ><i class="bi bi-calendar3 me-3"></i>Calendar</a
-                    >
-                    <a class="nav-link rounded-3" href="/progress"
-                        ><i class="bi bi-trophy me-3"></i>Progress</a
-                    >
-                    <a class="nav-link rounded-3" href="/races"
-                        ><i class="bi bi-flag me-3"></i>Races</a
-                    >
-                    <a class="nav-link rounded-3" href="/tcx/upload"
-                        ><i class="bi bi-upload me-3"></i>Import TCX</a
-                    >
-                    <a class="nav-link rounded-3" href="/profile"
-                        ><i class="bi bi-person-circle me-3"></i>Profile</a
-                    >
-                </nav>
-            </div>
-        </div>
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -323,25 +257,34 @@
             function updateMobileBottomNav() {
                 const currentPath = window.location.pathname;
 
-                document.querySelectorAll(".mobile-bottom-nav .bottom-nav-link").forEach((link) => {
-                    const navPath = link.dataset.navPath;
+                document
+                    .querySelectorAll(".mobile-bottom-nav .bottom-nav-link")
+                    .forEach((link) => {
+                        const navPath = link.dataset.navPath;
 
-                    const isActive =
-                        currentPath === navPath ||
-                        (navPath !== "/home" && currentPath.startsWith(navPath + "/"));
+                        const isActive =
+                            currentPath === navPath ||
+                            (navPath !== "/home" &&
+                                currentPath.startsWith(navPath + "/"));
 
-                    link.classList.toggle("active", isActive);
+                        link.classList.toggle("active", isActive);
 
-                    if (isActive) {
-                        link.setAttribute("aria-current", "page");
-                    } else {
-                        link.removeAttribute("aria-current");
-                    }
-                });
+                        if (isActive) {
+                            link.setAttribute("aria-current", "page");
+                        } else {
+                            link.removeAttribute("aria-current");
+                        }
+                    });
             }
 
-            document.addEventListener("DOMContentLoaded", updateMobileBottomNav);
-            document.body.addEventListener("htmx:afterSettle", updateMobileBottomNav);
+            document.addEventListener(
+                "DOMContentLoaded",
+                updateMobileBottomNav,
+            );
+            document.body.addEventListener(
+                "htmx:afterSettle",
+                updateMobileBottomNav,
+            );
             window.addEventListener("popstate", updateMobileBottomNav);
         </script>
 

@@ -105,33 +105,6 @@ class RaceService(database: Database) {
     }
 
     /**
-     * Retrieves a single race record by its ID.
-     *
-     * @param id The ID of the race record to retrieve.
-     * @return The matching [RaceRecord], or null if not found.
-     */
-    suspend fun getRace(id: Int): RaceRecord? = dbQuery {
-        RaceRecords.selectAll()
-            .where { RaceRecords.id eq id }
-            .map {
-                RaceRecord(
-                    id = it[RaceRecords.id],
-                    userId = it[RaceRecords.userId],
-                    eventName = it[RaceRecords.eventName],
-                    eventDate = it[RaceRecords.eventDate],
-                    location = it[RaceRecords.location],
-                    category = it[RaceRecords.category],
-                    finishTime = it[RaceRecords.finishTime],
-                    overallRank = it[RaceRecords.overallRank],
-                    categoryRank = it[RaceRecords.categoryRank],
-                    isPersonalBest = it[RaceRecords.isPersonalBest],
-                    certificateUrl = it[RaceRecords.certificateUrl]
-                )
-            }
-            .singleOrNull()
-    }
-
-    /**
      * Retrieves all race records belonging to a specific user.
      *
      * @param userIdValue The ID of the user whose races to retrieve.
@@ -158,15 +131,6 @@ class RaceService(database: Database) {
     }
 
     /**
-     * Deletes a race record from the database by its ID.
-     *
-     * @param id The ID of the race record to delete.
-     */
-    suspend fun deleteRace(id: Int) = dbQuery {
-        RaceRecords.deleteWhere { RaceRecords.id eq id }
-    }
-
-    /**
      * Updates a race record with new finish time, rank, and personal best status.
      *
      * @param id The ID of the race record to update.
@@ -175,11 +139,14 @@ class RaceService(database: Database) {
      * @param isPersonalBest Whether this result is now marked as a personal best.
      * @param notes Unused parameter reserved for future note support.
      */
-    suspend fun updateRace(id: Int, finishTime: String?, overallRank: Int?, isPersonalBest: Boolean, notes: String) = dbQuery {
+    suspend fun updateRace(id: Int, finishTime: String?, overallRank: Int?, isPersonalBest: Boolean, notes: String, date: String? = null) = dbQuery {
         RaceRecords.update({ RaceRecords.id eq id }) {
             it[RaceRecords.finishTime] = finishTime
             it[RaceRecords.overallRank] = overallRank
             it[RaceRecords.isPersonalBest] = isPersonalBest
+            if (date != null) {
+                it[RaceRecords.eventDate] = date
+            }
         }
     }
 

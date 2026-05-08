@@ -94,40 +94,6 @@ data class WeightliftingHistoryItem(
     val name: String? = null
 )
 
-@Serializable
-data class WeightliftingCreateRequest(
-    val logDate: String,
-    val duration: Int,
-    val notes: String? = null,
-    val exercises: List<WeightliftingLoggedExercise>
-)
-
-@Serializable
-data class WeightliftingUpdateRequest(
-    val duration: Int? = null,
-    val notes: String? = null
-)
-
-@Serializable
-data class WeightliftingApiResponse(
-    val id: Int,
-    val logDate: String,
-    val duration: Int,
-    val notes: String? = null,
-    val totalSets: Int,
-    val exercises: List<WeightliftingWorkoutEntry>
-)
-
-/**
- * Response wrapper for listing weightlifting sessions via the API.
- *
- * @property sessions The list of weightlifting session responses.
- */
-@Serializable
-data class WeightliftingListResponse(
-    val sessions: List<WeightliftingApiResponse>
-)
-
 /**
  * Service class responsible for all database operations related to weightlifting sessions.
  * Handles creation and retrieval of workout logs and their associated exercises.
@@ -260,12 +226,15 @@ class WeightliftingService(database: Database) {
      * @param notes The new session notes.
      * @param name Optional new custom workout name.
      */
-    suspend fun updateWorkoutSession(id: Int, duration: Int, notes: String, name: String? = null) = dbQuery {
+    suspend fun updateWorkoutSession(id: Int, duration: Int, notes: String, name: String? = null, date: String? = null) = dbQuery {
         WeightliftingWorkoutLogs.update({ WeightliftingWorkoutLogs.id eq id }) {
             it[WeightliftingWorkoutLogs.duration] = duration
             it[WeightliftingWorkoutLogs.notes] = notes
             if (name != null) {
                 it[WeightliftingWorkoutLogs.workoutName] = name
+            }
+            if (date != null) {
+                it[WeightliftingWorkoutLogs.logDate] = date
             }
         }
     }
@@ -288,58 +257,6 @@ class WeightliftingService(database: Database) {
                 it[weight] = exercise.weight
             }
         }
-    }
-
-    /**
-     * Retrieves a single weightlifting session by its ID for a specific user.
-     *
-     * @param id The ID of the session to retrieve.
-     * @param userIdValue The ID of the user who owns the session.
-     * @return A [WeightliftingHistoryItem] for the session, or null if not found.
-     */
-    suspend fun getWorkoutSessionById(id: Int, userIdValue: Int): WeightliftingHistoryItem? = dbQuery {
-        val rows = (WeightliftingWorkoutLogs innerJoin WeightliftingSessionExercises)
-            .selectAll()
-            .where { (WeightliftingWorkoutLogs.id eq id) and (WeightliftingWorkoutLogs.userId eq userIdValue) }
-            .map { row ->
-                WeightliftingWorkoutEntry(
-                    exerciseName = row[WeightliftingSessionExercises.exerciseName],
-                    sets = row[WeightliftingSessionExercises.sets],
-                    reps = row[WeightliftingSessionExercises.reps],
-                    weight = row[WeightliftingSessionExercises.weight]
-                )
-            }
-
-        if (rows.isEmpty()) return@dbQuery null
-
-        val workoutRow = (WeightliftingWorkoutLogs innerJoin WeightliftingSessionExercises)
-            .selectAll()
-            .where { (WeightliftingWorkoutLogs.id eq id) and (WeightliftingWorkoutLogs.userId eq userIdValue) }
-            .first()
-
-        WeightliftingHistoryItem(
-            id = workoutRow[WeightliftingWorkoutLogs.id],
-            logDate = workoutRow[WeightliftingWorkoutLogs.logDate],
-            duration = workoutRow[WeightliftingWorkoutLogs.duration],
-            notes = workoutRow[WeightliftingWorkoutLogs.notes],
-            totalSets = rows.sumOf { it.sets },
-            exercises = rows,
-            name = workoutRow[WeightliftingWorkoutLogs.workoutName]
-        )
-    }
-
-    /**
-     * Deletes a weightlifting session and all its exercises.
-     *
-     * @param id The ID of the session to delete.
-     * @param userIdValue The ID of the user who owns the session (for ownership verification).
-     * @return True if a session was deleted, false if no matching session was found.
-     */
-    suspend fun deleteWorkoutSession(id: Int, userIdValue: Int): Boolean = dbQuery {
-        val deleted = WeightliftingWorkoutLogs.deleteWhere {
-            (WeightliftingWorkoutLogs.id eq id) and (WeightliftingWorkoutLogs.userId eq userIdValue)
-        }
-        deleted > 0
     }
 
     /**

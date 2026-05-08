@@ -2,13 +2,17 @@
     <div class="col-lg-5">
         <div class="card shadow-soft h-100">
             <div class="card-body p-5">
-                <div class="avatar avatar-xl bg-primary text-white rounded-5 mb-4">
+                <div
+                    class="avatar avatar-xl bg-primary text-white rounded-5 mb-4"
+                >
                     <i aria-hidden="true" class="bi bi-person-fill fs-2"></i>
                 </div>
                 <h3 class="h4 mb-1">{{ name }}</h3>
                 <p class="text-muted mb-4">{{ email }}</p>
                 <div class="d-flex align-items-center gap-3">
-                    <span class="badge bg-primary-subtle text-primary rounded-pill">
+                    <span
+                        class="badge bg-primary-subtle text-primary rounded-pill"
+                    >
                         {{ fitnessLevel | default("Not set") }}
                     </span>
                     <span class="text-sm text-muted">Fitness level</span>
@@ -21,7 +25,9 @@
             <div class="col-12">
                 <div class="card card-hover">
                     <div class="card-body p-5">
-                        <span class="stat-icon bg-success-subtle text-success mb-4">
+                        <span
+                            class="stat-icon bg-success-subtle text-success mb-4"
+                        >
                             <i aria-hidden="true" class="bi bi-bullseye"></i>
                         </span>
                         <h3 class="h5">Goals</h3>
@@ -40,14 +46,16 @@
                         <h3 class="h5">Preferred Activities</h3>
                         <div class="d-flex flex-wrap gap-2">
                             {% if activities is empty %}
-                                <span class="text-muted">No preferred activities set</span>
-                            {% else %}
-                                {% for activity in activities %}
-                                    <span class="badge bg-body-secondary text-heading rounded-pill">
-                                        {{ activity }}
-                                    </span>
-                                {% endfor %}
-                            {% endif %}
+                            <span class="text-muted"
+                                >No preferred activities set</span
+                            >
+                            {% else %} {% for activity in activities %}
+                            <span
+                                class="badge bg-body-secondary text-heading rounded-pill"
+                            >
+                                {{ activity }}
+                            </span>
+                            {% endfor %} {% endif %}
                         </div>
                     </div>
                 </div>
@@ -55,7 +63,9 @@
             <div class="col-md-6">
                 <div class="card card-hover h-100">
                     <div class="card-body p-5">
-                        <span class="stat-icon bg-warning-subtle text-warning mb-4">
+                        <span
+                            class="stat-icon bg-warning-subtle text-warning mb-4"
+                        >
                             <i aria-hidden="true" class="bi bi-people"></i>
                         </span>
                         <h3 class="h5">Community</h3>

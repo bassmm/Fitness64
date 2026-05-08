@@ -3,7 +3,6 @@ package com.fitness64.core
 import com.fitness64.schema.ActivityService
 import com.fitness64.schema.WorkoutLog
 import java.time.LocalDate
-import java.time.format.TextStyle
 import java.util.*
 import kotlin.math.roundToInt
 

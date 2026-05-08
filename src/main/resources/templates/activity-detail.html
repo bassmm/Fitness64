@@ -1,19 +1,26 @@
-{% extends "base" %}
-
-{% block title %}{{ activity.title }}{% endblock %}
-{% block page_heading %}{{ activity.title }}{% endblock %}
-
-{% block content %}
-<div class="d-flex flex-column flex-lg-row align-items-lg-end justify-content-between gap-3 mb-5">
+{% extends "base" %} {% block title %}{{ activity.title }}{% endblock %} {%
+block page_heading %}{{ activity.title }}{% endblock %} {% block head %}
+<link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+/>
+{% endblock %} {% block content %}
+<div
+    class="d-flex flex-column flex-lg-row align-items-lg-end justify-content-between gap-3 mb-5"
+>
     <div>
         <p class="page-kicker mb-1">{{ activity.category }}</p>
         <h2 class="h3 mb-1">{{ activity.title }}</h2>
         <p class="text-muted mb-0">{{ activity.date }}</p>
     </div>
-    <button class="btn btn-primary"
+    <button
+        class="btn btn-primary"
         hx-get="/activities/{{ activity.id }}/edit"
         hx-target="#activity-edit-area"
-        hx-swap="innerHTML">
+        hx-swap="innerHTML"
+    >
         <i aria-hidden="true" class="bi bi-pencil-square me-2"></i>Edit Activity
     </button>
 </div>
@@ -24,7 +31,159 @@
 
 <div class="mt-5">
     <a class="btn btn-neutral" href="/activities">
-        <i aria-hidden="true" class="bi bi-arrow-left me-2"></i>Back to Activities
+        <i aria-hidden="true" class="bi bi-arrow-left me-2"></i>Back to
+        Activities
     </a>
 </div>
-{% endblock %}
+{% endblock %} {% block scripts %} {% if activity.type == "cardio" %} {% if
+activity.heartRateData is not empty %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const heartRateData = [
+        {% for point in activity.heartRateData %}
+            { label: "{{ point.label }}", bpm: {{ point.bpm }} }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    new Chart(document.getElementById('heartRateChart'), {
+        type: 'line',
+        data: {
+            labels: heartRateData.map(p => p.label),
+            datasets: [{
+                label: 'Heart Rate (BPM)',
+                data: heartRateData.map(p => p.bpm),
+                borderColor: 'rgba(185, 28, 28, 1)',
+                backgroundColor: 'rgba(185, 28, 28, 0.1)',
+                fill: true,
+                tension: 0.3,
+                pointRadius: 0,
+                pointHitRadius: 6,
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    callbacks: {
+                        title: (items) => items[0].label,
+                        label: (item) => `${item.raw} BPM`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    display: true,
+                    grid: { display: false },
+                    ticks: {
+                        maxTicksLimit: 8,
+                        maxRotation: 0,
+                        font: { size: 10 }
+                    }
+                },
+                y: {
+                    display: true,
+                    beginAtZero: false,
+                    grid: { color: 'rgba(0,0,0,0.05)' },
+                    ticks: {
+                        font: { size: 10 },
+                        callback: (v) => v + ' bpm'
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endif %} {% if activity.laps is not empty %}
+<!-- Leaflet -->
+<script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+></script>
+
+<!-- Maplibre GL -->
+<link
+    href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"
+    rel="stylesheet"
+    integrity="sha256-V2sIX92Uh6ZaGSFTKMHghsB85b9toJtmazgG09AI2uk="
+    crossorigin=""
+/>
+<script
+    src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"
+    integrity="sha256-vpYzxNhw4m+zfxz+XFp3GBZnEUAD6hYgeseFDY2ordE="
+    crossorigin=""
+></script>
+
+<!-- Maplibre GL Leaflet  -->
+<script
+    src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.3/leaflet-maplibre-gl.js"
+    integrity="sha256-HDM2eWLndVwaFtH4Vlj9yWtbqjb4Gt/KlJMXTNG1Js4="
+    crossorigin=""
+></script>
+<script>
+    const laps = [
+        {% for lap in activity.laps %}
+        { lapNumber: {{ lap.lapNumber }}, color: "{{ lap.color }}", points: [
+            {% for pt in lap.points %}
+                [{{ pt[0] }}, {{ pt[1] }}]{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ]}{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    const map = L.map('route-map', { zoomControl: false });
+    L.control.zoom({ position: 'topright' }).addTo(map);
+
+    L.maplibreGL({
+      style: 'https://tiles.openfreemap.org/styles/bright',
+    }).addTo(map)
+
+
+    let allBounds = [];
+    let firstPoint = null;
+    let lastPoint = null;
+
+    laps.forEach(lap => {
+        const coords = lap.points.map(p => [p[0], p[1]]);
+        L.polyline(coords, {
+            color: lap.color,
+            weight: 4,
+            opacity: 0.9,
+            lineJoin: 'round'
+        }).addTo(map);
+
+        allBounds.push(...coords);
+        if (!firstPoint && coords.length > 0) firstPoint = coords[0];
+        if (coords.length > 0) lastPoint = coords[coords.length - 1];
+    });
+
+    if (firstPoint) {
+        L.circleMarker(firstPoint, {
+            radius: 7,
+            color: '#fff',
+            weight: 2,
+            fillColor: '#22c55e',
+            fillOpacity: 1
+        }).addTo(map).bindPopup('Start');
+    }
+
+    if (lastPoint) {
+        L.circleMarker(lastPoint, {
+            radius: 7,
+            color: '#fff',
+            weight: 2,
+            fillColor: '#ef4444',
+            fillOpacity: 1
+        }).addTo(map).bindPopup('Finish');
+    }
+
+    if (allBounds.length > 0) {
+        map.fitBounds(allBounds, { padding: [20, 20] });
+    }
+</script>
+{% endif %} {% endif %} {% endblock %}

@@ -1,18 +1,33 @@
 <div class="card shadow-soft">
     <div class="card-body p-5 text-center">
         <div class="mb-4">
-            <span class="icon icon-lg bg-success-subtle text-success rounded-circle p-3">
-                <i aria-hidden="true" class="bi bi-check-lg" style="font-size: 2rem;"></i>
+            <span
+                class="icon icon-lg bg-success-subtle text-success rounded-circle p-3"
+            >
+                <i
+                    aria-hidden="true"
+                    class="bi bi-check-lg"
+                    style="font-size: 2rem"
+                ></i>
             </span>
         </div>
         <h3 class="h4 mb-2">Activity logged!</h3>
-        <p class="text-muted mb-4">{{ successMessage | default("Your activity has been saved.") }}</p>
+        <p class="text-muted mb-4">
+            {{ successMessage | default("Your activity has been saved.") }}
+        </p>
         <div class="d-flex flex-wrap justify-content-center gap-3">
-            <button hx-get="/log/picker" hx-target="#log-form-area" hx-swap="innerHTML" class="btn btn-primary">
-                <i aria-hidden="true" class="bi bi-plus-circle me-2"></i>Log another activity
+            <button
+                hx-get="/log/picker"
+                hx-target="#log-form-area"
+                hx-swap="innerHTML"
+                class="btn btn-primary"
+            >
+                <i aria-hidden="true" class="bi bi-plus-circle me-2"></i>Log
+                another activity
             </button>
-            <a href="/calendar" class="btn btn-neutral">
-                <i aria-hidden="true" class="bi bi-calendar3 me-2"></i>View calendar
+            <a href="/activities" class="btn btn-neutral">
+                <i aria-hidden="true" class="bi bi-calendar3 me-2"></i>View
+                Activities
             </a>
         </div>
     </div>

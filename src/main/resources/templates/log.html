@@ -1,16 +1,12 @@
-{% extends "base" %}
-
-{% block title %}Log Activity{% endblock %}
-{% block page_heading %}Log Activity{% endblock %}
-
-{% block content %}
+{% extends "base" %} {% block title %}Log Activity{% endblock %} {% block
+page_heading %}Log Activity{% endblock %} {% block content %}
 <div class="mb-5">
-    <p class="page-kicker">Fast entry</p>
+    <p class="page-kicker">Log</p>
     <h2 class="h3 mb-2">What are you training right now?</h2>
-    <p class="page-summary mb-0">Choose an activity type and date, then log it right here.</p>
+    <p class="page-summary mb-0">
+        Choose an activity type and date, then log it right here.
+    </p>
 </div>
 
-<div id="log-form-area">
-    {% include "_partials/_log-picker" %}
-</div>
+<div id="log-form-area">{% include "_partials/_log-picker" %}</div>
 {% endblock %}

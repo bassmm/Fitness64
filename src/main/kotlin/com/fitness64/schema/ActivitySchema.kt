@@ -31,34 +31,6 @@ data class ActivityType(
 )
 
 /**
- * Represents a specific exercise within an activity type.
- *
- * @property name The name of the exercise (e.g. Bench Press).
- * @property activityTypeId The ID of the associated activity type.
- * @property category Optional muscle group or exercise category (e.g. Chest, Legs).
- * @property measurementType How the exercise is measured (e.g. reps, time).
- */
-@Serializable
-data class Exercise(
-    val name: String,
-    val activityTypeId: Int,
-    val category: String? = null,
-    val measurementType: String? = null
-)
-
-/**
- * A simplified exercise representation used for dropdown options in the UI.
- *
- * @property id The exercise ID.
- * @property name The exercise name.
- */
-@Serializable
-data class ExerciseOption(
-    val id: Int,
-    val name: String
-)
-
-/**
  * Represents a logged workout session for any activity type.
  *
  * @property id The auto-generated workout log ID, or null for new entries.
@@ -111,24 +83,6 @@ data class CardioHistoryItem(
 )
 
 /**
- * Represents a specific exercise performed within a workout session.
- *
- * @property workoutLogId The ID of the parent workout log.
- * @property exerciseId The ID of the exercise performed.
- * @property sets Number of sets completed.
- * @property reps Number of repetitions per set.
- * @property weight Weight used in kg.
- */
-@Serializable
-data class WorkoutExercise(
-    val workoutLogId: Int,
-    val exerciseId: Int,
-    val sets: Int,
-    val reps: Int,
-    val weight: Double
-)
-
-/**
  * Represents a single lap within a cardio workout, used for TCX imports.
  *
  * @property workoutLogId The ID of the parent workout log.
@@ -139,6 +93,7 @@ data class WorkoutExercise(
  */
 @Serializable
 data class WorkoutLap(
+    val id: Int = 0,
     val workoutLogId: Int,
     val startTime: String,
     val totalTimeSeconds: Int,
@@ -206,19 +161,6 @@ class ActivityService(database: Database) {
     }
 
     /**
-     * Database table for exercises associated with activity types.
-     */
-    object Exercises : Table("exercises") {
-        val id = integer("exercise_id").autoIncrement()
-        val name = varchar("name", 255)
-        val activityTypeId = integer("activity_type_id").references(ActivityTypes.id)
-        val category = varchar("category", 100).nullable()
-        val measurementType = varchar("measurement_type", 50).nullable()
-
-        override val primaryKey = PrimaryKey(id)
-    }
-
-    /**
      * Database table for individual workout log entries.
      */
     object WorkoutLogs : Table("workout_logs") {
@@ -232,20 +174,6 @@ class ActivityService(database: Database) {
         val calories = integer("calories").nullable()
         val workoutSource = varchar("source", 50).nullable()
         val workoutName = varchar("name", 255).nullable()
-
-        override val primaryKey = PrimaryKey(id)
-    }
-
-    /**
-     * Database table linking workout logs to specific exercises with sets, reps and weight.
-     */
-    object WorkoutExercises : Table("workout_exercises") {
-        val id = integer("workout_exercise_id").autoIncrement()
-        val workoutLogId = integer("workout_log_id").references(WorkoutLogs.id)
-        val exerciseId = integer("exercise_id").references(Exercises.id)
-        val sets = integer("sets")
-        val reps = integer("reps")
-        val weight = double("weight")
 
         override val primaryKey = PrimaryKey(id)
     }
@@ -284,9 +212,7 @@ class ActivityService(database: Database) {
         transaction(database) {
             SchemaUtils.create(
                 ActivityTypes,
-                Exercises,
                 WorkoutLogs,
-                WorkoutExercises,
                 WorkoutLaps,
                 Trackpoints
             )
@@ -340,52 +266,6 @@ class ActivityService(database: Database) {
     suspend fun getOrCreateActivityType(typeName: String): Int {
         val existingActivityTypeId = getActivityTypeByName(typeName)
         return existingActivityTypeId ?: createActivityType(ActivityType(typeName))
-    }
-
-    /**
-     * Creates a new exercise in the database.
-     *
-     * @param exercise The exercise to create.
-     * @return The auto-generated ID of the new exercise.
-     */
-    suspend fun createExercise(exercise: Exercise): Int = dbQuery {
-        Exercises.insert {
-            it[name] = exercise.name
-            it[activityTypeId] = exercise.activityTypeId
-            it[category] = exercise.category
-            it[measurementType] = exercise.measurementType
-        }[Exercises.id]
-    }
-
-    /**
-     * Finds an exercise by name and returns its ID.
-     *
-     * @param exerciseName The name of the exercise to look up.
-     * @return The ID of the matching exercise, or null if not found.
-     */
-    suspend fun getExerciseByName(exerciseName: String): Int? = dbQuery {
-        Exercises.selectAll()
-            .where { Exercises.name eq exerciseName }
-            .map { it[Exercises.id] }
-            .singleOrNull()
-    }
-
-    /**
-     * Retrieves all exercises belonging to a specific activity type.
-     *
-     * @param activityTypeIdValue The ID of the activity type to filter by.
-     * @return A sorted list of [ExerciseOption] objects for the given activity type.
-     */
-    suspend fun getExercisesByActivityType(activityTypeIdValue: Int): List<ExerciseOption> = dbQuery {
-        Exercises.selectAll()
-            .where { Exercises.activityTypeId eq activityTypeIdValue }
-            .map {
-                ExerciseOption(
-                    id = it[Exercises.id],
-                    name = it[Exercises.name]
-                )
-            }
-            .sortedBy { it.name }
     }
 
     /**
@@ -447,7 +327,7 @@ class ActivityService(database: Database) {
      * @param activityTypeId The new activity type ID, or null to leave unchanged.
      * @param name The new custom workout name, or null to leave unchanged.
      */
-    suspend fun updateWorkoutLog(id: Int, duration: Int, distance: Double?, notes: String, calories: Int?, activityTypeId: Int?, name: String?) = dbQuery {
+    suspend fun updateWorkoutLog(id: Int, duration: Int, distance: Double?, notes: String, calories: Int?, activityTypeId: Int?, name: String?, date: String? = null) = dbQuery {
         WorkoutLogs.update({ WorkoutLogs.id eq id }) {
             it[WorkoutLogs.duration] = duration
             it[WorkoutLogs.distance] = distance
@@ -458,6 +338,9 @@ class ActivityService(database: Database) {
             }
             if (name != null) {
                 it[WorkoutLogs.workoutName] = name
+            }
+            if (date != null) {
+                it[WorkoutLogs.logDate] = date
             }
         }
     }
@@ -565,15 +448,6 @@ class ActivityService(database: Database) {
     }
 
     /**
-     * Deletes a workout log from the database by its ID.
-     *
-     * @param id The ID of the workout log to delete.
-     */
-    suspend fun deleteWorkoutLog(id: Int) = dbQuery {
-        WorkoutLogs.deleteWhere { WorkoutLogs.id eq id }
-    }
-
-    /**
      * Creates a new workout lap entry in the database.
      *
      * @param lap The lap data to save.
@@ -625,6 +499,22 @@ class ActivityService(database: Database) {
                     altitude = it[Trackpoints.altitude],
                     distance = it[Trackpoints.distance],
                     heartRate = it[Trackpoints.heartRate]
+                )
+            }
+    }
+
+    suspend fun getLapsForWorkoutLog(workoutLogId: Int): List<WorkoutLap> = dbQuery {
+        WorkoutLaps.selectAll()
+            .where { WorkoutLaps.workoutLogId eq workoutLogId }
+            .orderBy(WorkoutLaps.id to SortOrder.ASC)
+            .map {
+                WorkoutLap(
+                    id = it[WorkoutLaps.id],
+                    workoutLogId = it[WorkoutLaps.workoutLogId],
+                    startTime = it[WorkoutLaps.startTime],
+                    totalTimeSeconds = it[WorkoutLaps.totalTimeSeconds],
+                    distance = it[WorkoutLaps.distance],
+                    calories = it[WorkoutLaps.calories]
                 )
             }
     }

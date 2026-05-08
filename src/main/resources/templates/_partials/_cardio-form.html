@@ -1,16 +1,38 @@
 <div class="card shadow-soft">
     <div class="card-body p-5">
         {% if error %}
-            <div class="alert alert-danger d-flex align-items-center gap-2" role="alert"><i aria-hidden="true" class="bi bi-exclamation-triangle-fill"></i><span>{{ error }}</span></div>
+        <div
+            class="alert alert-danger d-flex align-items-center gap-2"
+            role="alert"
+        >
+            <i aria-hidden="true" class="bi bi-exclamation-triangle-fill"></i
+            ><span>{{ error }}</span>
+        </div>
         {% endif %}
 
-        <form hx-post="/log/submit" hx-target="#log-form-area" hx-swap="innerHTML" class="row g-4">
-            <input type="hidden" name="type" value="{{ selectedType }}">
-            <input type="hidden" name="activityDate" value="{{ activityDate }}">
+        <form
+            hx-post="/log/submit"
+            hx-target="#log-form-area"
+            hx-swap="innerHTML"
+            class="row g-4"
+        >
+            <input type="hidden" name="type" value="{{ selectedType }}" />
+            <input
+                type="hidden"
+                name="activityDate"
+                value="{{ activityDate }}"
+            />
 
             <div class="col-12">
-                <button type="button" hx-get="/log/picker" hx-target="#log-form-area" hx-swap="innerHTML" class="btn btn-sm btn-neutral">
-                    <i aria-hidden="true" class="bi bi-arrow-left me-1"></i>Change activity
+                <button
+                    type="button"
+                    hx-get="/log/picker"
+                    hx-target="#log-form-area"
+                    hx-swap="innerHTML"
+                    class="btn btn-sm btn-neutral"
+                >
+                    <i aria-hidden="true" class="bi bi-arrow-left me-1"></i
+                    >Change activity
                 </button>
             </div>
 
@@ -20,32 +42,83 @@
 
             <div class="col-md-6">
                 <label class="form-label" for="name">Activity Name</label>
-                <input class="form-control" id="name" name="name" type="text" placeholder="{{ selectedType }} Session" value="{{ name | default('') }}">
+                <input
+                    class="form-control"
+                    id="name"
+                    name="name"
+                    type="text"
+                    placeholder="{{ selectedType }} Session"
+                    value="{{ name | default('') }}"
+                />
             </div>
 
             <div class="col-md-6">
-                <label class="form-label" for="duration">Duration (minutes)</label>
-                <input class="form-control" id="duration" name="duration" type="text" placeholder="e.g. 30 min" value="{{ duration }}" required>
+                <label class="form-label" for="duration"
+                    >Duration (minutes)</label
+                >
+                <input
+                    class="form-control"
+                    id="duration"
+                    name="duration"
+                    type="text"
+                    placeholder="e.g. 30 min"
+                    value="{{ duration }}"
+                    required
+                />
             </div>
 
             <div class="col-md-6">
                 <label class="form-label" for="distance">Distance (km)</label>
-                <input class="form-control" id="distance" name="distance" type="number" step="0.01" min="0" placeholder="Optional" value="{{ distance }}">
+                <input
+                    class="form-control"
+                    id="distance"
+                    name="distance"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="Optional"
+                    value="{{ distance }}"
+                />
             </div>
 
             <div class="col-md-6">
                 <label class="form-label" for="calories">Calories</label>
-                <input class="form-control" id="calories" name="calories" type="number" min="0" placeholder="Optional">
+                <input
+                    class="form-control"
+                    id="calories"
+                    name="calories"
+                    type="number"
+                    min="0"
+                    placeholder="Optional"
+                />
             </div>
 
             <div class="col-md-6">
                 <label class="form-label" for="notes">Notes</label>
-                <input class="form-control" id="notes" name="notes" type="text" placeholder="Optional notes" value="{{ notes }}">
+                <input
+                    class="form-control"
+                    id="notes"
+                    name="notes"
+                    type="text"
+                    placeholder="Optional notes"
+                    value="{{ notes }}"
+                />
             </div>
 
             <div class="col-12 d-flex flex-wrap gap-3">
-                <button class="btn btn-primary" type="submit"><i aria-hidden="true" class="bi bi-check2-circle me-2"></i>Save Activity</button>
-                <button type="button" hx-get="/log/picker" hx-target="#log-form-area" hx-swap="innerHTML" class="btn btn-neutral">Cancel</button>
+                <button class="btn btn-primary" type="submit">
+                    <i aria-hidden="true" class="bi bi-check2-circle me-2"></i
+                    >Save Activity
+                </button>
+                <button
+                    type="button"
+                    hx-get="/log/picker"
+                    hx-target="#log-form-area"
+                    hx-swap="innerHTML"
+                    class="btn btn-neutral"
+                >
+                    Cancel
+                </button>
             </div>
         </form>
     </div>

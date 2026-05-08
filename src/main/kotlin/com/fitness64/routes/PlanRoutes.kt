@@ -9,7 +9,6 @@
 package com.fitness64.routes
 
 import com.fitness64.core.requireAuthenticatedUser
-import com.fitness64.core.getStartOfWeek
 import com.fitness64.schema.PlanService
 import com.fitness64.schema.UserService
 import io.ktor.server.application.*
@@ -18,7 +17,6 @@ import io.ktor.server.pebble.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import java.time.LocalDate
 
 /**
  * Registers all training plan related routes on the application.
@@ -63,7 +61,7 @@ fun Application.configurePlanRoutes(
              * POST /onboarding
              * Processes the onboarding form submission.
              * Generates a new training plan for the user based on their selected plan type.
-             * Redirects to /plan on success, or re-renders the form with an error if no plan was selected.
+              * Redirects to /home on success, or re-renders the form with an error if no plan was selected.
              */
             post("/onboarding") {
                 val auth = call.requireAuthenticatedUser(userService) ?: return@post
@@ -92,57 +90,14 @@ fun Application.configurePlanRoutes(
                 }
 
                 planService.generatePlanForType(userId, planType)
-                call.respondRedirect("/plan")
-            }
-
-            /**
-             * GET /plan
-             * Displays the user's current weekly training plan.
-             * Maps each session to its corresponding calendar date for the current week.
-             */
-            get("/plan") {
-                val auth = call.requireAuthenticatedUser(userService) ?: return@get
-                val (user, userId) = auth
-
-                val startOfWeek = getStartOfWeek(LocalDate.now())
-                val planFromDatabase = planService.getPlan(userId)
-                val currentPlanType = planService.getPlanType(userId) ?: "No plan selected"
-
-                val weeklyPlan = planFromDatabase.mapIndexed { index, entry ->
-                    val date = startOfWeek.plusDays(index.toLong())
-                    mapOf(
-                        "day" to entry.day,
-                        "date" to date.toString(),
-                        "session" to entry.session,
-                        "durationMinutes" to entry.durationMinutes,
-                        "intensity" to entry.intensity,
-                        "isRestDay" to entry.isRestDay
-                    )
-                }
-
-                call.respondTemplate(
-                    "plan",
-                    mapOf(
-                        "weeklyPlan" to weeklyPlan,
-                        "fitnessLevel" to (user.fitnessLevel ?: "Beginner"),
-                        "planType" to currentPlanType
-                    )
-                )
-            }
-
-            /**
-             * POST /plan/generate
-             * Redirects to the onboarding page to allow the user to select a new plan type.
-             */
-            post("/plan/generate") {
-                call.respondRedirect("/onboarding")
+                call.respondRedirect("/home")
             }
 
             /**
              * GET /plan/update-session
              * Displays the form for updating a specific day's planned session.
              * Pre-fills the form with the current session details for that day.
-             * Redirects to /plan if the day parameter is missing or invalid.
+             * Redirects to /home if the day parameter is missing or invalid.
              */
             get("/plan/update-session") {
                 val (_, userId) = call.requireAuthenticatedUser(userService) ?: return@get
@@ -150,13 +105,13 @@ fun Application.configurePlanRoutes(
                 val day = call.request.queryParameters["day"]?.trim().orEmpty()
 
                 if (day.isBlank()) {
-                    call.respondRedirect("/plan")
+                    call.respondRedirect("/home")
                     return@get
                 }
 
                 val currentSession = planService.getPlanSessionByDay(userId, day)
                 if (currentSession == null) {
-                    call.respondRedirect("/plan")
+                    call.respondRedirect("/home")
                     return@get
                 }
 
@@ -177,7 +132,7 @@ fun Application.configurePlanRoutes(
              * POST /plan/update-session
              * Processes the session update form submission.
              * Validates the new session name and updates the plan in the database.
-             * Redirects to /plan on success, or re-renders the form with an error if validation fails.
+             * Redirects to /home on success, or re-renders the form with an error if validation fails.
              */
             post("/plan/update-session") {
                 val (_, userId) = call.requireAuthenticatedUser(userService) ?: return@post
@@ -189,7 +144,7 @@ fun Application.configurePlanRoutes(
                 val newIntensity = params["newIntensity"]?.trim().orEmpty()
 
                 if (day.isBlank()) {
-                    call.respondRedirect("/plan")
+                    call.respondRedirect("/home")
                     return@post
                 }
 
@@ -211,7 +166,7 @@ fun Application.configurePlanRoutes(
                 }
 
                 planService.updatePlanSession(userId, day, newSession, newDuration, newIntensity)
-                call.respondRedirect("/plan")
+                call.respondRedirect("/home")
             }
         }
     }

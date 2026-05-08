@@ -11,7 +11,7 @@
                 >
                     Distance
                 </p>
-                <p class="display-5 fw-bold mb-0">{{ activity.distance }}</p>
+                <p class="display-5 fw-bold mb-0">{{ activity.distance | numberformat("0.00") }}</p>
                 <p class="text-muted mb-0">kilometers</p>
             </div>
         </div>
@@ -48,6 +48,48 @@
     </div>
     {% endif %}
 </div>
+
+{% if activity.heartRateData is not empty %}
+<div class="card shadow-soft mb-4">
+    <div class="card-body p-4">
+        <canvas id="heartRateChart" style="height: 150px;"></canvas>
+    </div>
+</div>
+{% endif %}
+
+{% if activity.laps is not empty %}
+<div class="card shadow-soft mb-4">
+    <div class="card-body p-3">
+        <div id="route-map" style="height: 400px; border-radius: 8px;"></div>
+        <div class="d-flex flex-wrap gap-3 mt-3" id="lap-legend">
+            {% for lap in activity.laps %}
+            <span class="d-flex align-items-center gap-1 small">
+                <span
+                    style="
+                        display: inline-block;
+                        width: 14px;
+                        height: 14px;
+                        border-radius: 3px;
+                        background: {{ lap.color }};
+                    "
+                ></span>
+                Lap {{ lap.lapNumber }}
+            </span>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="alert alert-light border-0 mb-4">
+    <div class="d-flex align-items-center gap-3">
+        <span class="text-muted" style="font-size: 1.5rem;">&#x1F5FA;</span>
+        <div>
+            <p class="mb-0 fw-semibold text-muted">No route data available</p>
+            <p class="mb-0 text-muted small">Upload a TCX file to see your route on a map.</p>
+        </div>
+    </div>
+</div>
+{% endif %}
 
 <div class="card shadow-soft">
     <div class="card-body p-5">
