@@ -7,15 +7,11 @@ import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.pebble.*
 import io.pebbletemplates.pebble.loader.ClasspathLoader
-import io.ktor.server.plugins.methodoverride.*
 import io.ktor.server.response.*
 import io.ktor.server.request.*
 import io.ktor.server.sessions.*
 
 fun Application.configureTemplating() {
-    install(XHttpMethodOverride) {
-        headerName = "_method"
-    }
     install(Pebble) {
         loader(ClasspathLoader().apply {
             prefix = "templates"
@@ -44,37 +40,9 @@ suspend fun ApplicationCall.respondHx(
     respondTemplate(templateName, model)
 }
 
-suspend fun ApplicationCall.respondToast(
-    message: String,
-    type: String = "success",
-    title: String? = null
-) {
-    val model = mutableMapOf<String, Any>(
-        "toast_message" to message,
-        "toast_type" to type
-    )
-    title?.let { model["toast_title"] = it }
-
-    respondHx(
-        templateName = "_partials/_toast",
-        model = model,
-        target = "toast-container",
-        swap = "innerHTML"
-    )
-}
-
 suspend fun ApplicationCall.respondHxRedirect(url: String) {
     response.header("HX-Redirect", url)
     respondText("")
-}
-
-fun ApplicationCall.isHtmxRequest(): Boolean {
-    return request.headers["HX-Request"] == "true"
-}
-
-fun ApplicationCall.acceptsJson(): Boolean {
-    val acceptHeader = request.headers["Accept"] ?: return false
-    return acceptHeader.contains("application/json", ignoreCase = true)
 }
 
 data class AuthenticatedUser(val user: User, val userId: Int)

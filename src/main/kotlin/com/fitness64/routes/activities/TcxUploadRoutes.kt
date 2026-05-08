@@ -7,7 +7,6 @@ import com.fitness64.schema.Trackpoint
 import com.fitness64.schema.UserService
 import com.fitness64.schema.WorkoutLap
 import com.fitness64.schema.WorkoutLog
-import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.PartData
 import io.ktor.http.content.forEachPart
 import io.ktor.server.application.Application

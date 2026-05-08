@@ -38,10 +38,6 @@ fun Application.configureRacesPagesRoutes(
 ) {
     routing {
         authenticate("auth-session") {
-            get("/races") {
-                call.respondRedirect("/activities?filter=races")
-            }
-
             get("/races/log") {
                 val eventDate = call.request.queryParameters["date"] ?: ""
 

@@ -1,5 +1,5 @@
 {% extends "base" %} {% block title %}Home{% endblock %} {% block page_heading
-%}Dashboard{% endblock %} {% block content %}
+%}Home{% endblock %} {% block content %}
 <section class="hero-card card shadow-soft mb-6">
     <div class="card-body p-5 p-lg-6 position-relative z-1">
         <div class="row align-items-center g-5">
@@ -27,8 +27,7 @@
                         Today's Plan
                     </p>
                     <h3 class="h5 mb-2 text-heading text-capitalize">
-                        {{ planType == "custom" ? "Custom" : planType + "
-                        Focused" }}
+                        {{ todaySession.session }}
                     </h3>
                     <p class="text-sm text-muted mb-3">
                         <i aria-hidden="true" class="bi bi-activity me-2"></i>{{
@@ -37,9 +36,13 @@
                     {% if todaySession is not null %}
                     <div class="d-flex flex-column gap-2 text-sm mb-3">
                         <span
-                            ><i aria-hidden="true" class="bi bi-clock me-2"></i
-                            >{{ todaySession.session }}</span
-                        >
+                            ><i
+                                aria-hidden="true"
+                                class="bi bi-calendar me-2"
+                            ></i>
+                            {{ planType == "custom" ? "Custom Plan" : planType +
+                            " Focused" }}
+                        </span>
                         <span
                             ><i
                                 aria-hidden="true"
