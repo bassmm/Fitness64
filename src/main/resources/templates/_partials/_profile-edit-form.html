@@ -39,37 +39,19 @@
                 <option value="">Select fitness level</option>
                 <option
                     value="Beginner"
-                    {%
-                    if
-                    fitnessLevel=""
-                    ="Beginner"
-                    %}selected{%
-                    endif
-                    %}
+                    {% if fitnessLevel == "Beginner" %}selected{% endif %}
                 >
                     Beginner
                 </option>
                 <option
                     value="Intermediate"
-                    {%
-                    if
-                    fitnessLevel=""
-                    ="Intermediate"
-                    %}selected{%
-                    endif
-                    %}
+                    {% if fitnessLevel == "Intermediate" %}selected{% endif %}
                 >
                     Intermediate
                 </option>
                 <option
                     value="Advanced"
-                    {%
-                    if
-                    fitnessLevel=""
-                    ="Advanced"
-                    %}selected{%
-                    endif
-                    %}
+                    {% if fitnessLevel == "Advanced" %}selected{% endif %}
                 >
                     Advanced
                 </option>
