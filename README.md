@@ -47,7 +47,7 @@ src/main/kotlin/com/fitness64/
 ```
 
 - **core/** — `Application.kt` (entry point), `Databases.kt`, `Security.kt` (cookie sessions + auth providers), `Templating.kt` (Pebble + HTMX helpers), `Helpers.kt`, `Serialization.kt`
-- **routes/** — `AuthRoutes.kt`, `DashboardRoutes.kt`, `LogRoutes.kt`, `CalendarRoutes.kt`, `PlanRoutes.kt`, `ProgressRoutes.kt`, `RacesPagesRoutes.kt`, and `activities/` sub-package
+- **routes/** — `AuthRoutes.kt`, `DashboardRoutes.kt`, `LogRoutes.kt`, `PlanRoutes.kt`, `ProgressRoutes.kt`, `RacesPagesRoutes.kt`, and `activities/` sub-package
 - **schema/** — `UsersSchema.kt`, `ActivitySchema.kt`, `WeightliftingSchema.kt`, `PlanSchema.kt`, `RaceSchema.kt`
 
 Templates live in `src/main/resources/templates/` with HTMX partials in `_partials/`.
@@ -84,7 +84,6 @@ The application creates the following tables automatically on startup:
 | `workout_logs` | Cardio activity records with date, duration, distance, calories |
 | `workout_laps` | Lap data imported from TCX files |
 | `trackpoints` | GPS coordinates, heart rate, altitude from TCX |
-| `workout_exercises` | Exercises linked to weightlifting logs |
 | `weightlifting_workout_logs` | Weightlifting session records |
 | `weightlifting_session_exercises` | Per-exercise sets, reps, weight in a weightlifting session |
 | `training_plans` | Weekly training plans (type, start date) |
@@ -109,10 +108,8 @@ A DBML diagram is available at `src/main/resources/db/schema.dbml`.
 | GET | `/activities` | Unified activity history feed |
 | GET | `/activities/{id}` | Activity detail with map and heart rate chart |
 | GET/POST | `/activities/{id}/edit` | Inline activity editing |
-| GET | `/calendar` | Monthly activity + plan calendar |
 | GET/POST | `/plan` | View and manage weekly training plan |
 | GET/POST | `/onboarding` | New-user plan selection |
 | GET | `/progress` | Progress dashboard with records and charts |
-| GET | `/races` | Race history listing |
 | GET/POST | `/races/log` | Log a new race result |
-| GET/POST | `/tcx/upload` | Upload and import a TCX file |
+| GET/POST | `/import` | Upload and import a TCX, GPX, or CSV file |
