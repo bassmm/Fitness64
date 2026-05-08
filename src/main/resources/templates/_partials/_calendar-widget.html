@@ -1,20 +1,20 @@
 <div id="calendar-widget" class="card shadow-soft sticky-lg-top">
     <div class="card-body p-3">
-        <div class="d-flex align-items-center gap-3 mb-3">
+        <div class="d-flex align-items-center gap-2 mb-2">
             <span class="stat-icon bg-primary-subtle text-primary">
                 <i class="bi bi-calendar3"></i>
             </span>
             <div>
-                <p class="page-kicker mb-1">Calendar</p>
+                <p class="page-kicker mb-0">Calendar</p>
                 <h2 id="date-filter-title" class="h6 mb-0">Filter by date</h2>
             </div>
         </div>
 
-        <p class="text-muted mb-3" style="font-size: 0.75rem">
+        <p class="text-muted mb-2" style="font-size: 0.75rem">
             Click a day to filter. Click again to clear.
         </p>
 
-        <div class="d-flex align-items-center justify-content-between mb-2">
+        <div class="d-flex align-items-center justify-content-between mb-1">
             <a
                 href="/activities?month={{ prevMonth }}&year={{ prevYear }}"
                 class="btn btn-sm btn-neutral px-1"
@@ -46,25 +46,26 @@
                 {% if cell.date is not empty %}
                 <a
                     href="/activities{% if cell.isSelected %}{% else %}?date={{ cell.date }}&month={{ cell.month }}&year={{ cell.year }}{% endif %}"
-                    class="d-inline-flex align-items-center justify-content-center rounded-circle text-decoration-none {% if cell.isSelected %}bg-primary text-white fw-bold{% elseif cell.isToday %}border border-primary fw-semibold{% endif %} {% if cell.hasActivity and not cell.isSelected %}position-relative{% endif %}"
+                    class="d-inline-flex align-items-center justify-content-center rounded-circle text-decoration-none calendar-day {% if cell.isSelected %}bg-primary text-white fw-bold{% elseif cell.isToday %}border border-primary fw-semibold{% endif %} {% if cell.hasActivity and not cell.isSelected %}position-relative{% endif %}"
                     style="
                         width: 100%;
                         height: 100%;
-                        font-size: 0.75rem;
-                        max-width: 28px;
-                        max-height: 28px;
+                        font-size: 0.7rem;
+                        max-width: 32px;
+                        max-height: 32px;
                     "
                     aria-label="{{ cell.date }}"
                 >
                     {{ cell.day }} {% if cell.hasActivity and not
                     cell.isSelected %}
                     <span
-                        class="position-absolute bottom-0 start-50 translate-middle-x"
+                        class="position-absolute start-50 translate-middle-x"
                         style="
                             width: 4px;
                             height: 4px;
                             border-radius: 50%;
                             background: var(--bs-primary);
+                            bottom: 1px;
                         "
                     ></span>
                     {% endif %}
@@ -75,7 +76,7 @@
         </div>
 
         {% if hasDateFilter %}
-        <div class="mt-3">
+        <div class="mt-2">
             <a href="/activities" class="btn btn-neutral btn-sm w-100">
                 <i class="bi bi-x-circle me-1"></i>Clear filter
             </a>

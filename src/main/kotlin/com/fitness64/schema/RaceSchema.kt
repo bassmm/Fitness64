@@ -175,11 +175,14 @@ class RaceService(database: Database) {
      * @param isPersonalBest Whether this result is now marked as a personal best.
      * @param notes Unused parameter reserved for future note support.
      */
-    suspend fun updateRace(id: Int, finishTime: String?, overallRank: Int?, isPersonalBest: Boolean, notes: String) = dbQuery {
+    suspend fun updateRace(id: Int, finishTime: String?, overallRank: Int?, isPersonalBest: Boolean, notes: String, date: String? = null) = dbQuery {
         RaceRecords.update({ RaceRecords.id eq id }) {
             it[RaceRecords.finishTime] = finishTime
             it[RaceRecords.overallRank] = overallRank
             it[RaceRecords.isPersonalBest] = isPersonalBest
+            if (date != null) {
+                it[RaceRecords.eventDate] = date
+            }
         }
     }
 

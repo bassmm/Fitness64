@@ -595,6 +595,25 @@ footer a:focus {
     -webkit-backdrop-filter: blur(8px);
 }
 
+/* Calendar widget day cells */
+
+.calendar-day {
+    background-color: rgba(15, 23, 42, 0.04);
+}
+
+.calendar-day:hover {
+    background-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+.calendar-day.bg-primary:hover {
+    background-color: var(--ff-primary-dark) !important;
+}
+
+.calendar-day:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(185, 28, 28, 0.2);
+}
+
 /* Responsive stabilization */
 
 @media (max-width: 991.98px) {
@@ -749,7 +768,7 @@ footer a:focus {
     border-radius: 999px;
     color: #fff;
     background: var(--bs-primary);
-    box-shadow: 0 0.75rem 1.5rem rgba(13, 110, 253, 0.25);
+    box-shadow: 0 0.75rem 1.5rem var(--ff-primary-border);
 }
 
 .bottom-nav-primary.active {

@@ -139,6 +139,7 @@ data class WorkoutExercise(
  */
 @Serializable
 data class WorkoutLap(
+    val id: Int = 0,
     val workoutLogId: Int,
     val startTime: String,
     val totalTimeSeconds: Int,
@@ -447,7 +448,7 @@ class ActivityService(database: Database) {
      * @param activityTypeId The new activity type ID, or null to leave unchanged.
      * @param name The new custom workout name, or null to leave unchanged.
      */
-    suspend fun updateWorkoutLog(id: Int, duration: Int, distance: Double?, notes: String, calories: Int?, activityTypeId: Int?, name: String?) = dbQuery {
+    suspend fun updateWorkoutLog(id: Int, duration: Int, distance: Double?, notes: String, calories: Int?, activityTypeId: Int?, name: String?, date: String? = null) = dbQuery {
         WorkoutLogs.update({ WorkoutLogs.id eq id }) {
             it[WorkoutLogs.duration] = duration
             it[WorkoutLogs.distance] = distance
@@ -458,6 +459,9 @@ class ActivityService(database: Database) {
             }
             if (name != null) {
                 it[WorkoutLogs.workoutName] = name
+            }
+            if (date != null) {
+                it[WorkoutLogs.logDate] = date
             }
         }
     }
@@ -625,6 +629,22 @@ class ActivityService(database: Database) {
                     altitude = it[Trackpoints.altitude],
                     distance = it[Trackpoints.distance],
                     heartRate = it[Trackpoints.heartRate]
+                )
+            }
+    }
+
+    suspend fun getLapsForWorkoutLog(workoutLogId: Int): List<WorkoutLap> = dbQuery {
+        WorkoutLaps.selectAll()
+            .where { WorkoutLaps.workoutLogId eq workoutLogId }
+            .orderBy(WorkoutLaps.id to SortOrder.ASC)
+            .map {
+                WorkoutLap(
+                    id = it[WorkoutLaps.id],
+                    workoutLogId = it[WorkoutLaps.workoutLogId],
+                    startTime = it[WorkoutLaps.startTime],
+                    totalTimeSeconds = it[WorkoutLaps.totalTimeSeconds],
+                    distance = it[WorkoutLaps.distance],
+                    calories = it[WorkoutLaps.calories]
                 )
             }
     }

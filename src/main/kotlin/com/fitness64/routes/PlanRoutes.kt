@@ -9,7 +9,6 @@
 package com.fitness64.routes
 
 import com.fitness64.core.requireAuthenticatedUser
-import com.fitness64.core.getStartOfWeek
 import com.fitness64.schema.PlanService
 import com.fitness64.schema.UserService
 import io.ktor.server.application.*
@@ -18,7 +17,6 @@ import io.ktor.server.pebble.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import java.time.LocalDate
 
 /**
  * Registers all training plan related routes on the application.
@@ -97,37 +95,10 @@ fun Application.configurePlanRoutes(
 
             /**
              * GET /plan
-             * Displays the user's current weekly training plan.
-             * Maps each session to its corresponding calendar date for the current week.
+             * Redirects to the home page where the full weekly plan is now displayed.
              */
             get("/plan") {
-                val auth = call.requireAuthenticatedUser(userService) ?: return@get
-                val (user, userId) = auth
-
-                val startOfWeek = getStartOfWeek(LocalDate.now())
-                val planFromDatabase = planService.getPlan(userId)
-                val currentPlanType = planService.getPlanType(userId) ?: "No plan selected"
-
-                val weeklyPlan = planFromDatabase.mapIndexed { index, entry ->
-                    val date = startOfWeek.plusDays(index.toLong())
-                    mapOf(
-                        "day" to entry.day,
-                        "date" to date.toString(),
-                        "session" to entry.session,
-                        "durationMinutes" to entry.durationMinutes,
-                        "intensity" to entry.intensity,
-                        "isRestDay" to entry.isRestDay
-                    )
-                }
-
-                call.respondTemplate(
-                    "plan",
-                    mapOf(
-                        "weeklyPlan" to weeklyPlan,
-                        "fitnessLevel" to (user.fitnessLevel ?: "Beginner"),
-                        "planType" to currentPlanType
-                    )
-                )
+                call.respondRedirect("/home")
             }
 
             /**
