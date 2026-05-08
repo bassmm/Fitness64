@@ -122,6 +122,7 @@
     </head>
 
     <body class="bg-body-secondary" hx-boost="true">
+        <a href="#main-content" onfocus="this.style.top='0'" onblur="this.style.top='-100px'" style="position:fixed;top:-100px;left:0;z-index:9999;padding:0.5rem 1.25rem;background:#b91c1c;color:#fff;text-decoration:none;font-weight:600;border-radius:0 0 4px 0;">Skip to main content</a>
         <div class="app-shell min-vh-100">
             <aside class="app-sidebar border-end bg-body shadow-soft">
                 <div
@@ -142,54 +143,54 @@
                         <ul class="navbar-nav px-4 py-5 gap-1">
                             <li class="nav-item">
                                 <a class="nav-link rounded-3" href="/home"
-                                    ><i class="bi bi-grid-1x2 me-3"></i
+                                    ><i aria-hidden="true" class="bi bi-grid-1x2 me-3"></i
                                     >Dashboard</a
                                 >
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link rounded-3" href="/log"
-                                    ><i class="bi bi-plus-circle me-3"></i>Log
+                                    ><i aria-hidden="true" class="bi bi-plus-circle me-3"></i>Log
                                     Activity</a
                                 >
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link rounded-3" href="/activities"
-                                    ><i class="bi bi-bar-chart-line me-3"></i
+                                    ><i aria-hidden="true" class="bi bi-bar-chart-line me-3"></i
                                     >Activity History</a
                                 >
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link rounded-3" href="/plan"
-                                    ><i class="bi bi-calendar2-week me-3"></i
+                                    ><i aria-hidden="true" class="bi bi-calendar2-week me-3"></i
                                     >Weekly Plan</a
                                 >
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link rounded-3" href="/calendar"
-                                    ><i class="bi bi-calendar3 me-3"></i
+                                    ><i aria-hidden="true" class="bi bi-calendar3 me-3"></i
                                     >Calendar</a
                                 >
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link rounded-3" href="/progress"
-                                    ><i class="bi bi-trophy me-3"></i
+                                    ><i aria-hidden="true" class="bi bi-trophy me-3"></i
                                     >Progress</a
                                 >
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link rounded-3" href="/races"
-                                    ><i class="bi bi-flag me-3"></i>Races</a
+                                    ><i aria-hidden="true" class="bi bi-flag me-3"></i>Races</a
                                 >
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link rounded-3" href="/tcx/upload"
-                                    ><i class="bi bi-upload me-3"></i>Import
+                                    ><i aria-hidden="true" class="bi bi-upload me-3"></i>Import
                                     TCX</a
                                 >
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link rounded-3" href="/profile"
-                                    ><i class="bi bi-person-circle me-3"></i
+                                    ><i aria-hidden="true" class="bi bi-person-circle me-3"></i
                                     >Profile</a
                                 >
                             </li>
@@ -204,7 +205,7 @@
                                 <span
                                     class="icon icon-sm bg-primary text-white rounded-circle"
                                 >
-                                    <i class="bi bi-stars"></i>
+                                    <i aria-hidden="true" class="bi bi-stars"></i>
                                 </span>
                                 <span class="fw-semibold text-heading"
                                     >Stay consistent</span
@@ -244,7 +245,7 @@
                                     aria-controls="mobileNavigation"
                                     aria-label="Open navigation"
                                 >
-                                    <i class="bi bi-list"></i>
+                                    <i aria-hidden="true" class="bi bi-list"></i>
                                 </button>
                                 <div>
                                     <h1 class="h4 mb-0">
@@ -258,11 +259,11 @@
                                 <a
                                     href="/log"
                                     class="btn btn-sm btn-primary d-none d-sm-inline-flex"
-                                    ><i class="bi bi-plus-circle me-2"></i>Log
+                                    ><i aria-hidden="true" class="bi bi-plus-circle me-2"></i>Log
                                     Activity</a
                                 >
-                                <a href="/logout" class="btn btn-sm btn-neutral"
-                                    ><i
+                                <a href="/logout" class="btn btn-sm btn-neutral" aria-label="Logout"
+                                    ><i aria-hidden="true"
                                         class="bi bi-box-arrow-right me-sm-2"
                                     ></i
                                     ><span class="d-none d-sm-inline"
@@ -295,9 +296,9 @@
                                     >Plan</a
                                 >
                                 <a
-                                    href="/calendar"
+                                    href="/activities"
                                     class="text-muted text-decoration-none"
-                                    >Calendar</a
+                                    >Activities</a
                                 >
                                 <a
                                     href="/progress"
@@ -348,32 +349,32 @@
                     aria-label="Mobile navigation"
                 >
                     <a class="nav-link rounded-3" href="/home"
-                        ><i class="bi bi-grid-1x2 me-3"></i>Dashboard</a
+                        ><i aria-hidden="true" class="bi bi-grid-1x2 me-3"></i>Dashboard</a
                     >
                     <a class="nav-link rounded-3" href="/log"
-                        ><i class="bi bi-plus-circle me-3"></i>Log Activity</a
+                        ><i aria-hidden="true" class="bi bi-plus-circle me-3"></i>Log Activity</a
                     >
                     <a class="nav-link rounded-3" href="/activities"
-                        ><i class="bi bi-bar-chart-line me-3"></i>Activity
+                        ><i aria-hidden="true" class="bi bi-bar-chart-line me-3"></i>Activity
                         History</a
                     >
                     <a class="nav-link rounded-3" href="/plan"
-                        ><i class="bi bi-calendar2-week me-3"></i>Weekly Plan</a
+                        ><i aria-hidden="true" class="bi bi-calendar2-week me-3"></i>Weekly Plan</a
                     >
                     <a class="nav-link rounded-3" href="/calendar"
-                        ><i class="bi bi-calendar3 me-3"></i>Calendar</a
+                        ><i aria-hidden="true" class="bi bi-calendar3 me-3"></i>Calendar</a
                     >
                     <a class="nav-link rounded-3" href="/progress"
-                        ><i class="bi bi-trophy me-3"></i>Progress</a
+                        ><i aria-hidden="true" class="bi bi-trophy me-3"></i>Progress</a
                     >
                     <a class="nav-link rounded-3" href="/races"
-                        ><i class="bi bi-flag me-3"></i>Races</a
+                        ><i aria-hidden="true" class="bi bi-flag me-3"></i>Races</a
                     >
                     <a class="nav-link rounded-3" href="/tcx/upload"
-                        ><i class="bi bi-upload me-3"></i>Import TCX</a
+                        ><i aria-hidden="true" class="bi bi-upload me-3"></i>Import TCX</a
                     >
                     <a class="nav-link rounded-3" href="/profile"
-                        ><i class="bi bi-person-circle me-3"></i>Profile</a
+                        ><i aria-hidden="true" class="bi bi-person-circle me-3"></i>Profile</a
                     >
                 </nav>
             </div>

@@ -84,6 +84,15 @@ fun Application.configureProgressRoutes(
                     if (isEmpty()) add("Complete more workouts to unlock achievements")
                 }
 
+                val volumeBySession = weightliftingHistory
+                    .sortedBy { it.logDate }
+                    .map { item ->
+                        mapOf(
+                            "date" to item.logDate,
+                            "totalSets" to item.totalSets
+                        )
+                    }
+
                 call.respondTemplate("progress", mapOf(
                     "weeklyWorkouts" to weeklySummary,
                     "activeDays" to activeDaysText,
@@ -95,6 +104,7 @@ fun Application.configureProgressRoutes(
                     "workoutsByDay" to workoutsByDay,
                     "activityBreakdown" to activityBreakdown,
                     "distanceByWeek" to distanceByWeek
+                    "volumeBySession" to volumeBySession
                 ))
             }
         }

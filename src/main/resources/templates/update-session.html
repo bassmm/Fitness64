@@ -15,7 +15,7 @@ page_heading %}Update Session{% endblock %} {% block content %}
             class="alert alert-danger d-flex align-items-center gap-2"
             role="alert"
         >
-            <i class="bi bi-exclamation-triangle-fill"></i
+            <i aria-hidden="true" class="bi bi-exclamation-triangle-fill"></i
             ><span>{{ error }}</span>
         </div>
         {% endif %}
@@ -56,7 +56,7 @@ page_heading %}Update Session{% endblock %} {% block content %}
             </div>
             <div class="d-flex flex-wrap gap-3">
                 <button class="btn btn-primary" type="submit">
-                    <i class="bi bi-check2-circle me-2"></i>Save Update
+                    <i aria-hidden="true" class="bi bi-check2-circle me-2"></i>Save Update
                 </button>
                 <a class="btn btn-neutral" href="/plan">Back to Weekly Plan</a>
             </div>

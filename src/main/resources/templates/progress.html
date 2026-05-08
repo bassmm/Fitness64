@@ -15,7 +15,7 @@
         <div class="card card-hover h-100">
             <div class="card-body p-5">
                 <span class="stat-icon bg-primary-subtle text-primary mb-4">
-                    <i class="bi bi-calendar-check"></i>
+                    <i aria-hidden="true" class="bi bi-calendar-check"></i>
                 </span>
                 <p class="text-muted text-sm mb-1">Weekly Summary</p>
                 <h3 class="h5 mb-2">{{ weeklyWorkouts }}</h3>
@@ -28,7 +28,7 @@
         <div class="card card-hover h-100">
             <div class="card-body p-5">
                 <span class="stat-icon bg-warning-subtle text-warning mb-4">
-                    <i class="bi bi-fire"></i>
+                    <i aria-hidden="true" class="bi bi-fire"></i>
                 </span>
                 <p class="text-muted text-sm mb-1">Consistency</p>
                 <h3 class="h5 mb-0">{{ consistency }}</h3>
@@ -40,7 +40,7 @@
         <div class="card card-hover h-100">
             <div class="card-body p-5">
                 <span class="stat-icon bg-success-subtle text-success mb-4">
-                    <i class="bi bi-bullseye"></i>
+                    <i aria-hidden="true" class="bi bi-bullseye"></i>
                 </span>
                 <p class="text-muted text-sm mb-1">Next Goal</p>
                 <h3 class="h5 mb-0">{{ nextGoal }}</h3>
@@ -55,7 +55,7 @@
             <div class="card-body p-5">
                 <div class="d-flex align-items-center gap-3 mb-4">
                     <span class="stat-icon bg-primary-subtle text-primary">
-                        <i class="bi bi-bar-chart-line"></i>
+                        <i aria-hidden="true" class="bi bi-bar-chart-line"></i>
                     </span>
                     <div>
                         <p class="page-kicker mb-1">This week</p>
@@ -81,7 +81,7 @@
             <div class="card-body p-5">
                 <div class="d-flex align-items-center gap-3 mb-4">
                     <span class="stat-icon bg-warning-subtle text-warning">
-                        <i class="bi bi-pie-chart"></i>
+                        <i aria-hidden="true" class="bi bi-pie-chart"></i>
                     </span>
                     <div>
                         <p class="page-kicker mb-1">Breakdown</p>
@@ -89,7 +89,7 @@
                     </div>
                 </div>
                 {% if activityBreakdown is not empty %}
-                    <canvas id="pieChart" height="180"></canvas>
+                    <canvas id="pieChart" height="180" role="img" aria-label="Doughnut chart showing activity type breakdown"></canvas>
                 {% else %}
                     <div class="text-center py-5">
                         <i class="bi bi-pie-chart text-muted" style="font-size: 2rem;"></i>
@@ -107,7 +107,7 @@
     <div class="card-body p-5">
         <div class="d-flex align-items-center gap-3 mb-4">
             <span class="stat-icon bg-info-subtle text-info">
-                <i class="bi bi-graph-up"></i>
+                <i aria-hidden="true" class="bi bi-graph-up"></i>
             </span>
             <div>
                 <p class="page-kicker mb-1">Trend</p>
@@ -115,7 +115,7 @@
             </div>
         </div>
         {% if hasDistanceData %}
-            <canvas id="distanceChart" height="80"></canvas>
+            <canvas id="distanceChart" height="80" role="img" aria-label="Line chart showing distance in kilometres over the last 4 weeks"></canvas>
         {% else %}
             <div class="text-center py-5">
                 <i class="bi bi-graph-down-arrow text-muted" style="font-size: 2rem;"></i>
@@ -125,13 +125,28 @@
     </div>
 </div>
 
+<div class="card shadow-soft mb-6">
+    <div class="card-body p-5">
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <span class="stat-icon bg-primary-subtle text-primary">
+                <i class="bi bi-graph-up-arrow"></i>
+            </span>
+            <div>
+                <p class="page-kicker mb-1">Strength</p>
+                <h2 class="h4 mb-0">Weightlifting Volume Over Time</h2>
+            </div>
+        </div>
+        <canvas id="volumeChart" height="80"></canvas>
+    </div>
+</div>
+
 <div class="row g-4 mb-6">
     <div class="col-lg-6">
         <div class="card shadow-soft h-100">
             <div class="card-body p-5">
                 <div class="d-flex align-items-center gap-3 mb-4">
                     <span class="stat-icon bg-info-subtle text-info">
-                        <i class="bi bi-speedometer2"></i>
+                        <i aria-hidden="true" class="bi bi-speedometer2"></i>
                     </span>
                     <div>
                         <p class="page-kicker mb-1">Running</p>
@@ -158,7 +173,7 @@
             <div class="card-body p-5">
                 <div class="d-flex align-items-center gap-3 mb-4">
                     <span class="stat-icon bg-primary-subtle text-primary">
-                        <i class="bi bi-bicycle"></i>
+                        <i aria-hidden="true" class="bi bi-bicycle"></i>
                     </span>
                     <div>
                         <p class="page-kicker mb-1">Cycling</p>
@@ -182,7 +197,7 @@
     <div class="card-body p-5">
         <div class="d-flex align-items-center gap-3 mb-4">
             <span class="stat-icon bg-primary text-white">
-                <i class="bi bi-award"></i>
+                <i aria-hidden="true" class="bi bi-award"></i>
             </span>
             <div>
                 <p class="page-kicker mb-1">Recent wins</p>
@@ -192,7 +207,7 @@
         <div class="list-group list-group-flush">
             {% for achievement in achievements %}
                 <div class="list-group-item px-0 d-flex align-items-center gap-3">
-                    <i class="bi bi-check-circle-fill text-success"></i>
+                    <i aria-hidden="true" class="bi bi-check-circle-fill text-success"></i>
                     <span>{{ achievement }}</span>
                 </div>
             {% endfor %}
@@ -202,7 +217,7 @@
 
 <div class="mt-5">
     <a class="btn btn-neutral" href="/home">
-        <i class="bi bi-arrow-left me-2"></i>Back to Home
+        <i aria-hidden="true" class="bi bi-arrow-left me-2"></i>Back to Home
     </a>
 </div>
 {% endblock %}
@@ -238,5 +253,74 @@
     {% endif %}
 
     initProgressCharts();
+
+    {% set hasDistanceData = false %}
+    {% for item in distanceByWeek %}{% if item.distance > 0 %}{% set hasDistanceData = true %}{% endif %}{% endfor %}
+    {% if hasDistanceData %}
+    new Chart(document.getElementById('distanceChart'), {
+        type: 'line',
+        data: {
+            labels: distanceByWeek.map(d => d.week),
+            datasets: [{
+                label: 'Distance (km)',
+                data: distanceByWeek.map(d => d.distance),
+                borderColor: primaryBorder,
+                backgroundColor: 'rgba(185, 28, 28, 0.1)',
+                borderWidth: 2,
+                pointBackgroundColor: primaryBorder,
+                pointRadius: 5,
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+    {% endif %}
+
+    {% if volumeBySession is not empty %}
+    const volumeBySession = [
+        {% for item in volumeBySession %}
+            { date: "{{ item.date }}", totalSets: {{ item.totalSets }} }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    new Chart(document.getElementById('volumeChart'), {
+        type: 'line',
+        data: {
+            labels: volumeBySession.map(d => d.date),
+            datasets: [{
+                label: 'Total Sets',
+                data: volumeBySession.map(d => d.totalSets),
+                borderColor: primaryBorder,
+                backgroundColor: 'rgba(185, 28, 28, 0.1)',
+                borderWidth: 2,
+                pointBackgroundColor: primaryBorder,
+                pointRadius: 5,
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 1 },
+                    title: { display: true, text: 'Total Sets' }
+                },
+                x: {
+                    title: { display: true, text: 'Session Date' }
+                }
+            }
+        }
+    });
+    {% endif %}
 </script>
 {% endblock %}

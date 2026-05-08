@@ -1,7 +1,7 @@
 <div class="card shadow-soft">
     <div class="card-body p-5">
         {% if error %}
-            <div class="alert alert-danger d-flex align-items-center gap-2" role="alert"><i class="bi bi-exclamation-triangle-fill"></i><span>{{ error }}</span></div>
+            <div class="alert alert-danger d-flex align-items-center gap-2" role="alert"><i aria-hidden="true" class="bi bi-exclamation-triangle-fill"></i><span>{{ error }}</span></div>
         {% endif %}
 
         <form hx-post="/log/submit" hx-target="#log-form-area" hx-swap="innerHTML" class="row g-4">
@@ -10,7 +10,7 @@
 
             <div class="col-12">
                 <button type="button" hx-get="/log/picker" hx-target="#log-form-area" hx-swap="innerHTML" class="btn btn-sm btn-neutral">
-                    <i class="bi bi-arrow-left me-1"></i>Change activity
+                    <i aria-hidden="true" class="bi bi-arrow-left me-1"></i>Change activity
                 </button>
             </div>
 
@@ -44,7 +44,7 @@
             </div>
 
             <div class="col-12 d-flex flex-wrap gap-3">
-                <button class="btn btn-primary" type="submit"><i class="bi bi-check2-circle me-2"></i>Save Activity</button>
+                <button class="btn btn-primary" type="submit"><i aria-hidden="true" class="bi bi-check2-circle me-2"></i>Save Activity</button>
                 <button type="button" hx-get="/log/picker" hx-target="#log-form-area" hx-swap="innerHTML" class="btn btn-neutral">Cancel</button>
             </div>
         </form>
