@@ -58,10 +58,16 @@ Templates live in `src/main/resources/templates/` with HTMX partials in `_partia
 ## Quick Start
 
 ```bash
+# 1. Clone and enter folder
+git clone https://github.com/bassmm/Fitness64.git
+cd Fitness64
+# 2. Create database folder
+mkdir data
+# 3. Run server
 ./gradlew run
 ```
 
-Go to [http://localhost:8080/](http://localhost:8080/).
+#### Then head to [http://localhost:8080/](http://localhost:8080/) to access site.
 
 ### Available Tasks
 
