@@ -1,4 +1,5 @@
 # Fitness64
+<img width="877" height="1241" alt="Fitness64 Poster" src="https://github.com/user-attachments/assets/a0bb3ab1-609b-4e73-bd9f-6dbd92403fb1" />
 
 A full-featured fitness tracking web application built with **Kotlin** and **Ktor**. Log workouts, track progress, import GPS routes from fitness devices, manage training plans, and log race results — all in one place.
 
