@@ -56,7 +56,7 @@ Templates live in `src/main/resources/templates/` with HTMX partials in `_partia
 ---
 
 ## Quick Start
-
+##### Note: Java 25 Required, make sure Java 25 is installed before running app.
 ```bash
 # 1. Clone and enter folder
 git clone https://github.com/bassmm/Fitness64.git
